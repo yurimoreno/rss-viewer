@@ -63,3 +63,8 @@
 [2026-02-10 19:09:51] US-002: tests and dev startup complete
 [2026-02-10 19:11:28] US-002: browser verification complete
 [2026-02-10 19:12:34] US-002: progress log updated
+[2026-02-10 19:12:48] ITERATION 1 start (mode=build story=US-003)
+[2026-02-10 19:13:09] Start US-003: auditing existing item list, persistence, and routes
+[2026-02-10 19:19:57] US-003: saved toggle and saved view implemented
+[2026-02-10 19:20:04] US-003: verification complete (npm test, dev startup, browser check)
+[2026-02-10 19:21:03] US-003: progress log updated

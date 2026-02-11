@@ -6,6 +6,39 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 19:20:28 PST - US-003: Saved/Read Later view
+Thread: 019c4aaf-e831-7002-8856-b09fe77507c8
+Run: 20260210-191247-57714 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-191247-57714-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-191247-57714-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 28b7bee feat: add saved items view
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/app.js
+  - public/index.html
+  - public/styles.css
+  - package.json
+  - tests/unread-cache.test.js
+  - tests/saved-view.test.js
+  - .agents/tasks/prd-feedly-clone.json
+  - .ralph/runs/run-20260210-191247-57714-iter-1.log
+  - .ralph/.tmp/prompt-20260210-191247-57714-1.md
+  - .ralph/.tmp/story-20260210-191247-57714-1.json
+  - .ralph/.tmp/story-20260210-191247-57714-1.md
+- What was implemented
+  - Added a Saved view with navigation toggles and saved-item listing.
+  - Added save toggles on item cards and persisted saved state in cache.
+  - Added test coverage for saved view and toggles.
+- **Learnings for future iterations:**
+  - Saved items are easiest to render by flattening the cached feed map.
+---
+
 ## 2026-02-10 19:11:53 PST - US-002: Item caching and unread tracking
 Thread: 019c4aa9-9a1f-7910-ba96-404e38bf29b2
 Run: 20260210-190554-55481 (iteration 1)

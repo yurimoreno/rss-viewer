@@ -124,7 +124,7 @@
     {
       "id": "US-003",
       "title": "Saved/Read Later view",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-002"
       ],
@@ -133,7 +133,10 @@
         "Add a save toggle on item cards",
         "Create a Saved view that lists saved items",
         "Saved state persists across reloads"
-      ]
+      ],
+      "startedAt": "2026-02-11T03:12:47.930904+00:00",
+      "completedAt": "2026-02-11T03:20:08.000Z",
+      "updatedAt": "2026-02-11T03:20:08.000Z"
     },
     {
       "id": "US-004",
