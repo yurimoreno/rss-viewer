@@ -83,6 +83,44 @@ button[disabled] {
   gap: 0.6rem;
 }
 
+.recent-feeds {
+  margin-top: 1rem;
+}
+
+.recent-feeds h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.recent-feeds-list {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.recent-feeds-empty {
+  margin: 0.6rem 0 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.recent-feed-button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d7deea;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: #f8faff;
+  color: #0f4fb7;
+  font-weight: 500;
+}
+
+.recent-feed-button:hover {
+  background: #edf3ff;
+}
+
 .spinner {
   width: 14px;
   height: 14px;

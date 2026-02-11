@@ -3,6 +3,12 @@ const urlInput = document.getElementById('feed-url');
 const loadButton = document.getElementById('load-feed');
 const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
+const recentFeedsList = document.getElementById('recent-feeds');
+const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+
+const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+const MAX_RECENT_FEEDS = 5;
+let recentFeeds = [];
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -107,6 +113,65 @@ function isValidHttpUrl(value) {
   }
 }
 
+function readRecentFeeds() {
+  try {
+    const raw = localStorage.getItem(RECENT_FEEDS_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((value) => typeof value === 'string' && isValidHttpUrl(value))
+      .slice(0, MAX_RECENT_FEEDS);
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentFeeds(urls) {
+  try {
+    localStorage.setItem(RECENT_FEEDS_KEY, JSON.stringify(urls));
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
+function renderRecentFeeds() {
+  recentFeedsList.innerHTML = '';
+
+  if (recentFeeds.length === 0) {
+    recentFeedsEmpty.hidden = false;
+    return;
+  }
+
+  recentFeedsEmpty.hidden = true;
+  const fragment = document.createDocumentFragment();
+
+  recentFeeds.forEach((url) => {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'recent-feed-button';
+    button.dataset.url = url;
+    button.textContent = url;
+    li.appendChild(button);
+    fragment.appendChild(li);
+  });
+
+  recentFeedsList.appendChild(fragment);
+}
+
+function addRecentFeed(url) {
+  recentFeeds = [url, ...recentFeeds.filter((entry) => entry !== url)].slice(0, MAX_RECENT_FEEDS);
+  saveRecentFeeds(recentFeeds);
+  renderRecentFeeds();
+}
+
 async function loadFeed(url) {
   setStatus('Loading feed...', 'loading');
   loadButton.disabled = true;
@@ -119,6 +184,8 @@ async function loadFeed(url) {
     if (!response.ok) {
       throw new Error(data && data.error ? data.error : 'fetch_failed');
     }
+
+    addRecentFeed(url);
 
     const items = Array.isArray(data.items) ? data.items : [];
     renderItems(items);
@@ -150,3 +217,21 @@ form.addEventListener('submit', async (event) => {
 
   await loadFeed(url);
 });
+
+recentFeedsList.addEventListener('click', async (event) => {
+  const target = event.target;
+  const button = target && typeof target.closest === 'function'
+    ? target.closest('button[data-url]')
+    : null;
+
+  if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
+    return;
+  }
+
+  const { url } = button.dataset;
+  urlInput.value = url;
+  await loadFeed(url);
+});
+
+recentFeeds = readRecentFeeds();
+renderRecentFeeds();
