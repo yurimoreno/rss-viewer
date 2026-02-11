@@ -6,6 +6,11 @@ const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
 const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const sidebar = document.getElementById('feed-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 640px)')
+  : { matches: false };
 
 const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
 const MAX_RECENT_FEEDS = 5;
@@ -197,6 +202,28 @@ function addRecentFeed(url) {
   mergeRecentFeeds([url]);
 }
 
+function setSidebarExpanded(isExpanded) {
+  if (!sidebar || !sidebarToggle) {
+    return;
+  }
+
+  sidebar.classList.toggle('is-open', isExpanded);
+  sidebarToggle.setAttribute('aria-expanded', String(isExpanded));
+}
+
+function syncSidebarToViewport() {
+  if (!sidebar || !sidebarToggle) {
+    return;
+  }
+
+  if (smallScreenMediaQuery.matches) {
+    setSidebarExpanded(false);
+    return;
+  }
+
+  setSidebarExpanded(true);
+}
+
 function parseOpmlFeedUrls(opmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
@@ -306,3 +333,21 @@ if (opmlInput) {
 
 recentFeeds = readRecentFeeds();
 renderRecentFeeds();
+syncSidebarToViewport();
+
+if (sidebarToggle) {
+  sidebarToggle.addEventListener('click', () => {
+    if (!sidebar || !smallScreenMediaQuery.matches) {
+      return;
+    }
+
+    const isExpanded = sidebar.classList.contains('is-open');
+    setSidebarExpanded(!isExpanded);
+  });
+}
+
+if (typeof smallScreenMediaQuery.addEventListener === 'function') {
+  smallScreenMediaQuery.addEventListener('change', syncSidebarToViewport);
+} else if (typeof smallScreenMediaQuery.addListener === 'function') {
+  smallScreenMediaQuery.addListener(syncSidebarToViewport);
+}

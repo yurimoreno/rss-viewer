@@ -7,38 +7,78 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="viewer" aria-live="polite">
-      <h1>RSS Viewer</h1>
-      <form id="feed-form" class="feed-form" novalidate>
-        <label for="feed-url">Feed URL</label>
-        <div class="controls">
-          <input
-            id="feed-url"
-            name="url"
-            type="url"
-            placeholder="https://example.com/feed.xml"
-            required
-            autocomplete="url"
-          />
-          <button id="load-feed" type="submit">Load</button>
+    <div class="app-shell">
+      <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+        <div class="sidebar-header">
+          <h2>Categories</h2>
         </div>
-      </form>
+        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+          <section class="sidebar-group" aria-label="Technology feeds">
+            <h3>Technology</h3>
+            <ul class="sidebar-feed-list">
+              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+            </ul>
+          </section>
+          <section class="sidebar-group" aria-label="News feeds">
+            <h3>News</h3>
+            <ul class="sidebar-feed-list">
+              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+            </ul>
+          </section>
+          <section class="sidebar-group" aria-label="Uncategorized feeds">
+            <h3>Uncategorized</h3>
+            <ul class="sidebar-feed-list">
+              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+            </ul>
+          </section>
+        </nav>
+      </aside>
 
-      <section class="opml-import" aria-label="OPML import">
-        <label for="opml-file">Import OPML</label>
-        <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
-      </section>
+      <main class="viewer" aria-live="polite">
+        <button
+          id="sidebar-toggle"
+          class="sidebar-toggle"
+          type="button"
+          aria-controls="feed-sidebar"
+          aria-expanded="false"
+        >
+          Browse feeds
+        </button>
 
-      <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+        <h1>RSS Viewer</h1>
+        <form id="feed-form" class="feed-form" novalidate>
+          <label for="feed-url">Feed URL</label>
+          <div class="controls">
+            <input
+              id="feed-url"
+              name="url"
+              type="url"
+              placeholder="https://example.com/feed.xml"
+              required
+              autocomplete="url"
+            />
+            <button id="load-feed" type="submit">Load</button>
+          </div>
+        </form>
 
-      <section class="recent-feeds" aria-label="Recent feeds">
-        <h2>Recent feeds</h2>
-        <ul id="recent-feeds" class="recent-feeds-list"></ul>
-        <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
-      </section>
+        <section class="opml-import" aria-label="OPML import">
+          <label for="opml-file">Import OPML</label>
+          <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
+        </section>
 
-      <ul id="results" class="results" aria-label="Feed items"></ul>
-    </main>
+        <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+        <section class="recent-feeds" aria-label="Recent feeds">
+          <h2>Recent feeds</h2>
+          <ul id="recent-feeds" class="recent-feeds-list"></ul>
+          <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+        </section>
+
+        <ul id="results" class="results" aria-label="Feed items"></ul>
+      </main>
+    </div>
 
     <script src="/app.js" defer></script>
   </body>
