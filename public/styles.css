@@ -1,0 +1,150 @@
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  background-color: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.viewer {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.feed-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+input[type="url"] {
+  flex: 1;
+  border: 1px solid #c7ced8;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: #1f6feb;
+  cursor: pointer;
+}
+
+button[disabled] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.status {
+  margin-top: 1rem;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #eef2ff;
+  border: 1px solid #dbe5ff;
+}
+
+.status.error {
+  color: #8b1d1d;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.status.loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #b6c6ee;
+  border-top-color: #1f6feb;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+.results {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.9rem;
+  background: #fff;
+}
+
+.item h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.item h2 a {
+  color: #0f4fb7;
+  text-decoration: none;
+}
+
+.item h2 a:hover {
+  text-decoration: underline;
+}
+
+.item .meta {
+  margin-top: 0.35rem;
+  font-size: 0.88rem;
+  color: #4b5563;
+}
+
+.item p {
+  margin: 0.55rem 0 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .viewer {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

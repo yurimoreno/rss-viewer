@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "total": 4,
+  "remaining": 2,
+  "quality_gates": [
+    "npm test"
+  ],
+  "id": "US-003",
+  "title": "Build the minimal viewer UI"
+}
