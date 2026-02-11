@@ -39,6 +39,13 @@ body {
   gap: 0.5rem;
 }
 
+.sidebar-metric-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: #5b677b;
+}
+
 .saved-view-toggle {
   border: 1px solid #c7ced8;
   background: #ffffff;

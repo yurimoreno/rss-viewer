@@ -26,6 +26,7 @@ const LIBRARY_KEY = 'rssViewer.library';
 const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
 const MAX_RECENT_FEEDS = 5;
 const MAX_ITEMS_PER_FEED = 50;
+const PREFETCH_CONCURRENCY = 3;
 const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
 let importedFeeds = [];
@@ -843,6 +844,7 @@ function renderSidebarFeeds() {
     const headingCount = document.createElement('span');
     headingCount.className = 'sidebar-count';
     headingCount.textContent = String(getCategoryCount(feeds));
+    headingCount.setAttribute('title', 'Unread items in category');
     heading.append(headingLabel, headingCount);
     section.appendChild(heading);
 
@@ -861,6 +863,7 @@ function renderSidebarFeeds() {
       const feedCount = document.createElement('span');
       feedCount.className = 'sidebar-count';
       feedCount.textContent = String(getFeedCount(feed.url));
+      feedCount.setAttribute('title', 'Unread items');
       button.append(feedName, feedCount);
       li.appendChild(button);
       list.appendChild(li);
@@ -883,11 +886,55 @@ function setImportedFeeds(feeds) {
   renderSidebarFeeds();
 }
 
+function shouldPrefetchFeed(feedUrl) {
+  return getCachedFeedItems(feedUrl).length === 0;
+}
+
+async function fetchFeedItemsForCache(feedUrl) {
+  try {
+    const response = await fetch(`/api/rss?url=${encodeURIComponent(feedUrl)}`);
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json();
+    const items = Array.isArray(data.items) ? data.items : [];
+    const cachedItems = buildCachedItemsFromFetch(feedUrl, items);
+    setCachedFeedItems(feedUrl, cachedItems);
+    renderSidebarFeeds();
+  } catch {
+    // Ignore prefetch failures.
+  }
+}
+
+function prefetchLibraryFeeds(feeds) {
+  const queue = feeds
+    .map((feed) => feed.url)
+    .filter((url) => isValidHttpUrl(url) && shouldPrefetchFeed(url));
+
+  if (queue.length === 0) {
+    return;
+  }
+
+  let index = 0;
+  const workerCount = Math.min(PREFETCH_CONCURRENCY, queue.length);
+  const workers = Array.from({ length: workerCount }, () => (async () => {
+    while (index < queue.length) {
+      const nextUrl = queue[index];
+      index += 1;
+      await fetchFeedItemsForCache(nextUrl);
+    }
+  })());
+
+  void Promise.all(workers);
+}
+
 function mergeIntoLibrary(imported) {
   const currentLibrary = readLibrary();
   const merged = buildLibrary([...imported, ...currentLibrary.feeds], currentLibrary.categories);
   saveLibrary(merged);
   setImportedFeeds(merged.feeds);
+  prefetchLibraryFeeds(merged.feeds);
 }
 
 async function loadFeed(url) {
@@ -1039,6 +1086,7 @@ feedItemCache = readFeedItemCache();
 refreshUnreadCounts();
 const startupLibrary = readLibrary();
 setImportedFeeds(startupLibrary.feeds);
+prefetchLibraryFeeds(startupLibrary.feeds);
 renderRecentFeeds();
 syncSidebarToViewport();
 
