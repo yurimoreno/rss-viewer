@@ -6,6 +6,63 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 18:27:08 PST - US-002: Test OPML import behavior
+Thread: 019c4a80-d135-7803-9037-123e1b8ea8f0
+Run: 20260210-182121-39456 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-182121-39456-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-182121-39456-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7276726 feat: add OPML import UI and tests
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - tests/opml-import.test.js
+  - package.json
+  - .agents/tasks/prd-opml-import.json
+  - .ralph/.tmp/us001-valid.opml
+  - .ralph/.tmp/us001-invalid.txt
+  - .ralph/runs/run-20260210-182121-39456-iter-1.log
+- What was implemented
+  - Added OPML import test coverage for valid and invalid uploads.
+  - Verified imported URLs merge with recent feeds and invalid files do not change storage.
+- **Learnings for future iterations:**
+  - DOMParser can be stubbed in tests for OPML parsing behavior.
+---
+
+## 2026-02-10 18:27:08 PST - US-001: Add OPML file upload and parsing
+Thread: 019c4a80-d135-7803-9037-123e1b8ea8f0
+Run: 20260210-182121-39456 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-182121-39456-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-182121-39456-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7276726 feat: add OPML import UI and tests
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/index.html
+  - public/styles.css
+  - public/app.js
+  - .agents/tasks/prd-opml-import.json
+  - .ralph/.tmp/prompt-20260210-182121-39456-1.md
+  - .ralph/.tmp/story-20260210-182121-39456-1.json
+  - .ralph/.tmp/story-20260210-182121-39456-1.md
+  - .ralph/.tmp/prd-prompt-20260210-181700-38699.md
+- What was implemented
+  - Added OPML file upload control and client-side parsing of xmlUrl feeds.
+  - Merged imported feed URLs into recent feeds with dedupe and max-5 rules.
+  - Displayed success/error status messages for imports.
+- **Learnings for future iterations:**
+  - Include OPML parsing errors in status banner for fast feedback.
+---
+
 ## 2026-02-10 17:52:40 PST - US-004: Remember recent feeds
 Thread: 019c4a63-8a21-7aa0-8dff-698fa6b2f0d0
 Run: 20260210-174923-30606 (iteration 1)

@@ -28,3 +28,11 @@
 [2026-02-10 17:51:32] US-004: added recent feeds UI, localStorage persistence, and tests
 [2026-02-10 17:52:09] US-004: verification complete (npm test, dev startup, browser check)
 [2026-02-10 17:52:58] US-004: progress log updated
+[2026-02-10 18:21:21] ITERATION 1 start (mode=build story=US-001)
+[2026-02-10 18:21:41] Start US-001 work
+[2026-02-10 18:21:45] Auditing codebase for US-001 implementation points
+[2026-02-10 18:22:14] Implementing US-001: add OPML upload UI and client-side parsing/merge logic
+[2026-02-10 18:22:42] Completed major code changes for US-001 OPML import UI and parsing
+[2026-02-10 18:25:33] OPML import: added tests and updated test script
+[2026-02-10 18:26:24] OPML import: verification complete (npm test, dev startup, browser check)
+[2026-02-10 18:28:20] OPML import: progress log updated
