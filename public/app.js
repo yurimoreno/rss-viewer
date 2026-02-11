@@ -7,6 +7,12 @@ const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
 const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
 const sidebarGroups = document.getElementById('sidebar-groups');
+const feedView = document.getElementById('feed-view');
+const savedView = document.getElementById('saved-view');
+const savedResultsList = document.getElementById('saved-results');
+const savedEmpty = document.getElementById('saved-empty');
+const savedViewToggle = document.getElementById('saved-view-toggle');
+const feedViewToggle = document.getElementById('feed-view-toggle');
 const sidebar = document.getElementById('feed-sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
 const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -25,6 +31,7 @@ let selectedSidebarFeedUrl = '';
 let selectedFeedUrl = '';
 let feedItemCache = {};
 const feedUnreadCounts = new Map();
+let currentView = 'feed';
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -122,10 +129,23 @@ function createItemElement(feedUrl, item) {
     rerenderSelectedFeed();
   });
 
+  const saveToggle = document.createElement('button');
+  saveToggle.type = 'button';
+  saveToggle.className = 'item-save-toggle';
+  saveToggle.textContent = item.isSaved ? 'Unsave' : 'Save';
+  saveToggle.addEventListener('click', () => {
+    updateItemSavedState(feedUrl, item.id, !item.isSaved);
+    rerenderSelectedFeed();
+  });
+
+  const actions = document.createElement('div');
+  actions.className = 'item-actions';
+  actions.append(readToggle, saveToggle);
+
   const summaryText = document.createElement('p');
   summaryText.textContent = summary;
 
-  li.append(heading, meta, readToggle, summaryText);
+  li.append(heading, meta, actions, summaryText);
   return li;
 }
 
@@ -297,7 +317,8 @@ function normalizeFeedItem(feedUrl, item) {
     link,
     pubDate,
     summary,
-    isRead: item.isRead === true
+    isRead: item.isRead === true,
+    isSaved: item.isSaved === true
   };
 }
 
@@ -389,10 +410,13 @@ function refreshUnreadCounts() {
 }
 
 function buildCachedItemsFromFetch(feedUrl, items) {
-  const existingState = new Map(getCachedFeedItems(feedUrl).map((item) => [item.id, item.isRead]));
+  const existingState = new Map(
+    getCachedFeedItems(feedUrl).map((item) => [item.id, { isRead: item.isRead, isSaved: item.isSaved }])
+  );
   return normalizeFeedItemList(feedUrl, items).map((item) => ({
     ...item,
-    isRead: existingState.has(item.id) ? existingState.get(item.id) : false
+    isRead: existingState.has(item.id) ? existingState.get(item.id).isRead : false,
+    isSaved: existingState.has(item.id) ? existingState.get(item.id).isSaved : false
   }));
 }
 
@@ -408,12 +432,82 @@ function updateItemReadState(feedUrl, itemId, isRead) {
   renderSidebarFeeds();
 }
 
+function updateItemSavedState(feedUrl, itemId, isSaved) {
+  if (!isValidHttpUrl(feedUrl) || typeof itemId !== 'string' || itemId.trim().length === 0) {
+    return;
+  }
+
+  const updatedItems = getCachedFeedItems(feedUrl).map((item) => (
+    item.id === itemId ? { ...item, isSaved } : item
+  ));
+  setCachedFeedItems(feedUrl, updatedItems);
+  if (currentView === 'saved') {
+    renderSavedItems();
+  }
+}
+
 function rerenderSelectedFeed() {
   if (!selectedFeedUrl) {
     return;
   }
 
   renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+}
+
+function getSavedItems() {
+  const savedItems = [];
+  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
+    items.forEach((item) => {
+      if (item.isSaved) {
+        savedItems.push({ ...item, feedUrl });
+      }
+    });
+  });
+
+  savedItems.sort((a, b) => {
+    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
+    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
+    return bTime - aTime;
+  });
+
+  return savedItems;
+}
+
+function renderSavedItems() {
+  if (!savedResultsList || !savedEmpty) {
+    return;
+  }
+
+  const savedItems = getSavedItems();
+  savedResultsList.innerHTML = '';
+
+  if (savedItems.length === 0) {
+    savedEmpty.classList.remove('is-hidden');
+    return;
+  }
+
+  savedEmpty.classList.add('is-hidden');
+  const fragment = document.createDocumentFragment();
+  savedItems.forEach((item) => {
+    fragment.appendChild(createItemElement(item.feedUrl, item));
+  });
+  savedResultsList.appendChild(fragment);
+}
+
+function setView(view) {
+  currentView = view;
+
+  if (feedView) {
+    feedView.classList.toggle('is-hidden', view === 'saved');
+  }
+
+  if (savedView) {
+    savedView.classList.toggle('is-hidden', view !== 'saved');
+  }
+
+  if (view === 'saved') {
+    renderSavedItems();
+  }
 }
 
 function renderRecentFeeds() {
@@ -673,6 +767,7 @@ function mergeIntoLibrary(imported) {
 }
 
 async function loadFeed(url) {
+  setView('feed');
   setStatus('Loading feed...', 'loading');
   loadButton.disabled = true;
   urlInput.disabled = true;
@@ -757,6 +852,18 @@ if (sidebarGroups) {
     selectedSidebarFeedUrl = url;
     renderSidebarFeeds();
     await loadFeed(url);
+  });
+}
+
+if (savedViewToggle) {
+  savedViewToggle.addEventListener('click', () => {
+    setView('saved');
+  });
+}
+
+if (feedViewToggle) {
+  feedViewToggle.addEventListener('click', () => {
+    setView('feed');
   });
 }
 

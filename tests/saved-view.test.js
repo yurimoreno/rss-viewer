@@ -113,25 +113,6 @@ class FakeElement {
   }
 }
 
-function findChildByClass(element, className) {
-  if (!element) {
-    return null;
-  }
-
-  if (element.className === className) {
-    return element;
-  }
-
-  for (const child of element.children) {
-    const match = findChildByClass(child, className);
-    if (match) {
-      return match;
-    }
-  }
-
-  return null;
-}
-
 class FakeDocumentFragment {
   constructor() {
     this.isFragment = true;
@@ -223,6 +204,25 @@ function createLocalStorage(seed = {}) {
   };
 }
 
+function findChildByClass(element, className) {
+  if (!element) {
+    return null;
+  }
+
+  if (element.className === className) {
+    return element;
+  }
+
+  for (const child of element.children) {
+    const match = findChildByClass(child, className);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
 function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
   const elements = {
     'feed-form': new FakeElement('form'),
@@ -288,11 +288,9 @@ async function run() {
       </body>
     </opml>`;
 
-  const items = new Array(60).fill(null).map((_, index) => ({
-    title: `Item ${index}`,
-    link: `https://example.com/${index}`,
-    pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
-  }));
+  const items = [
+    { title: 'Item A', link: 'https://example.com/a', pubDate: '2024-01-02' }
+  ];
 
   const { elements, localStorage } = bootstrapApp({
     localStorageSeed: {},
@@ -308,34 +306,52 @@ async function run() {
   elements['opml-file'].files = [file];
   await elements['opml-file'].dispatch('change');
 
-  const library = JSON.parse(localStorage.dump()[libraryKey]);
-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
-
   elements['feed-url'].value = feedUrl;
   await elements['feed-form'].dispatch('submit');
 
-  const cached = JSON.parse(localStorage.dump()[cacheKey]);
-  assert.strictEqual(cached[feedUrl].length, 50, 'Cached feed items should be capped at 50');
-
-  const sidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
-  assert.strictEqual(sidebarFeed.children[1].textContent, '50', 'Unread count should equal cached items');
-
   const firstItem = elements.results.children[0];
-  const readToggle = findChildByClass(firstItem, 'item-read-toggle');
-  assert.ok(readToggle, 'Read toggle should be rendered');
-  await readToggle.dispatch('click');
+  const saveToggle = findChildByClass(firstItem, 'item-save-toggle');
+  assert.ok(saveToggle, 'Save toggle should be rendered');
+  await saveToggle.dispatch('click');
 
-  const updatedCache = JSON.parse(localStorage.dump()[cacheKey]);
-  const readItems = updatedCache[feedUrl].filter((item) => item.isRead);
-  assert.strictEqual(readItems.length, 1, 'Read toggle should mark one item as read');
+  const cached = JSON.parse(localStorage.dump()[cacheKey]);
+  assert.strictEqual(cached[feedUrl].filter((item) => item.isSaved).length, 1, 'Save toggle should persist');
 
-  const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
-  assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+  await elements['saved-view-toggle'].dispatch('click');
+  assert.strictEqual(elements['saved-results'].children.length, 1, 'Saved view should render saved items');
+  assert.ok(
+    elements['saved-empty'].classList.classes.has('is-hidden'),
+    'Saved empty state should be hidden when items exist'
+  );
 
-  console.log('Unread cache test passed: cap, read state, and counts verified.');
+  const seed = {};
+  seed[libraryKey] = JSON.stringify({
+    feeds: [{ url: feedUrl, title: 'Feed A', category: 'Tech' }],
+    categories: ['Tech']
+  });
+  seed[cacheKey] = JSON.stringify(cached);
+
+  const reloaded = bootstrapApp({
+    localStorageSeed: seed,
+    fetchImpl: async () => ({
+      ok: true,
+      async json() {
+        return { items: [] };
+      }
+    })
+  });
+
+  await reloaded.elements['saved-view-toggle'].dispatch('click');
+  assert.strictEqual(
+    reloaded.elements['saved-results'].children.length,
+    1,
+    'Saved items should persist across reloads'
+  );
+
+  console.log('Saved view test passed: toggle, list, and persistence verified.');
 }
 
 run().catch((error) => {
-  console.error(`Unread cache test failed: ${error.stack || error.message}`);
+  console.error(`Saved view test failed: ${error.stack || error.message}`);
   process.exit(1);
 });

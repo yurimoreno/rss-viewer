@@ -11,6 +11,7 @@
       <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
         <div class="sidebar-header">
           <h2>Categories</h2>
+          <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
         </div>
         <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
       </aside>
@@ -27,35 +28,47 @@
         </button>
 
         <h1>RSS Viewer</h1>
-        <form id="feed-form" class="feed-form" novalidate>
-          <label for="feed-url">Feed URL</label>
-          <div class="controls">
-            <input
-              id="feed-url"
-              name="url"
-              type="url"
-              placeholder="https://example.com/feed.xml"
-              required
-              autocomplete="url"
-            />
-            <button id="load-feed" type="submit">Load</button>
+
+        <section id="feed-view">
+          <form id="feed-form" class="feed-form" novalidate>
+            <label for="feed-url">Feed URL</label>
+            <div class="controls">
+              <input
+                id="feed-url"
+                name="url"
+                type="url"
+                placeholder="https://example.com/feed.xml"
+                required
+                autocomplete="url"
+              />
+              <button id="load-feed" type="submit">Load</button>
+            </div>
+          </form>
+
+          <section class="opml-import" aria-label="OPML import">
+            <label for="opml-file">Import OPML</label>
+            <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
+          </section>
+
+          <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+          <section class="recent-feeds" aria-label="Recent feeds">
+            <h2>Recent feeds</h2>
+            <ul id="recent-feeds" class="recent-feeds-list"></ul>
+            <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+          </section>
+
+          <ul id="results" class="results" aria-label="Feed items"></ul>
+        </section>
+
+        <section id="saved-view" class="saved-view is-hidden" aria-label="Saved items">
+          <div class="saved-header">
+            <h2>Saved items</h2>
+            <button id="feed-view-toggle" class="saved-view-toggle" type="button">Back to feeds</button>
           </div>
-        </form>
-
-        <section class="opml-import" aria-label="OPML import">
-          <label for="opml-file">Import OPML</label>
-          <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
+          <p id="saved-empty" class="saved-empty">No saved items yet.</p>
+          <ul id="saved-results" class="results"></ul>
         </section>
-
-        <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
-
-        <section class="recent-feeds" aria-label="Recent feeds">
-          <h2>Recent feeds</h2>
-          <ul id="recent-feeds" class="recent-feeds-list"></ul>
-          <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
-        </section>
-
-        <ul id="results" class="results" aria-label="Feed items"></ul>
       </main>
     </div>
 
