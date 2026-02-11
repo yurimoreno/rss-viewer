@@ -15,12 +15,16 @@ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.mat
 
 const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
 const LIBRARY_KEY = 'rssViewer.library';
+const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
 const MAX_RECENT_FEEDS = 5;
+const MAX_ITEMS_PER_FEED = 50;
 const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
 let importedFeeds = [];
 let selectedSidebarFeedUrl = '';
-const feedItemCounts = new Map();
+let selectedFeedUrl = '';
+let feedItemCache = {};
+const feedUnreadCounts = new Map();
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -74,14 +78,17 @@ function formatDate(rawDate) {
   }).format(parsed);
 }
 
-function createItemElement(item) {
+function createItemElement(feedUrl, item) {
   const li = document.createElement('li');
   li.className = 'item';
+  if (item.isRead) {
+    li.classList.add('is-read');
+  }
 
   const title = item.title || 'Untitled item';
   const itemLink = typeof item.link === 'string' ? item.link : '';
-  const pubDate = formatDate(item.isoDate || item.pubDate);
-  const summarySource = item.contentSnippet || item.summary || item.content || item.description || '';
+  const pubDate = formatDate(item.pubDate);
+  const summarySource = item.summary || '';
   const summary = stripHtml(summarySource) || 'No summary available.';
 
   const heading = document.createElement('h2');
@@ -90,6 +97,12 @@ function createItemElement(item) {
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.href = itemLink || '#';
+  if (itemLink) {
+    link.addEventListener('click', () => {
+      updateItemReadState(feedUrl, item.id, true);
+      rerenderSelectedFeed();
+    });
+  }
   if (!itemLink) {
     link.removeAttribute('target');
     link.removeAttribute('rel');
@@ -100,17 +113,26 @@ function createItemElement(item) {
   meta.className = 'meta';
   meta.textContent = pubDate;
 
+  const readToggle = document.createElement('button');
+  readToggle.type = 'button';
+  readToggle.className = 'item-read-toggle';
+  readToggle.textContent = item.isRead ? 'Mark unread' : 'Mark read';
+  readToggle.addEventListener('click', () => {
+    updateItemReadState(feedUrl, item.id, !item.isRead);
+    rerenderSelectedFeed();
+  });
+
   const summaryText = document.createElement('p');
   summaryText.textContent = summary;
 
-  li.append(heading, meta, summaryText);
+  li.append(heading, meta, readToggle, summaryText);
   return li;
 }
 
-function renderItems(items) {
+function renderItems(feedUrl, items) {
   const fragment = document.createDocumentFragment();
   items.forEach((item) => {
-    fragment.appendChild(createItemElement(item));
+    fragment.appendChild(createItemElement(feedUrl, item));
   });
   clearResults();
   resultsList.appendChild(fragment);
@@ -241,6 +263,157 @@ function saveLibrary(library) {
   } catch {
     // Ignore localStorage write failures.
   }
+}
+
+function normalizeFeedItem(feedUrl, item) {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+
+  const title = typeof item.title === 'string' && item.title.trim().length > 0
+    ? item.title.trim()
+    : 'Untitled item';
+  const link = typeof item.link === 'string' && item.link.trim().length > 0 ? item.link.trim() : '';
+  const rawPubDate = typeof item.isoDate === 'string' && item.isoDate.trim().length > 0
+    ? item.isoDate
+    : item.pubDate;
+  const pubDate = typeof rawPubDate === 'string' && rawPubDate.trim().length > 0
+    ? rawPubDate.trim()
+    : '';
+  const summarySource = item.summary || item.contentSnippet || item.content || item.description || '';
+  const summary = stripHtml(summarySource);
+
+  const idSource = typeof item.id === 'string' && item.id.trim().length > 0
+    ? item.id.trim()
+    : (typeof item.guid === 'string' && item.guid.trim().length > 0 ? item.guid.trim() : '');
+  const fallbackId = [feedUrl, link, title, pubDate].join('|');
+  const id = idSource.length > 0
+    ? (idSource.startsWith(`${feedUrl}|`) ? idSource : `${feedUrl}|${idSource}`)
+    : fallbackId;
+
+  return {
+    id,
+    title,
+    link,
+    pubDate,
+    summary,
+    isRead: item.isRead === true
+  };
+}
+
+function normalizeFeedItemList(feedUrl, items) {
+  const normalizedItems = [];
+  const seenIds = new Set();
+  const sourceItems = Array.isArray(items) ? items : [];
+
+  sourceItems.slice(0, MAX_ITEMS_PER_FEED).forEach((item) => {
+    const normalized = normalizeFeedItem(feedUrl, item);
+    if (!normalized || seenIds.has(normalized.id)) {
+      return;
+    }
+
+    seenIds.add(normalized.id);
+    normalizedItems.push(normalized);
+  });
+
+  return normalizedItems;
+}
+
+function readFeedItemCache() {
+  try {
+    const raw = localStorage.getItem(FEED_CACHE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return {};
+    }
+
+    const normalized = {};
+    Object.entries(parsed).forEach(([feedUrl, items]) => {
+      if (!isValidHttpUrl(feedUrl)) {
+        return;
+      }
+
+      const normalizedItems = normalizeFeedItemList(feedUrl, items);
+      if (normalizedItems.length > 0) {
+        normalized[feedUrl] = normalizedItems;
+      }
+    });
+
+    return normalized;
+  } catch {
+    return {};
+  }
+}
+
+function saveFeedItemCache(cache) {
+  try {
+    localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
+function getCachedFeedItems(feedUrl) {
+  return Array.isArray(feedItemCache[feedUrl]) ? feedItemCache[feedUrl] : [];
+}
+
+function setCachedFeedItems(feedUrl, items) {
+  const normalizedItems = normalizeFeedItemList(feedUrl, items);
+
+  if (normalizedItems.length === 0) {
+    delete feedItemCache[feedUrl];
+  } else {
+    feedItemCache[feedUrl] = normalizedItems;
+  }
+
+  updateFeedUnreadCount(feedUrl);
+  saveFeedItemCache(feedItemCache);
+}
+
+function updateFeedUnreadCount(feedUrl) {
+  const unreadCount = getCachedFeedItems(feedUrl).reduce((count, item) => (
+    item.isRead ? count : count + 1
+  ), 0);
+  feedUnreadCounts.set(feedUrl, unreadCount);
+}
+
+function refreshUnreadCounts() {
+  feedUnreadCounts.clear();
+  Object.keys(feedItemCache).forEach((feedUrl) => {
+    updateFeedUnreadCount(feedUrl);
+  });
+}
+
+function buildCachedItemsFromFetch(feedUrl, items) {
+  const existingState = new Map(getCachedFeedItems(feedUrl).map((item) => [item.id, item.isRead]));
+  return normalizeFeedItemList(feedUrl, items).map((item) => ({
+    ...item,
+    isRead: existingState.has(item.id) ? existingState.get(item.id) : false
+  }));
+}
+
+function updateItemReadState(feedUrl, itemId, isRead) {
+  if (!isValidHttpUrl(feedUrl) || typeof itemId !== 'string' || itemId.trim().length === 0) {
+    return;
+  }
+
+  const updatedItems = getCachedFeedItems(feedUrl).map((item) => (
+    item.id === itemId ? { ...item, isRead } : item
+  ));
+  setCachedFeedItems(feedUrl, updatedItems);
+  renderSidebarFeeds();
+}
+
+function rerenderSelectedFeed() {
+  if (!selectedFeedUrl) {
+    return;
+  }
+
+  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
 }
 
 function renderRecentFeeds() {
@@ -415,7 +588,7 @@ function groupFeedsByCategory(feeds) {
 }
 
 function getFeedCount(feedUrl) {
-  return feedItemCounts.get(feedUrl) || 0;
+  return feedUnreadCounts.get(feedUrl) || 0;
 }
 
 function getCategoryCount(feeds) {
@@ -515,16 +688,18 @@ async function loadFeed(url) {
     addRecentFeed(url);
 
     const items = Array.isArray(data.items) ? data.items : [];
-    feedItemCounts.set(url, items.length);
+    selectedFeedUrl = url;
+    const cachedItems = buildCachedItemsFromFetch(url, items);
+    setCachedFeedItems(url, cachedItems);
     renderSidebarFeeds();
-    renderItems(items);
+    renderItems(url, cachedItems);
 
-    if (items.length === 0) {
+    if (cachedItems.length === 0) {
       setStatus('Feed loaded, but no items were found.');
       return;
     }
 
-    setStatus(`Loaded ${items.length} item${items.length === 1 ? '' : 's'}.`);
+    setStatus(`Loaded ${cachedItems.length} item${cachedItems.length === 1 ? '' : 's'}.`);
   } catch {
     clearResults();
     setStatus('Could not load this feed URL. Check the URL and try again.', 'error');
@@ -559,6 +734,7 @@ recentFeedsList.addEventListener('click', async (event) => {
 
   const { url } = button.dataset;
   urlInput.value = url;
+  selectedFeedUrl = url;
   selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
   renderSidebarFeeds();
   await loadFeed(url);
@@ -577,6 +753,7 @@ if (sidebarGroups) {
 
     const { url } = button.dataset;
     urlInput.value = url;
+    selectedFeedUrl = url;
     selectedSidebarFeedUrl = url;
     renderSidebarFeeds();
     await loadFeed(url);
@@ -610,6 +787,8 @@ if (opmlInput) {
 }
 
 recentFeeds = readRecentFeeds();
+feedItemCache = readFeedItemCache();
+refreshUnreadCounts();
 const startupLibrary = readLibrary();
 setImportedFeeds(startupLibrary.feeds);
 renderRecentFeeds();

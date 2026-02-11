@@ -266,6 +266,11 @@ button[disabled] {
   background: #fff;
 }
 
+.item.is-read {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
 .item h2 {
   margin: 0;
   font-size: 1.05rem;
@@ -284,6 +289,20 @@ button[disabled] {
   margin-top: 0.35rem;
   font-size: 0.88rem;
   color: #4b5563;
+}
+
+.item-read-toggle {
+  margin-top: 0.5rem;
+  align-self: flex-start;
+  border: 1px solid #c7ced8;
+  background: #ffffff;
+  color: #1f2937;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.item-read-toggle:hover {
+  background: #f1f5f9;
 }
 
 .item p {

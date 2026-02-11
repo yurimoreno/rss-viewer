@@ -259,7 +259,12 @@ async function run() {
         return {
           ok: true,
           async json() {
-            return { items: new Array(itemCount).fill({ title: 'Item' }) };
+            return {
+              items: Array.from({ length: itemCount }, (_, index) => ({
+                title: `Item ${index}`,
+                link: `https://example.com/${index}`
+              }))
+            };
           }
         };
       }
