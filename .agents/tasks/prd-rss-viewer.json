@@ -99,7 +99,7 @@
     {
       "id": "US-002",
       "title": "Create RSS proxy endpoint",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -112,8 +112,8 @@
         "Negative case: fetch or parse failure returns 502 with `{\"error\":\"fetch_failed\"}`"
       ],
       "startedAt": "2026-02-11T01:40:28.160238+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-11T01:40:28.160557+00:00"
+      "completedAt": "2026-02-11T01:42:43.000Z",
+      "updatedAt": "2026-02-11T01:42:43.000Z"
     },
     {
       "id": "US-003",
