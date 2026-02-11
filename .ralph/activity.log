@@ -36,3 +36,8 @@
 [2026-02-10 18:25:33] OPML import: added tests and updated test script
 [2026-02-10 18:26:24] OPML import: verification complete (npm test, dev startup, browser check)
 [2026-02-10 18:28:20] OPML import: progress log updated
+[2026-02-10 18:36:25] ITERATION 1 start (mode=build story=US-001)
+[2026-02-11] Start US-001 implementation (run 20260210-183625-44089 iter 1)
+[2026-02-11] Implemented US-001 layout/styles/js changes for sidebar and mobile collapse behavior
+[2026-02-11] Verification complete: npm test PASS; npm run dev startup PASS
+[2026-02-10 18:39:55] US-001 verification: npm test, npm run dev, browser check
