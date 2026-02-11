@@ -6,6 +6,36 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 18:51:22 PST - US-003: Add metrics to sidebar
+Thread: 019c4a99-258b-7251-8807-a00a089163e8
+Run: 20260210-184756-49168 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184756-49168-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184756-49168-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: be8b571 feat: show sidebar feed and category counts
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/app.js
+  - public/styles.css
+  - tests/opml-import.test.js
+  - .agents/tasks/prd-feed-selector.json
+  - .ralph/runs/run-20260210-184756-49168-iter-1.log
+  - .ralph/.tmp/prompt-20260210-184756-49168-1.md
+  - .ralph/.tmp/story-20260210-184756-49168-1.json
+  - .ralph/.tmp/story-20260210-184756-49168-1.md
+- What was implemented
+  - Added per-feed counts and category totals based on last loaded items.
+  - Updated sidebar rendering to show count badges.
+  - Extended OPML import tests to validate sidebar metric updates.
+- **Learnings for future iterations:**
+  - Sidebar metrics can be tracked with a simple in-memory map keyed by feed URL.
+---
+
 ## 2026-02-10 18:47:01 PST - US-002: Populate sidebar from imported feeds
 Thread: 019c4a94-062e-7920-98b9-2b43880ea942
 Run: 20260210-184220-46856 (iteration 1)

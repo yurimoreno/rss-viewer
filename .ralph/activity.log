@@ -46,3 +46,8 @@
 [2026-02-10 18:46:33] US-002: sidebar feeds grouped by OPML categories and clickable
 [2026-02-10 18:46:37] US-002: verification complete (npm test, dev startup, browser check)
 [2026-02-10 18:47:38] US-002: progress log updated
+[2026-02-10 18:47:56] ITERATION 1 start (mode=build story=US-003)
+[2026-02-10 18:48:56] US-003 implementation: adding sidebar feed/category metrics and count updates on load.
+[2026-02-10 18:49:36] US-003 major code changes complete: sidebar metrics implemented in app.js/styles.css and tests updated.
+[2026-02-10 18:50:58] US-003: verification complete (npm test, dev startup, browser check)
+[2026-02-10 18:51:55] US-003: progress log updated
