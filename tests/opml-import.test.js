@@ -229,6 +229,7 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
 
 async function run() {
   const storageKey = 'rssViewer.recentFeeds';
+  const libraryKey = 'rssViewer.library';
   const existingUrl = 'https://existing.example/feed.xml';
   const opml = `<?xml version="1.0"?>
     <opml version="1.0">
@@ -273,6 +274,20 @@ async function run() {
       stored,
       ['https://feed-a.example/rss.xml', 'https://feed-b.example/rss.xml', existingUrl],
       'OPML import should merge, dedupe, and keep most-recent-first'
+    );
+
+    const storedLibrary = JSON.parse(localStorage.dump()[libraryKey]);
+    assert.deepStrictEqual(
+      storedLibrary,
+      {
+        feeds: [
+          { url: 'https://feed-a.example/rss.xml', title: 'Feed A', category: 'Tech' },
+          { url: 'https://feed-b.example/rss.xml', title: 'Feed B', category: 'Tech' },
+          { url: existingUrl, title: 'Existing', category: 'Uncategorized' }
+        ],
+        categories: ['Tech', 'Uncategorized']
+      },
+      'OPML import should persist a normalized feed library with categories'
     );
 
     const sidebarSections = elements['sidebar-groups'].children;
@@ -325,6 +340,36 @@ async function run() {
       JSON.parse(localStorage.dump()[storageKey]),
       [existingUrl],
       'Invalid OPML should not modify recent feeds'
+    );
+    assert.strictEqual(localStorage.getItem(libraryKey), null, 'Invalid OPML should not modify feed library');
+  }
+
+  {
+    const seed = {};
+    seed[libraryKey] = JSON.stringify({
+      feeds: [
+        { url: 'https://startup-a.example/rss.xml', title: 'Startup A', category: 'News' },
+        { url: 'https://startup-b.example/rss.xml', title: 'Startup B', category: 'News' }
+      ],
+      categories: ['News']
+    });
+
+    const { elements } = bootstrapApp({
+      localStorageSeed: seed,
+      fetchImpl: async () => ({
+        ok: true,
+        async json() {
+          return { items: [] };
+        }
+      })
+    });
+
+    const sidebarSections = elements['sidebar-groups'].children;
+    assert.strictEqual(sidebarSections.length, 1, 'Stored library should render sidebar groups on startup');
+    assert.strictEqual(
+      sidebarSections[0].children[1].children.length,
+      2,
+      'Stored library feeds should populate sidebar on startup'
     );
   }
 

@@ -14,6 +14,7 @@ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.mat
   : { matches: false };
 
 const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+const LIBRARY_KEY = 'rssViewer.library';
 const MAX_RECENT_FEEDS = 5;
 const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
@@ -147,6 +148,96 @@ function readRecentFeeds() {
 function saveRecentFeeds(urls) {
   try {
     localStorage.setItem(RECENT_FEEDS_KEY, JSON.stringify(urls));
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
+function normalizeCategory(category) {
+  if (typeof category !== 'string') {
+    return UNCATEGORIZED_CATEGORY;
+  }
+
+  const trimmed = category.trim();
+  return trimmed.length > 0 ? trimmed : UNCATEGORIZED_CATEGORY;
+}
+
+function normalizeFeedEntry(feed) {
+  if (!feed || typeof feed !== 'object') {
+    return null;
+  }
+
+  const url = typeof feed.url === 'string' ? feed.url.trim() : '';
+  if (!isValidHttpUrl(url)) {
+    return null;
+  }
+
+  const rawTitle = typeof feed.title === 'string' ? feed.title.trim() : '';
+  return {
+    url,
+    title: rawTitle.length > 0 ? rawTitle : url,
+    category: normalizeCategory(feed.category)
+  };
+}
+
+function dedupeFeeds(feeds) {
+  const unique = [];
+  const seenUrls = new Set();
+
+  feeds.forEach((feed) => {
+    const normalized = normalizeFeedEntry(feed);
+    if (!normalized || seenUrls.has(normalized.url)) {
+      return;
+    }
+
+    seenUrls.add(normalized.url);
+    unique.push(normalized);
+  });
+
+  return unique;
+}
+
+function buildLibrary(feeds, categories = []) {
+  const normalizedFeeds = dedupeFeeds(feeds);
+  const categorySet = new Set(
+    categories
+      .filter((name) => typeof name === 'string')
+      .map((name) => normalizeCategory(name))
+  );
+
+  normalizedFeeds.forEach((feed) => {
+    categorySet.add(feed.category);
+  });
+
+  return {
+    feeds: normalizedFeeds,
+    categories: Array.from(categorySet)
+  };
+}
+
+function readLibrary() {
+  try {
+    const raw = localStorage.getItem(LIBRARY_KEY);
+    if (!raw) {
+      return buildLibrary([]);
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return buildLibrary([]);
+    }
+
+    const feeds = Array.isArray(parsed.feeds) ? parsed.feeds : [];
+    const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
+    return buildLibrary(feeds, categories);
+  } catch {
+    return buildLibrary([]);
+  }
+}
+
+function saveLibrary(library) {
+  try {
+    localStorage.setItem(LIBRARY_KEY, JSON.stringify(buildLibrary(library.feeds, library.categories)));
   } catch {
     // Ignore localStorage write failures.
   }
@@ -392,21 +483,20 @@ function renderSidebarFeeds() {
 }
 
 function setImportedFeeds(feeds) {
-  const seenUrls = new Set();
-  importedFeeds = feeds.filter((feed) => {
-    if (!feed || seenUrls.has(feed.url)) {
-      return false;
-    }
-
-    seenUrls.add(feed.url);
-    return true;
-  });
+  importedFeeds = dedupeFeeds(feeds);
 
   if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
     selectedSidebarFeedUrl = '';
   }
 
   renderSidebarFeeds();
+}
+
+function mergeIntoLibrary(imported) {
+  const currentLibrary = readLibrary();
+  const merged = buildLibrary([...imported, ...currentLibrary.feeds], currentLibrary.categories);
+  saveLibrary(merged);
+  setImportedFeeds(merged.feeds);
 }
 
 async function loadFeed(url) {
@@ -509,7 +599,7 @@ if (opmlInput) {
         throw new Error('invalid_opml');
       }
 
-      setImportedFeeds(imported);
+      mergeIntoLibrary(imported);
       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
     } catch {
       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
@@ -520,8 +610,9 @@ if (opmlInput) {
 }
 
 recentFeeds = readRecentFeeds();
+const startupLibrary = readLibrary();
+setImportedFeeds(startupLibrary.feeds);
 renderRecentFeeds();
-renderSidebarFeeds();
 syncSidebarToViewport();
 
 if (sidebarToggle) {
