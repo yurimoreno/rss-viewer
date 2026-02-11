@@ -617,6 +617,11 @@ input[type="search"]::placeholder {
   white-space: pre-wrap;
 }
 
+.reader-content[data-state="loading"] {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .saved-header {
   display: flex;
   align-items: center;

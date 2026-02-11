@@ -32,9 +32,12 @@ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
 const LIBRARY_KEY = 'rssViewer.library';
 const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
 const CATEGORY_STATE_KEY = 'rssViewer.categoryState';
+const ARTICLE_CACHE_KEY = 'rssViewer.articleCache';
 const MAX_RECENT_FEEDS = 5;
 const MAX_ITEMS_PER_FEED = 50;
 const PREFETCH_CONCURRENCY = 3;
+const MAX_ARTICLE_CACHE = 40;
+const MAX_ARTICLE_LENGTH = 20000;
 const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
 let importedFeeds = [];
@@ -50,6 +53,8 @@ let currentVisibleItems = [];
 let currentListElement = resultsList;
 let categoryState = {};
 let dragState = null;
+let articleCache = { order: [], entries: {} };
+let readerRequestId = 0;
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -98,6 +103,19 @@ function truncateText(value, maxLength = 240) {
   }
 
   return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
+function normalizeArticleText(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.replace(/\s+/g, ' ').trim();
+  if (trimmed.length <= MAX_ARTICLE_LENGTH) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, MAX_ARTICLE_LENGTH).trimEnd()}...`;
 }
 
 function formatDate(rawDate) {
@@ -231,6 +249,7 @@ function updateReaderView(item, feedUrl) {
   readerDate.textContent = formatDate(item.pubDate);
   const bodyText = stripHtml(item.summary || item.content || item.contentSnippet || item.description || '');
   readerContent.textContent = bodyText || 'No content available.';
+  readerContent.removeAttribute('data-state');
 
   if (readerOpen) {
     if (item.link) {
@@ -276,6 +295,9 @@ function setSelectedItem(feedUrl, itemId, { scroll = false } = {}) {
   const item = currentVisibleItems.find((entry) => entry.id === itemId && entry.feedUrl === feedUrl)
     || getCachedFeedItems(feedUrl).find((entry) => entry.id === itemId);
   updateReaderView(item || null, feedUrl);
+  if (item) {
+    void loadFullArticle(item);
+  }
   syncSelectedListItems();
 
   if (scroll && currentListElement && currentListElement.children) {
@@ -285,6 +307,90 @@ function setSelectedItem(feedUrl, itemId, { scroll = false } = {}) {
     ));
     if (selectedElement && typeof selectedElement.scrollIntoView === 'function') {
       selectedElement.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function getCachedArticle(url) {
+  if (!url || !articleCache || !articleCache.entries) {
+    return '';
+  }
+  return typeof articleCache.entries[url] === 'string' ? articleCache.entries[url] : '';
+}
+
+function setCachedArticle(url, content) {
+  if (!url || typeof content !== 'string') {
+    return;
+  }
+
+  const normalized = normalizeArticleText(content);
+  if (!normalized) {
+    return;
+  }
+
+  const order = Array.isArray(articleCache.order) ? [...articleCache.order] : [];
+  const entries = articleCache.entries && typeof articleCache.entries === 'object'
+    ? { ...articleCache.entries }
+    : {};
+
+  const existingIndex = order.indexOf(url);
+  if (existingIndex !== -1) {
+    order.splice(existingIndex, 1);
+  }
+  order.push(url);
+  entries[url] = normalized;
+
+  while (order.length > MAX_ARTICLE_CACHE) {
+    const oldest = order.shift();
+    if (oldest && entries[oldest]) {
+      delete entries[oldest];
+    }
+  }
+
+  articleCache = { order, entries };
+  saveArticleCache(articleCache);
+}
+
+async function loadFullArticle(item) {
+  if (!item || !item.link || !readerContent) {
+    return;
+  }
+
+  const cached = getCachedArticle(item.link);
+  const requestId = readerRequestId + 1;
+  readerRequestId = requestId;
+
+  if (cached) {
+    if (selectedItemId === item.id) {
+      readerContent.textContent = cached;
+      readerContent.removeAttribute('data-state');
+    }
+    return;
+  }
+
+  readerContent.setAttribute('data-state', 'loading');
+  readerContent.textContent = 'Loading full article...';
+
+  try {
+    const response = await fetch(`/api/article?url=${encodeURIComponent(item.link)}`);
+    if (!response.ok) {
+      throw new Error('fetch_failed');
+    }
+
+    const data = await response.json();
+    const content = normalizeArticleText(data && data.content ? data.content : '');
+    if (!content) {
+      throw new Error('empty_content');
+    }
+
+    setCachedArticle(item.link, content);
+    if (selectedItemId === item.id && readerRequestId === requestId) {
+      readerContent.textContent = content;
+      readerContent.removeAttribute('data-state');
+    }
+  } catch {
+    if (selectedItemId === item.id && readerRequestId === requestId) {
+      readerContent.removeAttribute('data-state');
     }
   }
 }
@@ -502,6 +608,34 @@ function readCategoryState() {
     return parsed;
   } catch {
     return {};
+  }
+}
+
+function readArticleCache() {
+  try {
+    const raw = localStorage.getItem(ARTICLE_CACHE_KEY);
+    if (!raw) {
+      return { order: [], entries: {} };
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return { order: [], entries: {} };
+    }
+
+    const order = Array.isArray(parsed.order) ? parsed.order.filter((url) => typeof url === 'string') : [];
+    const entries = parsed.entries && typeof parsed.entries === 'object' ? parsed.entries : {};
+    return { order, entries };
+  } catch {
+    return { order: [], entries: {} };
+  }
+}
+
+function saveArticleCache(nextCache) {
+  try {
+    localStorage.setItem(ARTICLE_CACHE_KEY, JSON.stringify(nextCache));
+  } catch {
+    // Ignore localStorage write failures.
   }
 }
 
@@ -1725,6 +1859,7 @@ recentFeeds = readRecentFeeds();
 feedItemCache = readFeedItemCache();
 refreshUnreadCounts();
 categoryState = readCategoryState();
+articleCache = readArticleCache();
 const startupLibrary = readLibrary();
 setImportedFeeds(startupLibrary.feeds);
 prefetchLibraryFeeds(startupLibrary.feeds);
