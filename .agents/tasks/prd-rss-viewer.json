@@ -118,7 +118,7 @@
     {
       "id": "US-003",
       "title": "Build the minimal viewer UI",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-002"
       ],
@@ -129,7 +129,10 @@
         "States: loading shows spinner/text, error shows message and clears items",
         "Example: entering a valid feed URL renders a list of items with title, date, and summary",
         "Negative case: entering an invalid URL shows an error state and no items"
-      ]
+      ],
+      "startedAt": "2026-02-11T01:43:22.728016+00:00",
+      "completedAt": "2026-02-11T01:48:04.000Z",
+      "updatedAt": "2026-02-11T01:48:04.000Z"
     },
     {
       "id": "US-004",
