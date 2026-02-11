@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "project": "RSS Viewer",
+  "overview": "A simple, fast RSS viewer that lets users paste a feed URL and read recent items with minimal dependencies.",
+  "goals": [
+    "Load and display RSS feeds quickly with a minimal stack",
+    "Provide a clean, lightweight UI for reading recent items"
+  ],
+  "nonGoals": [
+    "User accounts or authentication",
+    "Background polling or push notifications",
+    "Offline sync or full-text extraction",
+    "OPML import/export"
+  ],
+  "successMetrics": [
+    "User can paste a URL and see items within 2 seconds on typical feeds",
+    "No unnecessary dependencies beyond the server and parser"
+  ],
+  "openQuestions": [
+    "Should we support viewing multiple feeds at once or only one active feed?"
+  ],
+  "stack": {
+    "framework": "Vanilla JS (no framework)",
+    "hosting": "Node + Express (local/server)",
+    "database": "None",
+    "auth": "None"
+  },
+  "routes": [
+    {
+      "path": "/",
+      "name": "Viewer",
+      "purpose": "Enter a feed URL and read items"
+    },
+    {
+      "path": "/api/rss",
+      "name": "RSS Proxy",
+      "purpose": "Fetch and parse RSS for the UI"
+    }
+  ],
+  "uiNotes": [
+    "Single page layout with URL input, load button, and status banner",
+    "States: idle, loading, error, empty, results",
+    "Item cards show title, source, date, and short summary"
+  ],
+  "dataModel": [
+    {
+      "entity": "Feed",
+      "fields": [
+        "url",
+        "title",
+        "lastFetchedAt"
+      ]
+    },
+    {
+      "entity": "Item",
+      "fields": [
+        "id",
+        "title",
+        "link",
+        "pubDate",
+        "summary"
+      ]
+    }
+  ],
+  "importFormat": {
+    "description": "A single RSS feed URL string",
+    "example": {
+      "url": "https://example.com/feed.xml"
+    }
+  },
+  "rules": [
+    "All RSS fetching and parsing happens on the server to avoid browser CORS",
+    "Sort items by pubDate descending",
+    "Limit results to the 20 most recent items",
+    "Strip HTML from summaries and truncate to a short snippet"
+  ],
+  "qualityGates": [
+    "npm test"
+  ],
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Initialize project and basic server",
+      "status": "in_progress",
+      "dependsOn": [],
+      "description": "As a developer, I want a minimal project scaffold so I can run the app locally.",
+      "acceptanceCriteria": [
+        "Create a new npm project with scripts: dev, start, test",
+        "Install dependencies with `npm install express rss-parser`",
+        "Add a basic Express server that serves `public/` at `/`",
+        "Add a `tests/smoke.test.js` script and wire `npm test` to run it",
+        "Example: running `npm test` exits with code 0 when `server.js` and `public/index.html` exist",
+        "Negative case: if `public/index.html` is missing, `npm test` exits non-zero with a clear message"
+      ],
+      "startedAt": "2026-02-11T01:24:49.602538+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-11T01:24:49.602702+00:00"
+    },
+    {
+      "id": "US-002",
+      "title": "Create RSS proxy endpoint",
+      "status": "open",
+      "dependsOn": [
+        "US-001"
+      ],
+      "description": "As a user, I want the app to fetch and parse RSS feeds so I can view items in the UI.",
+      "acceptanceCriteria": [
+        "Add `GET /api/rss?url=...` that validates the url query parameter",
+        "Parse the RSS feed and return JSON with feed metadata and items",
+        "Example: requesting a valid feed returns JSON with `feed.title` and a non-empty `items` array",
+        "Negative case: missing or invalid `url` returns 400 with `{\"error\":\"invalid_url\"}`",
+        "Negative case: fetch or parse failure returns 502 with `{\"error\":\"fetch_failed\"}`"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "Build the minimal viewer UI",
+      "status": "open",
+      "dependsOn": [
+        "US-002"
+      ],
+      "description": "As a reader, I want a simple page to enter a feed URL and read recent items.",
+      "acceptanceCriteria": [
+        "Create `public/index.html`, `public/styles.css`, and `public/app.js`",
+        "UI includes URL input, load button, status banner, and results list",
+        "States: loading shows spinner/text, error shows message and clears items",
+        "Example: entering a valid feed URL renders a list of items with title, date, and summary",
+        "Negative case: entering an invalid URL shows an error state and no items"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Remember recent feeds",
+      "status": "open",
+      "dependsOn": [
+        "US-003"
+      ],
+      "description": "As a user, I want quick access to recent feeds so I can revisit them easily.",
+      "acceptanceCriteria": [
+        "Store the last 5 successfully loaded feed URLs in localStorage",
+        "Show a recent feeds list that lets users re-load a feed with one click",
+        "Example: loading a valid feed adds it to the recent list and persists after refresh",
+        "Negative case: failed/invalid URLs are not added to the recent list"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# Error Log
+
+> Failures and repeated issues. Use this to add guardrails.
+
+[2026-02-10 17:19:51] ITERATION 1 command failed (status=1)
+[2026-02-10 17:19:51] ITERATION 1 left uncommitted changes; review run summary at /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.md
+[2026-02-10 17:19:51] ITERATION 1 exited non-zero; review /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.log

@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "total": 4,
+  "remaining": 4,
+  "quality_gates": [
+    "npm test"
+  ],
+  "id": "US-001",
+  "title": "Initialize project and basic server"
+}
