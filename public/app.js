@@ -17,6 +17,13 @@ const savedViewToggle = document.getElementById('saved-view-toggle');
 const feedViewToggle = document.getElementById('feed-view-toggle');
 const sidebar = document.getElementById('feed-sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
+const readerEmpty = document.getElementById('reader-empty');
+const readerArticle = document.getElementById('reader-article');
+const readerSource = document.getElementById('reader-source');
+const readerTitle = document.getElementById('reader-title');
+const readerDate = document.getElementById('reader-date');
+const readerOpen = document.getElementById('reader-open');
+const readerContent = document.getElementById('reader-content');
 const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
   ? window.matchMedia('(max-width: 640px)')
   : { matches: false };
@@ -36,6 +43,10 @@ let feedItemCache = {};
 const feedUnreadCounts = new Map();
 let currentView = 'feed';
 let currentSearchQuery = '';
+let selectedItemId = '';
+let selectedItemFeedUrl = '';
+let currentVisibleItems = [];
+let currentListElement = resultsList;
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -73,6 +84,19 @@ function stripHtml(value) {
   return (temp.textContent || '').trim();
 }
 
+function truncateText(value, maxLength = 240) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, maxLength).trimEnd()}...`;
+}
+
 function formatDate(rawDate) {
   if (!rawDate) {
     return 'Unknown date';
@@ -97,8 +121,13 @@ function getFeedLabel(feedUrl) {
 function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
   const li = document.createElement('li');
   li.className = 'item';
+  li.dataset.itemId = item.id;
+  li.dataset.feedUrl = feedUrl;
   if (item.isRead) {
     li.classList.add('is-read');
+  }
+  if (selectedItemId === item.id && selectedItemFeedUrl === feedUrl) {
+    li.classList.add('is-selected');
   }
 
   const title = item.title || 'Untitled item';
@@ -106,6 +135,8 @@ function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
   const pubDate = formatDate(item.pubDate);
   const summarySource = item.summary || '';
   const summary = stripHtml(summarySource) || 'No summary available.';
+  const summaryPreview = truncateText(summary);
+  const feedLabel = getFeedLabel(feedUrl);
 
   const heading = document.createElement('h2');
   const link = document.createElement('a');
@@ -125,9 +156,25 @@ function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
   }
   heading.appendChild(link);
 
+  const row = document.createElement('div');
+  row.className = 'item-row';
+
+  const icon = document.createElement('span');
+  icon.className = 'item-icon';
+
+  const source = document.createElement('span');
+  source.className = 'item-source';
+  source.textContent = feedLabel;
+
+  const time = document.createElement('span');
+  time.className = 'item-time';
+  time.textContent = pubDate;
+
+  row.append(icon, source, heading, time);
+
   const meta = document.createElement('div');
   meta.className = 'meta';
-  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+  meta.textContent = includeFeedLabel ? `${feedLabel} • ${pubDate}` : pubDate;
 
   const readToggle = document.createElement('button');
   readToggle.type = 'button';
@@ -152,19 +199,212 @@ function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
   actions.append(readToggle, saveToggle);
 
   const summaryText = document.createElement('p');
-  summaryText.textContent = summary;
+  summaryText.textContent = summaryPreview;
 
-  li.append(heading, meta, actions, summaryText);
+  li.append(row, meta, actions, summaryText);
+  li.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target && (target.tagName === 'BUTTON' || target.tagName === 'A')) {
+      return;
+    }
+    setSelectedItem(feedUrl, item.id);
+  });
   return li;
 }
 
+function updateReaderView(item, feedUrl) {
+  if (!readerArticle || !readerEmpty || !readerTitle || !readerDate || !readerContent || !readerSource) {
+    return;
+  }
+
+  if (!item || !feedUrl) {
+    readerArticle.classList.add('is-hidden');
+    readerEmpty.classList.remove('is-hidden');
+    return;
+  }
+
+  readerTitle.textContent = item.title || 'Untitled item';
+  readerSource.textContent = getFeedLabel(feedUrl);
+  readerDate.textContent = formatDate(item.pubDate);
+  const bodyText = stripHtml(item.summary || item.content || item.contentSnippet || item.description || '');
+  readerContent.textContent = bodyText || 'No content available.';
+
+  if (readerOpen) {
+    if (item.link) {
+      readerOpen.href = item.link;
+      readerOpen.classList.remove('is-hidden');
+    } else {
+      readerOpen.href = '#';
+      readerOpen.classList.add('is-hidden');
+    }
+  }
+
+  readerEmpty.classList.add('is-hidden');
+  readerArticle.classList.remove('is-hidden');
+}
+
+function getVisibleItemsForCurrentView() {
+  if (currentView === 'saved') {
+    return getSavedItems();
+  }
+
+  if (currentSearchQuery.length > 0) {
+    return getSearchResults(currentSearchQuery);
+  }
+
+  if (selectedFeedUrl) {
+    return getCachedFeedItems(selectedFeedUrl).map((item) => ({ ...item, feedUrl: selectedFeedUrl }));
+  }
+
+  return [];
+}
+
+function setSelectedItem(feedUrl, itemId, { scroll = false } = {}) {
+  if (!feedUrl || !itemId) {
+    selectedItemId = '';
+    selectedItemFeedUrl = '';
+    updateReaderView(null, '');
+    syncSelectedListItems();
+    return;
+  }
+
+  selectedItemId = itemId;
+  selectedItemFeedUrl = feedUrl;
+  const item = currentVisibleItems.find((entry) => entry.id === itemId && entry.feedUrl === feedUrl)
+    || getCachedFeedItems(feedUrl).find((entry) => entry.id === itemId);
+  updateReaderView(item || null, feedUrl);
+  syncSelectedListItems();
+
+  if (scroll && currentListElement && currentListElement.children) {
+    const children = Array.from(currentListElement.children);
+    const selectedElement = children.find((child) => (
+      child && child.dataset && child.dataset.itemId === itemId && child.dataset.feedUrl === feedUrl
+    ));
+    if (selectedElement && typeof selectedElement.scrollIntoView === 'function') {
+      selectedElement.scrollIntoView({ block: 'nearest' });
+    }
+  }
+}
+
+function syncSelectedListItems() {
+  if (!currentListElement || !currentListElement.children) {
+    return;
+  }
+
+  Array.from(currentListElement.children).forEach((child) => {
+    if (!child || !child.classList || !child.dataset) {
+      return;
+    }
+    const isSelected = child.dataset.itemId === selectedItemId && child.dataset.feedUrl === selectedItemFeedUrl;
+    if (typeof child.classList.toggle === 'function') {
+      child.classList.toggle('is-selected', isSelected);
+    } else if (isSelected) {
+      child.classList.add('is-selected');
+    } else {
+      child.classList.remove('is-selected');
+    }
+  });
+}
+
+function ensureSelectionAfterRender(items) {
+  if (items.length === 0) {
+    setSelectedItem('', '');
+    return;
+  }
+
+  const stillVisible = items.some((item) => item.id === selectedItemId && item.feedUrl === selectedItemFeedUrl);
+  if (!stillVisible) {
+    const next = items[0];
+    setSelectedItem(next.feedUrl, next.id);
+    return;
+  }
+
+  setSelectedItem(selectedItemFeedUrl, selectedItemId);
+}
+
+function getSelectedVisibleItem() {
+  return currentVisibleItems.find((item) => item.id === selectedItemId && item.feedUrl === selectedItemFeedUrl) || null;
+}
+
+function moveSelection(delta) {
+  if (currentVisibleItems.length === 0) {
+    return;
+  }
+
+  const currentIndex = currentVisibleItems.findIndex(
+    (item) => item.id === selectedItemId && item.feedUrl === selectedItemFeedUrl
+  );
+  const nextIndex = currentIndex === -1
+    ? 0
+    : Math.min(currentVisibleItems.length - 1, Math.max(0, currentIndex + delta));
+  const nextItem = currentVisibleItems[nextIndex];
+  if (nextItem) {
+    setSelectedItem(nextItem.feedUrl, nextItem.id, { scroll: true });
+  }
+}
+
+function toggleSelectedSavedState() {
+  const item = getSelectedVisibleItem();
+  if (!item) {
+    return;
+  }
+
+  updateItemSavedState(item.feedUrl, item.id, !item.isSaved);
+  if (currentView === 'saved') {
+    renderSavedItems();
+  } else {
+    rerenderSelectedFeed();
+  }
+}
+
+function toggleSelectedReadState() {
+  const item = getSelectedVisibleItem();
+  if (!item) {
+    return;
+  }
+
+  updateItemReadState(item.feedUrl, item.id, !item.isRead);
+  if (currentView === 'saved') {
+    renderSavedItems();
+  } else {
+    rerenderSelectedFeed();
+  }
+}
+
+function openSelectedItem() {
+  const item = getSelectedVisibleItem();
+  if (!item || !item.link) {
+    return;
+  }
+
+  if (typeof window !== 'undefined' && typeof window.open === 'function') {
+    window.open(item.link, '_blank', 'noopener,noreferrer');
+  }
+}
+
+function isEditableTarget(target) {
+  if (!target || typeof target.tagName !== 'string') {
+    return false;
+  }
+
+  const tagName = target.tagName.toLowerCase();
+  if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+    return true;
+  }
+
+  return Boolean(target.isContentEditable);
+}
+
 function renderItems(feedUrl, items) {
+  currentListElement = resultsList;
+  currentVisibleItems = items.map((item) => ({ ...item, feedUrl }));
   const fragment = document.createDocumentFragment();
   items.forEach((item) => {
     fragment.appendChild(createItemElement(feedUrl, item));
   });
   clearResults();
   resultsList.appendChild(fragment);
+  ensureSelectionAfterRender(currentVisibleItems);
 }
 
 function getAllCachedItems() {
@@ -202,6 +442,8 @@ function getSearchResults(query) {
 
 function renderSearchResults() {
   const results = getSearchResults(currentSearchQuery);
+  currentListElement = resultsList;
+  currentVisibleItems = results;
   const fragment = document.createDocumentFragment();
 
   results.forEach((item) => {
@@ -210,6 +452,7 @@ function renderSearchResults() {
 
   clearResults();
   resultsList.appendChild(fragment);
+  ensureSelectionAfterRender(currentVisibleItems);
 }
 
 function isValidHttpUrl(value) {
@@ -512,6 +755,7 @@ function rerenderSelectedFeed() {
   }
 
   clearResults();
+  setSelectedItem('', '');
 }
 
 function getSavedItems() {
@@ -543,6 +787,11 @@ function renderSavedItems() {
 
   if (savedItems.length === 0) {
     savedEmpty.classList.remove('is-hidden');
+    if (currentView === 'saved') {
+      currentVisibleItems = [];
+      currentListElement = savedResultsList;
+      setSelectedItem('', '');
+    }
     return;
   }
 
@@ -552,6 +801,11 @@ function renderSavedItems() {
     fragment.appendChild(createItemElement(item.feedUrl, item));
   });
   savedResultsList.appendChild(fragment);
+  if (currentView === 'saved') {
+    currentListElement = savedResultsList;
+    currentVisibleItems = savedItems;
+    ensureSelectionAfterRender(currentVisibleItems);
+  }
 }
 
 function setView(view) {
@@ -567,7 +821,12 @@ function setView(view) {
 
   if (view === 'saved') {
     renderSavedItems();
+    return;
   }
+
+  currentListElement = resultsList;
+  currentVisibleItems = getVisibleItemsForCurrentView();
+  ensureSelectionAfterRender(currentVisibleItems);
 }
 
 function renderRecentFeeds() {
@@ -1078,6 +1337,52 @@ if (searchInput) {
   searchInput.addEventListener('input', () => {
     currentSearchQuery = searchInput.value.trim().toLowerCase();
     rerenderSelectedFeed();
+  });
+}
+
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('keydown', (event) => {
+    if (!event || event.defaultPrevented) {
+      return;
+    }
+
+    if (event.metaKey || event.ctrlKey || event.altKey) {
+      return;
+    }
+
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+
+    const key = String(event.key || '').toLowerCase();
+    if (!key) {
+      return;
+    }
+
+    switch (key) {
+      case 'j':
+        event.preventDefault();
+        moveSelection(1);
+        break;
+      case 'k':
+        event.preventDefault();
+        moveSelection(-1);
+        break;
+      case 'o':
+        event.preventDefault();
+        openSelectedItem();
+        break;
+      case 's':
+        event.preventDefault();
+        toggleSelectedSavedState();
+        break;
+      case 'm':
+        event.preventDefault();
+        toggleSelectedReadState();
+        break;
+      default:
+        break;
+    }
   });
 }
 

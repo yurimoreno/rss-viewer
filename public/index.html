@@ -3,88 +3,128 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RSS Viewer</title>
+    <title>Feedly | RSS Viewer</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
-        <div class="sidebar-header">
-          <div>
-            <h2>Categories</h2>
-            <span class="sidebar-metric-label">Unread counts</span>
-          </div>
-          <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
+    <div class="page">
+      <header class="topbar">
+        <div class="topbar-left">
+          <span class="workspace-name">RSS Viewer</span>
         </div>
-        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
-      </aside>
+      </header>
 
-      <main class="viewer" aria-live="polite">
-        <button
-          id="sidebar-toggle"
-          class="sidebar-toggle"
-          type="button"
-          aria-controls="feed-sidebar"
-          aria-expanded="false"
-        >
-          Browse feeds
-        </button>
-
-        <h1>RSS Viewer</h1>
-
-        <section id="feed-view">
-          <form id="feed-form" class="feed-form" novalidate>
-            <label for="feed-url">Feed URL</label>
-            <div class="controls">
-              <input
-                id="feed-url"
-                name="url"
-                type="url"
-                placeholder="https://example.com/feed.xml"
-                required
-                autocomplete="url"
-              />
-              <button id="load-feed" type="submit">Load</button>
+      <div class="app-shell">
+        <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+          <div class="sidebar-header">
+            <div>
+              <h2>Today</h2>
+              <span class="sidebar-metric-label">Your feed map</span>
             </div>
-          </form>
-
-          <section class="opml-import" aria-label="OPML import">
-            <label for="opml-file">Import OPML</label>
-            <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
-            <button id="opml-export" type="button">Export OPML</button>
-          </section>
-
-          <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
-
-          <section class="recent-feeds" aria-label="Recent feeds">
-            <h2>Recent feeds</h2>
-            <ul id="recent-feeds" class="recent-feeds-list"></ul>
-            <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
-          </section>
-
-          <section class="item-search" aria-label="Search cached items">
-            <label for="item-search">Search items</label>
-            <input
-              id="item-search"
-              name="item-search"
-              type="search"
-              placeholder="Search by title or summary"
-              autocomplete="off"
-            />
-          </section>
-
-          <ul id="results" class="results" aria-label="Feed items"></ul>
-        </section>
-
-        <section id="saved-view" class="saved-view is-hidden" aria-label="Saved items">
-          <div class="saved-header">
-            <h2>Saved items</h2>
-            <button id="feed-view-toggle" class="saved-view-toggle" type="button">Back to feeds</button>
+            <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
           </div>
-          <p id="saved-empty" class="saved-empty">No saved items yet.</p>
-          <ul id="saved-results" class="results"></ul>
-        </section>
-      </main>
+
+          <section class="sidebar-section" aria-label="Feeds">
+            <h3>Feeds</h3>
+            <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+          </section>
+        </aside>
+
+        <main class="viewer" aria-live="polite">
+          <button
+            id="sidebar-toggle"
+            class="sidebar-toggle"
+            type="button"
+            aria-controls="feed-sidebar"
+            aria-expanded="false"
+          >
+            Browse feeds
+          </button>
+
+          <section id="feed-view">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Today</p>
+                <h1>Today</h1>
+              </div>
+            </header>
+
+            <section class="viewer-layout">
+              <section class="feed-panel" aria-label="Feed list">
+                <section class="utility-panel">
+                  <form id="feed-form" class="feed-form" novalidate>
+                    <label for="feed-url">Feed URL</label>
+                    <div class="controls">
+                      <input
+                        id="feed-url"
+                        name="url"
+                        type="url"
+                        placeholder="https://example.com/feed.xml"
+                        required
+                        autocomplete="url"
+                      />
+                      <button id="load-feed" type="submit">Load</button>
+                    </div>
+                  </form>
+
+                  <section class="opml-import" aria-label="OPML import">
+                    <label for="opml-file">Import OPML</label>
+                    <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
+                    <button id="opml-export" type="button">Export OPML</button>
+                  </section>
+
+                  <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+                  <section class="recent-feeds" aria-label="Recent feeds">
+                    <h2>Recent feeds</h2>
+                    <ul id="recent-feeds" class="recent-feeds-list"></ul>
+                    <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+                  </section>
+
+                  <section class="item-search" aria-label="Search cached items">
+                    <label for="item-search">Search items</label>
+                    <input
+                      id="item-search"
+                      name="item-search"
+                      type="search"
+                      placeholder="Search by title or summary"
+                      autocomplete="off"
+                    />
+                  </section>
+                </section>
+
+                <section class="feed-section" aria-label="Feed items">
+                  <ul id="results" class="results" aria-label="Feed items"></ul>
+                </section>
+              </section>
+
+              <aside id="reader" class="reader" aria-label="Article reader">
+                <div id="reader-empty" class="reader-empty">Select an article to start reading.</div>
+                <article id="reader-article" class="reader-article is-hidden">
+                  <header class="reader-header">
+                    <p id="reader-source" class="reader-source"></p>
+                    <h2 id="reader-title" class="reader-title"></h2>
+                    <div class="reader-meta">
+                      <span id="reader-date" class="reader-date"></span>
+                      <a id="reader-open" class="reader-open" href="#" target="_blank" rel="noopener noreferrer">Open original</a>
+                    </div>
+                  </header>
+                  <div id="reader-content" class="reader-content"></div>
+                </article>
+              </aside>
+            </section>
+          </section>
+
+          <section id="saved-view" class="saved-view is-hidden" aria-label="Saved items">
+            <div class="saved-header">
+              <h2>Saved items</h2>
+              <button id="feed-view-toggle" class="saved-view-toggle" type="button">Back to feeds</button>
+            </div>
+            <p id="saved-empty" class="saved-empty">No saved items yet.</p>
+            <ul id="saved-results" class="results"></ul>
+          </section>
+        </main>
+      </div>
     </div>
 
     <script src="/app.js" defer></script>
