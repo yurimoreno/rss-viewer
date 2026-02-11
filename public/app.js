@@ -31,6 +31,7 @@ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.mat
 const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
 const LIBRARY_KEY = 'rssViewer.library';
 const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
+const CATEGORY_STATE_KEY = 'rssViewer.categoryState';
 const MAX_RECENT_FEEDS = 5;
 const MAX_ITEMS_PER_FEED = 50;
 const PREFETCH_CONCURRENCY = 3;
@@ -47,6 +48,7 @@ let selectedItemId = '';
 let selectedItemFeedUrl = '';
 let currentVisibleItems = [];
 let currentListElement = resultsList;
+let categoryState = {};
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -484,6 +486,32 @@ function readRecentFeeds() {
   }
 }
 
+function readCategoryState() {
+  try {
+    const raw = localStorage.getItem(CATEGORY_STATE_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return {};
+    }
+
+    return parsed;
+  } catch {
+    return {};
+  }
+}
+
+function saveCategoryState(nextState) {
+  try {
+    localStorage.setItem(CATEGORY_STATE_KEY, JSON.stringify(nextState));
+  } catch {
+    // Ignore localStorage write failures.
+  }
+}
+
 function saveRecentFeeds(urls) {
   try {
     localStorage.setItem(RECENT_FEEDS_KEY, JSON.stringify(urls));
@@ -690,6 +718,33 @@ function setCachedFeedItems(feedUrl, items) {
 
   updateFeedUnreadCount(feedUrl);
   saveFeedItemCache(feedItemCache);
+}
+
+function markFeedAllRead(feedUrl) {
+  if (!isValidHttpUrl(feedUrl)) {
+    return 0;
+  }
+
+  const items = getCachedFeedItems(feedUrl);
+  if (items.length === 0) {
+    return 0;
+  }
+
+  const updatedItems = items.map((item) => (item.isRead ? item : { ...item, isRead: true }));
+  setCachedFeedItems(feedUrl, updatedItems);
+  return updatedItems.length;
+}
+
+function markCategoryAllRead(categoryName) {
+  const normalizedCategory = normalizeCategory(categoryName);
+  const feedsToUpdate = importedFeeds.filter(
+    (feed) => normalizeCategory(feed.category) === normalizedCategory
+  );
+  let count = 0;
+  feedsToUpdate.forEach((feed) => {
+    count += markFeedAllRead(feed.url);
+  });
+  return count;
 }
 
 function updateFeedUnreadCount(feedUrl) {
@@ -1096,15 +1151,40 @@ function renderSidebarFeeds() {
     section.className = 'sidebar-group';
     section.setAttribute('aria-label', `${categoryName} feeds`);
 
+    const isCollapsed = Boolean(categoryState[categoryName]);
+    if (isCollapsed) {
+      section.classList.add('is-collapsed');
+    }
+
     const heading = document.createElement('h3');
     const headingLabel = document.createElement('span');
     headingLabel.className = 'sidebar-category-name';
     headingLabel.textContent = categoryName;
     const headingCount = document.createElement('span');
     headingCount.className = 'sidebar-count';
-    headingCount.textContent = String(getCategoryCount(feeds));
+    const categoryUnreadCount = getCategoryCount(feeds);
+    headingCount.textContent = String(categoryUnreadCount);
     headingCount.setAttribute('title', 'Unread items in category');
-    heading.append(headingLabel, headingCount);
+    if (categoryUnreadCount === 0) {
+      headingCount.classList.add('is-zero');
+    }
+
+    const toggleButton = document.createElement('button');
+    toggleButton.type = 'button';
+    toggleButton.className = 'category-toggle';
+    toggleButton.dataset.category = categoryName;
+    toggleButton.dataset.action = 'toggle-category';
+    toggleButton.setAttribute('aria-expanded', String(!isCollapsed));
+    toggleButton.textContent = isCollapsed ? 'Show' : 'Hide';
+
+    const markReadButton = document.createElement('button');
+    markReadButton.type = 'button';
+    markReadButton.className = 'category-action';
+    markReadButton.dataset.category = categoryName;
+    markReadButton.dataset.action = 'mark-category-read';
+    markReadButton.textContent = 'Mark read';
+
+    heading.append(headingLabel, headingCount, toggleButton, markReadButton);
     section.appendChild(heading);
 
     const list = document.createElement('ul');
@@ -1121,10 +1201,23 @@ function renderSidebarFeeds() {
       feedName.textContent = feed.title;
       const feedCount = document.createElement('span');
       feedCount.className = 'sidebar-count';
-      feedCount.textContent = String(getFeedCount(feed.url));
+      const unreadCount = getFeedCount(feed.url);
+      feedCount.textContent = String(unreadCount);
       feedCount.setAttribute('title', 'Unread items');
+      if (unreadCount === 0) {
+        feedCount.classList.add('is-zero');
+      }
       button.append(feedName, feedCount);
-      li.appendChild(button);
+
+      const markReadButton = document.createElement('button');
+      markReadButton.type = 'button';
+      markReadButton.className = 'feed-action';
+      markReadButton.dataset.feedAction = 'mark-read';
+      markReadButton.dataset.url = feed.url;
+      markReadButton.setAttribute('aria-label', `Mark ${feed.title} as read`);
+      markReadButton.textContent = 'Read';
+
+      li.append(button, markReadButton);
       list.appendChild(li);
     });
 
@@ -1268,6 +1361,51 @@ recentFeedsList.addEventListener('click', async (event) => {
 if (sidebarGroups) {
   sidebarGroups.addEventListener('click', async (event) => {
     const target = event.target;
+    const actionButton = target && typeof target.closest === 'function'
+      ? target.closest('[data-action], [data-feed-action]')
+      : null;
+
+    if (actionButton && actionButton.dataset) {
+      if (actionButton.dataset.action === 'toggle-category' && typeof actionButton.dataset.category === 'string') {
+        const categoryName = actionButton.dataset.category;
+        categoryState = {
+          ...categoryState,
+          [categoryName]: !categoryState[categoryName]
+        };
+        saveCategoryState(categoryState);
+        renderSidebarFeeds();
+        return;
+      }
+
+      if (actionButton.dataset.action === 'mark-category-read' && typeof actionButton.dataset.category === 'string') {
+        const categoryName = actionButton.dataset.category;
+        const updated = markCategoryAllRead(categoryName);
+        if (updated > 0) {
+          setStatus(`Marked ${updated} item${updated === 1 ? '' : 's'} as read in ${categoryName}.`);
+        }
+        renderSidebarFeeds();
+        rerenderSelectedFeed();
+        if (currentView === 'saved') {
+          renderSavedItems();
+        }
+        return;
+      }
+
+      if (actionButton.dataset.feedAction === 'mark-read' && typeof actionButton.dataset.url === 'string') {
+        const feedUrl = actionButton.dataset.url;
+        const updated = markFeedAllRead(feedUrl);
+        if (updated > 0) {
+          setStatus(`Marked ${updated} item${updated === 1 ? '' : 's'} as read.`);
+        }
+        renderSidebarFeeds();
+        rerenderSelectedFeed();
+        if (currentView === 'saved') {
+          renderSavedItems();
+        }
+        return;
+      }
+    }
+
     const button = target && typeof target.closest === 'function'
       ? target.closest('button[data-url]')
       : null;
@@ -1389,6 +1527,7 @@ if (typeof document !== 'undefined' && typeof document.addEventListener === 'fun
 recentFeeds = readRecentFeeds();
 feedItemCache = readFeedItemCache();
 refreshUnreadCounts();
+categoryState = readCategoryState();
 const startupLibrary = readLibrary();
 setImportedFeeds(startupLibrary.feeds);
 prefetchLibraryFeeds(startupLibrary.feeds);
