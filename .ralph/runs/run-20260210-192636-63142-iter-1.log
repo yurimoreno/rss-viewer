@@ -1,0 +1,3523 @@
+OpenAI Codex v0.98.0 (research preview)
+--------
+workdir: /Users/yurimoreno/Coding/rss-viewer
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: auto
+session id: 019c4abc-8d55-7d80-94e9-8dbc73b277d8
+--------
+user
+# Build
+
+You are an autonomous coding agent. Your task is to complete the work for exactly one story and record the outcome.
+
+## Paths
+- PRD: /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feedly-clone.json
+- AGENTS (optional): /Users/yurimoreno/Coding/rss-viewer/AGENTS.md
+- Progress Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md
+- Guardrails: /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md
+- Guardrails Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md
+- Context Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/CONTEXT_ENGINEERING.md
+- Errors Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log
+- Activity Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log
+- Activity Logger: /Users/yurimoreno/Coding/rss-viewer/ralph log
+- No-commit: false
+- Repo Root: /Users/yurimoreno/Coding/rss-viewer
+- Run ID: 20260210-192636-63142
+- Iteration: 1
+- Run Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192636-63142-iter-1.log
+- Run Summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192636-63142-iter-1.md
+
+## Global Quality Gates (apply to every story)
+- npm test
+
+## Selected Story (Do not change scope)
+ID: US-005
+Title: OPML export
+
+Story details:
+### US-005: OPML export
+Status: in_progress
+Depends on: US-001
+
+Description:
+As a user, I want to export my library as OPML.
+
+Acceptance Criteria:
+- [ ] Generate an OPML file from the current library
+- [ ] Preserve categories as outline folders
+- [ ] Download triggers from the UI
+
+
+If the story details are empty or missing, STOP and report that the PRD story format could not be parsed.
+
+## Rules (Non-Negotiable)
+- Implement **only** the work required to complete the selected story.
+- Complete all tasks associated with this story (and only this story).
+- Do NOT ask the user questions.
+- Do NOT change unrelated code.
+- Do NOT assume something is unimplemented — confirm by reading code.
+- Implement completely; no placeholders or stubs.
+- If No-commit is true, do NOT commit or push changes.
+- Do NOT edit the PRD JSON (status is handled by the loop).
+- All changes made during the run must be committed (including updates to progress/logs).
+ - Before committing, perform a final **security**, **performance**, and **regression** review of your changes.
+
+## Your Task (Do this in order)
+1. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md before any code changes.
+2. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log for repeated failures to avoid.
+3. Read /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feedly-clone.json for global context (do not edit).
+4. Fully audit and read all necessary files to understand the task end-to-end before implementing. Do not assume missing functionality.
+5. If /Users/yurimoreno/Coding/rss-viewer/AGENTS.md exists, follow its build/test instructions.
+6. Implement only the tasks that belong to US-005.
+7. Run verification commands listed in the story, the global quality gates, and in /Users/yurimoreno/Coding/rss-viewer/AGENTS.md (if required).
+8. If the project has a build or dev workflow, run what applies:
+   - Build step (e.g., `npm run build`) if defined.
+   - Dev server (e.g., `npm run dev`, `wrangler dev`) if it is the normal validation path.
+   - Confirm no runtime/build errors in the console.
+9. Perform a brief audit before committing:
+   - **Security:** check for obvious vulnerabilities or unsafe handling introduced by your changes.
+   - **Performance:** check for avoidable regressions (extra queries, heavy loops, unnecessary re-renders).
+   - **Regression:** verify existing behavior that could be impacted still works.
+10. If No-commit is false, commit changes using the `$commit` skill.
+    - Stage everything: `git add -A`
+    - Confirm a clean working tree after commit: `git status --porcelain` should be empty.
+    - After committing, capture the commit hash and subject using:
+      `git show -s --format="%h %s" HEAD`.
+11. Append a progress entry to /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md with run/commit/test details (format below).
+    If No-commit is true, skip committing and note it in the progress entry.
+
+## Progress Entry Format (Append Only)
+```
+## [Date/Time] - US-005: OPML export
+Thread: [codex exec session id if available, otherwise leave blank]
+Run: 20260210-192636-63142 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192636-63142-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192636-63142-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: <hash> <subject> (or `none` + reason)
+- Post-commit status: `clean` or list remaining files
+- Verification:
+  - Command: <exact command> -> PASS/FAIL
+  - Command: <exact command> -> PASS/FAIL
+- Files changed:
+  - <file path>
+  - <file path>
+- What was implemented
+- **Learnings for future iterations:**
+  - Patterns discovered
+  - Gotchas encountered
+  - Useful context
+---
+```
+
+## Completion Signal
+Only output the completion signal when the **selected story** is fully complete and verified.
+When the selected story is complete, output:
+<promise>COMPLETE</promise>
+
+Otherwise, end normally without the signal.
+
+## Additional Guardrails
+- When authoring documentation, capture the why (tests + implementation intent).
+- If you learn how to run/build/test the project, update /Users/yurimoreno/Coding/rss-viewer/AGENTS.md briefly (operational only).
+- Keep AGENTS operational only; progress notes belong in /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md.
+- If you hit repeated errors, log them in /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log and add a Sign to /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md using /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md as the template.
+
+## Activity Logging (Required)
+Log major actions to /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log using the helper:
+```
+/Users/yurimoreno/Coding/rss-viewer/ralph log "message"
+```
+Log at least:
+- Start of work on the story
+- After major code changes
+- After tests/verification
+- After updating progress log
+
+## Browser Testing (Required for Frontend Stories)
+If the selected story changes UI, you MUST verify it in the browser:
+1. Load the `dev-browser` skill.
+2. Navigate to the relevant page.
+3. Verify the UI changes work as expected.
+4. Take a screenshot if helpful for the progress log.
+
+A frontend story is NOT complete until browser verification passes.
+
+mcp startup: no servers
+
+thinking
+**Confirming missing named skills**
+codex
+I’m starting US-005 now and will first read guardrails, recent errors, and the PRD story details before touching code, then audit the current OPML/library UI flow end-to-end.
+exec
+/bin/zsh -lc 'cat .ralph/guardrails.md' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat .ralph/errors.log' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat .agents/tasks/prd-feedly-clone.json' in /Users/yurimoreno/Coding/rss-viewer succeeded in 52ms:
+# Guardrails (Signs)
+
+> Lessons learned from failures. Read before acting.
+
+## Core Signs
+
+### Sign: Read Before Writing
+- **Trigger**: Before modifying any file
+- **Instruction**: Read the file first
+- **Added after**: Core principle
+
+### Sign: Test Before Commit
+- **Trigger**: Before committing changes
+- **Instruction**: Run required tests and verify outputs
+- **Added after**: Core principle
+
+---
+
+## Learned Signs
+
+ succeeded in 52ms:
+{
+  "version": 1,
+  "project": "RSS Viewer Feedly-Style v1",
+  "overview": "Evolve the RSS viewer into a Feedly-style experience with a multi-feed library, categories, unread tracking, saved items, search, and OPML import/export, all without accounts.",
+  "goals": [
+    "Multi-feed library with categories and counts",
+    "Unread tracking with per-feed and per-category totals",
+    "Saved/Read Later list",
+    "Search across loaded items",
+    "OPML import and export"
+  ],
+  "nonGoals": [
+    "Authentication or accounts",
+    "Cross-device sync",
+    "Keyboard shortcuts",
+    "Full-text article extraction"
+  ],
+  "successMetrics": [
+    "User can manage a library of feeds and categories locally",
+    "Unread counts update accurately as items are marked read",
+ succeeded in 52ms:
+# Error Log
+
+> Failures and repeated issues. Use this to add guardrails.
+
+[2026-02-10 17:19:51] ITERATION 1 command failed (status=1)
+[2026-02-10 17:19:51] ITERATION 1 left uncommitted changes; review run summary at /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.md
+[2026-02-10 17:19:51] ITERATION 1 exited non-zero; review /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.log
+
+thinking
+**Adding log start action**
+exec
+/bin/zsh -lc './ralph log "Start US-005 OPML export: reviewed guardrails, errors, PRD; beginning code audit."' in /Users/yurimoreno/Coding/rss-viewer exited 127 in 51ms:
+zsh:1: no such file or directory: ./ralph
+
+thinking
+**Testing command execution**
+codex
+I hit a tooling path mismatch for the activity logger; next I’m locating the correct `ralph` executable path and then continuing the repository audit.
+exec
+/bin/zsh -lc 'ls -la' in /Users/yurimoreno/Coding/rss-viewer succeeded in 52ms:
+total 120
+drwxr-xr-x@ 14 yurimoreno  staff    448 Feb 10 17:27 .
+drwxr-xr-x  14 yurimoreno  staff    448 Feb 10 17:16 ..
+-rw-r--r--@  1 yurimoreno  staff  10244 Feb 10 17:18 .DS_Store
+drwxr-xr-x@  4 yurimoreno  staff    128 Feb 10 17:16 .agents
+drwxr-xr-x@ 12 yurimoreno  staff    384 Feb 10 19:26 .git
+-rw-r--r--@  1 yurimoreno  staff     24 Feb 10 17:26 .gitignore
+drwxr-xr-x@  8 yurimoreno  staff    256 Feb 10 17:19 .ralph
+-rw-r--r--@  1 yurimoreno  staff    105 Feb 10 17:27 AGENTS.md
+drwxr-xr-x@ 73 yurimoreno  staff   2336 Feb 10 17:25 node_modules
+-rw-r--r--@  1 yurimoreno  staff  30823 Feb 10 17:25 package-lock.json
+-rw-r--r--@  1 yurimoreno  staff    543 Feb 10 19:17 package.json
+drwxr-xr-x@  5 yurimoreno  staff    160 Feb 10 17:44 public
+-rw-r--r--@  1 yurimoreno  staff   1257 Feb 10 17:41 server.js
+drwxr-xr-x@  8 yurimoreno  staff    256 Feb 10 19:18 tests
+
+thinking
+**Searching for executable script**
+exec
+/bin/zsh -lc 'which ralph || command -v ralph || ls -la /Users/yurimoreno/Coding/rss-viewer/ralph' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+/Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/.bin/ralph
+
+thinking
+**Confirming log command syntax**
+exec
+/bin/zsh -lc 'ralph log "Start US-005 OPML export: reviewed guardrails, errors, PRD; beginning code audit."' in /Users/yurimoreno/Coding/rss-viewer succeeded in 101ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+
+thinking
+**Planning audit file inspection**
+codex
+I’ve started scanning the app and tests to confirm what already exists for library/category handling and where export hooks should be added with minimal scope.
+exec
+/bin/zsh -lc 'cat package.json' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat AGENTS.md' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'rg --files' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+# AGENTS
+
+## Build & test
+- No build step.
+- Tests: `npm test`
+- Dev: `npm run dev`
+- Start: `npm start`
+ succeeded in 53ms:
+{
+  "name": "rss-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/recent-feeds.test.js && node tests/opml-import.test.js && node tests/unread-cache.test.js && node tests/saved-view.test.js",
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "rss-parser": "^3.13.0"
+  }
+}
+ succeeded in 53ms:
+AGENTS.md
+package.json
+package-lock.json
+public/app.js
+public/styles.css
+public/index.html
+tests/rss-proxy.test.js
+tests/recent-feeds.test.js
+tests/unread-cache.test.js
+tests/smoke.test.js
+tests/opml-import.test.js
+tests/saved-view.test.js
+server.js
+
+thinking
+**Planning file review for import logic**
+exec
+/bin/zsh -lc 'cat public/app.js' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat public/index.html' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat tests/opml-import.test.js' in /Users/yurimoreno/Coding/rss-viewer succeeded in 52ms:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSS Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+        <div class="sidebar-header">
+          <h2>Categories</h2>
+          <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
+        </div>
+        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+      </aside>
+
+      <main class="viewer" aria-live="polite">
+        <button
+ succeeded in 52ms:
+const form = document.getElementById('feed-form');
+const urlInput = document.getElementById('feed-url');
+const loadButton = document.getElementById('load-feed');
+const opmlInput = document.getElementById('opml-file');
+const statusBanner = document.getElementById('status');
+const resultsList = document.getElementById('results');
+const recentFeedsList = document.getElementById('recent-feeds');
+const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const searchInput = document.getElementById('item-search');
+const sidebarGroups = document.getElementById('sidebar-groups');
+const feedView = document.getElementById('feed-view');
+const savedView = document.getElementById('saved-view');
+const savedResultsList = document.getElementById('saved-results');
+const savedEmpty = document.getElementById('saved-empty');
+const savedViewToggle = document.getElementById('saved-view-toggle');
+const feedViewToggle = document.getElementById('feed-view-toggle');
+const sidebar = document.getElementById('feed-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 640px)')
+ succeeded in 53ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+}
+
+class FakeElement {
+
+thinking
+**Planning test audit and adjustments**
+codex
+I found the core import and sidebar logic in `public/app.js`; now I’m checking the rest of the tests to avoid regressions and to add only targeted coverage for OPML export.
+exec
+/bin/zsh -lc 'cat tests/unread-cache.test.js' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat tests/smoke.test.js' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat tests/recent-feeds.test.js' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat tests/rss-proxy.test.js' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat tests/saved-view.test.js' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+const fs = require('fs');
+const path = require('path');
+
+const requiredFiles = [
+  { name: 'server.js', path: path.join(__dirname, '..', 'server.js') },
+  { name: 'public/index.html', path: path.join(__dirname, '..', 'public', 'index.html') }
+];
+
+const missing = requiredFiles.filter((file) => !fs.existsSync(file.path));
+
+if (missing.length > 0) {
+  const names = missing.map((file) => file.name).join(', ');
+  console.error(`Smoke test failed: missing required file(s): ${names}`);
+  process.exit(1);
+}
+
+console.log('Smoke test passed: required scaffold files exist.');
+ succeeded in 53ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+}
+
+class FakeElement {
+ succeeded in 53ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+
+  toggle(name, force) {
+    if (typeof force === 'boolean') {
+ succeeded in 53ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+
+  toggle(name, force) {
+    if (typeof force === 'boolean') {
+ succeeded in 53ms:
+const assert = require('assert');
+const http = require('http');
+
+const app = require('../server');
+
+function requestJson(serverPort, path) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(
+      {
+        hostname: '127.0.0.1',
+        port: serverPort,
+        path,
+        headers: {
+          Accept: 'application/json'
+        }
+      },
+      (res) => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+
+thinking
+**Evaluating test coverage for new UI elements**
+exec
+/bin/zsh -lc 'cat public/styles.css' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  background-color: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f5f6f8;
+}
+
+.app-shell {
+  max-width: 1120px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+
+thinking
+**Noting browser testing skill absence**
+exec
+/bin/zsh -lc 'rg -n "opml|export" public tests server.js' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+tests/unread-cache.test.js:148:    const isValid = /<opml[\s>]/i.test(text);
+tests/unread-cache.test.js:231:    'opml-file': new FakeElement('input'),
+tests/unread-cache.test.js:284:  const opml = `<?xml version="1.0"?>
+tests/unread-cache.test.js:285:    <opml version="1.0">
+tests/unread-cache.test.js:292:    </opml>`;
+tests/unread-cache.test.js:330:  const file = { text: async () => opml };
+tests/unread-cache.test.js:331:  elements['opml-file'].files = [file];
+tests/unread-cache.test.js:332:  await elements['opml-file'].dispatch('change');
+server.js:51:module.exports = app;
+public/app.js:4:const opmlInput = document.getElementById('opml-file');
+public/app.js:676:function parseOpmlFeeds(opmlText) {
+public/app.js:678:  const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+public/app.js:681:    throw new Error('invalid_opml');
+public/app.js:718:    throw new Error('invalid_opml');
+public/app.js:928:if (opmlInput) {
+public/app.js:929:  opmlInput.addEventListener('change', async () => {
+public/app.js:930:    const [file] = opmlInput.files || [];
+public/app.js:941:        throw new Error('invalid_opml');
+public/app.js:949:      opmlInput.value = '';
+public/index.html:48:          <section class="opml-import" aria-label="OPML import">
+
+thinking
+**Designing fallback for new APIs**
+codex
+I have enough context and will implement US-005 in a tight scope:
+
+1. Add an OPML export control to the existing OPML section in `public/index.html`.
+2. Implement OPML serialization in `public/app.js` from the persisted library (`rssViewer.library`), grouping feeds by category so categories export as folder outlines.
+3. Trigger download from the UI using a generated `.opml` file and provide status feedback for success/error/empty-library states.
+4. Add/extend tests in `tests/opml-import.test.js` to verify:
+   - exported OPML contains category folder outlines and feed outlines,
+   - export action triggers a download artifact and cleanup behavior.
+5. Run required verification (`npm test`) plus `npm run dev` startup check for runtime errors.
+6. Run security/performance/regression review, commit changes, append progress log, and record activity log milestones.
+
+thinking
+**Planning patch additions and logging**
+codex
+I’m now editing `index.html` and `app.js` to add the export button, OPML generation, and download flow while keeping all existing import behavior unchanged.
+exec
+/bin/zsh -lc "sed -n '620,780p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,120p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '900,980p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "rg -n \"opml-file|parseOpmlFeeds|if \\(opmlInput\\)\" public/app.js public/index.html" in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+}
+
+function addRecentFeed(url) {
+  mergeRecentFeeds([url]);
+}
+
+function getOutlineLabel(outline) {
+  if (!outline || typeof outline.getAttribute !== 'function') {
+    return '';
+  }
+
+  const title = outline.getAttribute('title');
+  if (typeof title === 'string' && title.trim().length > 0) {
+    return title.trim();
+  }
+
+  const text = outline.getAttribute('text');
+  if (typeof text === 'string' && text.trim().length > 0) {
+    return text.trim();
+  }
+ succeeded in 53ms:
+const form = document.getElementById('feed-form');
+const urlInput = document.getElementById('feed-url');
+const loadButton = document.getElementById('load-feed');
+const opmlInput = document.getElementById('opml-file');
+const statusBanner = document.getElementById('status');
+const resultsList = document.getElementById('results');
+const recentFeedsList = document.getElementById('recent-feeds');
+const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const searchInput = document.getElementById('item-search');
+const sidebarGroups = document.getElementById('sidebar-groups');
+const feedView = document.getElementById('feed-view');
+const savedView = document.getElementById('saved-view');
+const savedResultsList = document.getElementById('saved-results');
+const savedEmpty = document.getElementById('saved-empty');
+const savedViewToggle = document.getElementById('saved-view-toggle');
+const feedViewToggle = document.getElementById('feed-view-toggle');
+const sidebar = document.getElementById('feed-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 640px)')
+ succeeded in 52ms:
+public/app.js:4:const opmlInput = document.getElementById('opml-file');
+public/app.js:676:function parseOpmlFeeds(opmlText) {
+public/app.js:928:if (opmlInput) {
+public/app.js:937:      const imported = parseOpmlFeeds(content);
+public/index.html:49:            <label for="opml-file">Import OPML</label>
+public/index.html:50:            <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
+ succeeded in 52ms:
+      ? target.closest('button[data-url]')
+      : null;
+
+    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
+      return;
+    }
+
+    const { url } = button.dataset;
+    urlInput.value = url;
+    selectedFeedUrl = url;
+    selectedSidebarFeedUrl = url;
+    renderSidebarFeeds();
+    await loadFeed(url);
+  });
+}
+
+if (savedViewToggle) {
+  savedViewToggle.addEventListener('click', () => {
+    setView('saved');
+  });
+
+thinking
+**Planning index and styles patch**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/index.html
+@@ -50,2 +50,3 @@
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+apply_patch(auto_approved=true) exited 0 in 18ms:
+Success. Updated the following files:
+M public/index.html
+file update:
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+file update:
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+
+thinking
+**Adding functions and event handlers**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/app.js
+@@ -4,2 +4,3 @@
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+@@ -723,2 +724,67 @@
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+@@ -953,2 +1019,12 @@
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+apply_patch(auto_approved=true) exited 0 in 34ms:
+Success. Updated the following files:
+M public/app.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+
+
+thinking
+**Adding styles for export button**
+codex
+The export logic is now in place; next I’m adding a small style adjustment and then updating tests to verify category-preserving OPML output and UI-triggered download behavior.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/styles.css
+@@ -243,2 +243,6 @@
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+apply_patch(auto_approved=true) exited 0 in 42ms:
+Success. Updated the following files:
+M public/styles.css
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+
+
+thinking
+**Extending tests with Blob/URL and export button**
+codex
+I’m updating the OPML test harness now so it can simulate browser download APIs (`Blob` and `URL.createObjectURL`) and assert the export output structure.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/tests/opml-import.test.js
+@@ -34,2 +34,5 @@
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+@@ -90,2 +93,13 @@
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+@@ -184,2 +198,6 @@
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+@@ -189,2 +207,3 @@
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+@@ -196,5 +215,16 @@
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+@@ -205,3 +235,4 @@
+       return elements[id];
+-    }
++    },
++    body
+   };
+@@ -209,2 +240,15 @@
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+@@ -215,2 +259,3 @@
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+@@ -226,3 +271,11 @@
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+@@ -248,3 +301,3 @@
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+@@ -323,2 +376,33 @@
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+apply_patch(auto_approved=true) exited 0 in 50ms:
+Success. Updated the following files:
+M tests/opml-import.test.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+
+thinking
+**Verifying test isolation and DOM dependencies**
+exec
+/bin/zsh -lc 'ralph log "Implemented OPML export UI and client logic: added export button, OPML serialization by category, and download trigger."' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+
+thinking
+**Running initial tests**
+codex
+Code changes are in; I’m running the full required verification suite now (`npm test`) before doing runtime/dev validation.
+exec
+/bin/zsh -lc 'npm test' in /Users/yurimoreno/Coding/rss-viewer succeeded in 636ms:
+
+> rss-viewer@1.0.0 test
+> node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/recent-feeds.test.js && node tests/opml-import.test.js && node tests/unread-cache.test.js && node tests/saved-view.test.js
+
+Smoke test passed: required scaffold files exist.
+RSS proxy test passed: endpoint validates URL, parses feeds, and handles failures.
+Recent feeds test passed: persistence, reload, and failure guards work.
+OPML import test passed: merge, sidebar metrics, and error handling verified.
+Unread cache test passed: cap, read state, counts, and search behavior verified.
+Saved view test passed: toggle, list, and persistence verified.
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+
+thinking
+**Testing dev server startup**
+exec
+/bin/zsh -lc 'npm run dev' in /Users/yurimoreno/Coding/rss-viewerfile update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+
+thinking
+**Stopping session**
+ succeeded in 4.34s:
+
+> rss-viewer@1.0.0 dev
+> node --watch server.js
+
+Server listening on http://localhost:3000
+Completed running 'server.js'. Waiting for file changes before restarting...
+^C
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+
+
+thinking
+**Handling missing browser skill with fallback**
+exec
+/bin/zsh -lc 'ralph log "Verification complete: npm test passed and npm run dev starts cleanly with no runtime startup errors."' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+file update:
+diff --git a/public/app.js b/public/app.js
+index fcf518b14b2994707dd695bf313836a5bca8e793..89b30525896b4f1882a29806f21880c7d5d3ae81
+--- a/public/app.js
++++ b/public/app.js
+@@ -2,6 +2,7 @@
+ const urlInput = document.getElementById('feed-url');
+ const loadButton = document.getElementById('load-feed');
+ const opmlInput = document.getElementById('opml-file');
++const opmlExportButton = document.getElementById('opml-export');
+ const statusBanner = document.getElementById('status');
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+@@ -721,6 +722,71 @@
+   return parsedFeeds;
+ }
+ 
++function escapeXml(value) {
++  return String(value)
++    .replaceAll('&', '&amp;')
++    .replaceAll('<', '&lt;')
++    .replaceAll('>', '&gt;')
++    .replaceAll('"', '&quot;')
++    .replaceAll("'", '&apos;');
++}
++
++function buildOpmlTextFromLibrary(library) {
++  const normalizedLibrary = buildLibrary(
++    library && Array.isArray(library.feeds) ? library.feeds : [],
++    library && Array.isArray(library.categories) ? library.categories : []
++  );
++  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
++  const outlineLines = [];
++
++  grouped.forEach((feeds, categoryName) => {
++    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
++
++    feeds.forEach((feed) => {
++      const title = feed.title || feed.url;
++      outlineLines.push(
++        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
++      );
++    });
++
++    outlineLines.push('    </outline>');
++  });
++
++  const now = new Date().toUTCString();
++  return `<?xml version="1.0" encoding="UTF-8"?>
++<opml version="1.0">
++  <head>
++    <title>RSS Viewer Library</title>
++    <dateCreated>${escapeXml(now)}</dateCreated>
++  </head>
++  <body>
++${outlineLines.join('\n')}
++  </body>
++</opml>`;
++}
++
++function downloadLibraryAsOpml() {
++  const library = readLibrary();
++  if (!library.feeds.length) {
++    setStatus('Add at least one feed before exporting OPML.', 'error');
++    return;
++  }
++
++  const opmlText = buildOpmlTextFromLibrary(library);
++  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
++  const objectUrl = URL.createObjectURL(blob);
++  const link = document.createElement('a');
++  const dateStamp = new Date().toISOString().slice(0, 10);
++  link.href = objectUrl;
++  link.download = `rss-viewer-library-${dateStamp}.opml`;
++  link.style.display = 'none';
++  document.body.appendChild(link);
++  link.click();
++  link.remove();
++  URL.revokeObjectURL(objectUrl);
++  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
++}
++
+ function groupFeedsByCategory(feeds) {
+   const grouped = new Map();
+ 
+@@ -951,6 +1017,16 @@
+   });
+ }
+ 
++if (opmlExportButton) {
++  opmlExportButton.addEventListener('click', () => {
++    try {
++      downloadLibraryAsOpml();
++    } catch {
++      setStatus('Could not export OPML. Please try again.', 'error');
++    }
++  });
++}
++
+ if (searchInput) {
+   searchInput.addEventListener('input', () => {
+     currentSearchQuery = searchInput.value.trim().toLowerCase();
+diff --git a/public/index.html b/public/index.html
+index f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0..c53ef8373b3379110f6c699e7e58c918cc8caf44
+--- a/public/index.html
++++ b/public/index.html
+@@ -48,6 +48,7 @@
+           <section class="opml-import" aria-label="OPML import">
+             <label for="opml-file">Import OPML</label>
+             <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
++            <button id="opml-export" type="button">Export OPML</button>
+           </section>
+ 
+           <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
+diff --git a/public/styles.css b/public/styles.css
+index 396e28a8b8283fa23eb9a1a09c625fe05b43e049..ccc83bfa211217dc40ed974ad7c156b1c6d46cd0
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -241,6 +241,10 @@
+   background: #ffffff;
+ }
+ 
++#opml-export {
++  margin-top: 0.6rem;
++}
++
+ .recent-feeds {
+   margin-top: 1rem;
+ }
+diff --git a/tests/opml-import.test.js b/tests/opml-import.test.js
+index cbc4668906f6875bd384eaf6befe9c5b21e7d30c..6d4f8bc20fbcfac625510ca7f67b9c749363111f
+--- a/tests/opml-import.test.js
++++ b/tests/opml-import.test.js
+@@ -32,6 +32,9 @@
+     this.listeners = {};
+     this.classList = new ClassList();
+     this.files = null;
++    this.style = {};
++    this.href = '';
++    this.download = '';
+   }
+ 
+   append(...nodes) {
+@@ -88,6 +91,17 @@
+     this.children = [];
+     this.textContent = '';
+   }
++
++  click() {}
++
++  remove() {
++    if (!this.parentElement) {
++      return;
++    }
++
++    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
++    this.parentElement = null;
++  }
+ }
+ 
+ class FakeDocumentFragment {
+@@ -182,11 +196,16 @@
+ }
+ 
+ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
++  const downloadLinks = [];
++  const createdBlobs = [];
++  const revokedUrls = [];
++
+   const elements = {
+     'feed-form': new FakeElement('form'),
+     'feed-url': new FakeElement('input'),
+     'load-feed': new FakeElement('button'),
+     'opml-file': new FakeElement('input'),
++    'opml-export': new FakeElement('button'),
+     status: new FakeElement('section'),
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+@@ -194,25 +213,51 @@
+     'sidebar-groups': new FakeElement('nav')
+   };
+ 
++  const body = new FakeElement('body');
++
+   const document = {
+     createElement(tagName) {
+-      return new FakeElement(tagName);
++      const element = new FakeElement(tagName);
++      if (tagName.toLowerCase() === 'a') {
++        element.click = () => {
++          downloadLinks.push({
++            href: element.href,
++            download: element.download
++          });
++        };
++      }
++      return element;
+     },
+     createDocumentFragment() {
+       return new FakeDocumentFragment();
+     },
+     getElementById(id) {
+       return elements[id];
+-    }
++    },
++    body
+   };
+ 
+   const localStorage = createLocalStorage(localStorageSeed);
++  class FakeBlob {
++    constructor(parts, options = {}) {
++      this.parts = Array.isArray(parts) ? parts : [];
++      this.type = options.type || '';
++    }
++  }
++  URL.createObjectURL = (blob) => {
++    createdBlobs.push(blob);
++    return `blob:mock-${createdBlobs.length}`;
++  };
++  URL.revokeObjectURL = (url) => {
++    revokedUrls.push(url);
++  };
+ 
+   const context = {
+     document,
+     localStorage,
+     fetch: fetchImpl,
+     DOMParser: FakeDOMParser,
++    Blob: FakeBlob,
+     URL,
+     Intl,
+     Date,
+@@ -224,7 +269,15 @@
+   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+   vm.runInNewContext(source, context, { filename: 'public/app.js' });
+ 
+-  return { elements, localStorage };
++  return {
++    elements,
++    localStorage,
++    downloads: {
++      links: downloadLinks,
++      blobs: createdBlobs,
++      revokedUrls
++    }
++  };
+ }
+ 
+ async function run() {
+@@ -246,7 +299,7 @@
+     const seed = {};
+     seed[storageKey] = JSON.stringify([existingUrl]);
+ 
+-    const { elements, localStorage } = bootstrapApp({
++    const { elements, localStorage, downloads } = bootstrapApp({
+       localStorageSeed: seed,
+       fetchImpl: async (requestUrl) => {
+         let itemCount = 1;
+@@ -321,6 +374,37 @@
+       '5',
+       'Category count should equal the sum of feed counts'
+     );
++
++    await elements['opml-export'].dispatch('click');
++
++    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
++    assert.ok(
++      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
++      'OPML export should use a dated filename'
++    );
++    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
++    const exportedOpml = downloads.blobs[0].parts.join('');
++    assert.ok(
++      exportedOpml.includes('<outline text="Tech" title="Tech">'),
++      'OPML export should preserve categories as folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
++      'OPML export should include Uncategorized folder when needed'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.ok(
++      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
++      'OPML export should include feed entries in folder outlines'
++    );
++    assert.deepStrictEqual(
++      downloads.revokedUrls,
++      [downloads.links[0].href],
++      'OPML export should revoke the generated object URL'
++    );
+   }
+ 
+   {
+

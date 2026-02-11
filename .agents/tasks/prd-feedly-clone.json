@@ -158,7 +158,7 @@
     {
       "id": "US-005",
       "title": "OPML export",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -167,7 +167,10 @@
         "Generate an OPML file from the current library",
         "Preserve categories as outline folders",
         "Download triggers from the UI"
-      ]
+      ],
+      "startedAt": "2026-02-11T03:26:36.639703+00:00",
+      "completedAt": "2026-02-11T03:29:27.000Z",
+      "updatedAt": "2026-02-11T03:29:27.000Z"
     }
   ]
 }

@@ -75,3 +75,11 @@
 [2026-02-10 19:25:08] US-004: search UI and filtering implemented
 [2026-02-10 19:25:12] US-004: browser verification complete
 [2026-02-10 19:26:18] US-004: progress log updated
+[2026-02-10 19:26:36] ITERATION 1 start (mode=build story=US-005)
+[2026-02-10 19:26:53] Start US-005 OPML export: reviewed guardrails, errors, PRD; beginning code audit.
+[2026-02-10 19:28:16] Implemented OPML export UI and client logic: added export button, OPML serialization by category, and download trigger.
+[2026-02-10 19:28:33] Verification complete: npm test passed and npm run dev starts cleanly with no runtime startup errors.
+[2026-02-10 19:28:47] US-005: tests and dev startup complete
+[2026-02-10 19:29:22] US-005: OPML export UI and serializer implemented
+[2026-02-10 19:29:22] US-005: browser verification complete
+[2026-02-10 19:30:42] US-005: progress log updated
