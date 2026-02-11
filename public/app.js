@@ -6,6 +6,7 @@ const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
 const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const sidebarGroups = document.getElementById('sidebar-groups');
 const sidebar = document.getElementById('feed-sidebar');
 const sidebarToggle = document.getElementById('sidebar-toggle');
 const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -14,7 +15,10 @@ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.mat
 
 const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
 const MAX_RECENT_FEEDS = 5;
+const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
+let importedFeeds = [];
+let selectedSidebarFeedUrl = '';
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -202,6 +206,34 @@ function addRecentFeed(url) {
   mergeRecentFeeds([url]);
 }
 
+function getOutlineLabel(outline) {
+  if (!outline || typeof outline.getAttribute !== 'function') {
+    return '';
+  }
+
+  const title = outline.getAttribute('title');
+  if (typeof title === 'string' && title.trim().length > 0) {
+    return title.trim();
+  }
+
+  const text = outline.getAttribute('text');
+  if (typeof text === 'string' && text.trim().length > 0) {
+    return text.trim();
+  }
+
+  return '';
+}
+
+function getOutlineChildren(node) {
+  if (!node || !node.children) {
+    return [];
+  }
+
+  return Array.from(node.children).filter((child) =>
+    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
+  );
+}
+
 function setSidebarExpanded(isExpanded) {
   if (!sidebar || !sidebarToggle) {
     return;
@@ -224,7 +256,7 @@ function syncSidebarToViewport() {
   setSidebarExpanded(true);
 }
 
-function parseOpmlFeedUrls(opmlText) {
+function parseOpmlFeeds(opmlText) {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
 
@@ -232,18 +264,128 @@ function parseOpmlFeedUrls(opmlText) {
     throw new Error('invalid_opml');
   }
 
-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
-  const urls = outlines
-    .map((outline) => outline.getAttribute('xmlUrl'))
-    .filter((value) => typeof value === 'string')
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
+  const body = xmlDoc.querySelector('body');
+  const rootOutlines = getOutlineChildren(body);
+  const parsedFeeds = [];
 
-  if (urls.length === 0) {
+  function walkOutlines(outlines, currentCategory = '') {
+    outlines.forEach((outline) => {
+      const xmlUrl = outline.getAttribute('xmlUrl');
+      const label = getOutlineLabel(outline);
+      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
+      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
+      const childOutlines = getOutlineChildren(outline);
+
+      if (hasUrl) {
+        const normalizedUrl = xmlUrl.trim();
+        if (!isValidHttpUrl(normalizedUrl)) {
+          return;
+        }
+
+        parsedFeeds.push({
+          url: normalizedUrl,
+          title: label || normalizedUrl,
+          category: currentCategory || UNCATEGORIZED_CATEGORY
+        });
+      }
+
+      if (childOutlines.length > 0) {
+        walkOutlines(childOutlines, nextCategory);
+      }
+    });
+  }
+
+  walkOutlines(rootOutlines);
+
+  if (parsedFeeds.length === 0) {
     throw new Error('invalid_opml');
   }
 
-  return urls;
+  return parsedFeeds;
+}
+
+function groupFeedsByCategory(feeds) {
+  const grouped = new Map();
+
+  feeds.forEach((feed) => {
+    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
+      ? feed.category.trim()
+      : UNCATEGORIZED_CATEGORY;
+
+    if (!grouped.has(categoryName)) {
+      grouped.set(categoryName, []);
+    }
+
+    grouped.get(categoryName).push(feed);
+  });
+
+  return grouped;
+}
+
+function renderSidebarFeeds() {
+  if (!sidebarGroups) {
+    return;
+  }
+
+  sidebarGroups.innerHTML = '';
+
+  if (importedFeeds.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'sidebar-empty';
+    empty.textContent = 'Import an OPML file to list feeds by category.';
+    sidebarGroups.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  const grouped = groupFeedsByCategory(importedFeeds);
+
+  grouped.forEach((feeds, categoryName) => {
+    const section = document.createElement('section');
+    section.className = 'sidebar-group';
+    section.setAttribute('aria-label', `${categoryName} feeds`);
+
+    const heading = document.createElement('h3');
+    heading.textContent = categoryName;
+    section.appendChild(heading);
+
+    const list = document.createElement('ul');
+    list.className = 'sidebar-feed-list';
+
+    feeds.forEach((feed) => {
+      const li = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
+      button.dataset.url = feed.url;
+      button.textContent = feed.title;
+      li.appendChild(button);
+      list.appendChild(li);
+    });
+
+    section.appendChild(list);
+    fragment.appendChild(section);
+  });
+
+  sidebarGroups.appendChild(fragment);
+}
+
+function setImportedFeeds(feeds) {
+  const seenUrls = new Set();
+  importedFeeds = feeds.filter((feed) => {
+    if (!feed || seenUrls.has(feed.url)) {
+      return false;
+    }
+
+    seenUrls.add(feed.url);
+    return true;
+  });
+
+  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
+    selectedSidebarFeedUrl = '';
+  }
+
+  renderSidebarFeeds();
 }
 
 async function loadFeed(url) {
@@ -304,8 +446,29 @@ recentFeedsList.addEventListener('click', async (event) => {
 
   const { url } = button.dataset;
   urlInput.value = url;
+  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
+  renderSidebarFeeds();
   await loadFeed(url);
 });
+
+if (sidebarGroups) {
+  sidebarGroups.addEventListener('click', async (event) => {
+    const target = event.target;
+    const button = target && typeof target.closest === 'function'
+      ? target.closest('button[data-url]')
+      : null;
+
+    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
+      return;
+    }
+
+    const { url } = button.dataset;
+    urlInput.value = url;
+    selectedSidebarFeedUrl = url;
+    renderSidebarFeeds();
+    await loadFeed(url);
+  });
+}
 
 if (opmlInput) {
   opmlInput.addEventListener('change', async () => {
@@ -316,12 +479,14 @@ if (opmlInput) {
 
     try {
       const content = await file.text();
-      const importedUrls = parseOpmlFeedUrls(content);
+      const imported = parseOpmlFeeds(content);
+      const importedUrls = imported.map((feed) => feed.url);
 
       if (!mergeRecentFeeds(importedUrls)) {
         throw new Error('invalid_opml');
       }
 
+      setImportedFeeds(imported);
       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
     } catch {
       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
@@ -333,6 +498,7 @@ if (opmlInput) {
 
 recentFeeds = readRecentFeeds();
 renderRecentFeeds();
+renderSidebarFeeds();
 syncSidebarToViewport();
 
 if (sidebarToggle) {

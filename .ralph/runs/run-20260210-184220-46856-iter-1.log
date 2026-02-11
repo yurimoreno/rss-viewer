@@ -1,0 +1,2604 @@
+OpenAI Codex v0.98.0 (research preview)
+--------
+workdir: /Users/yurimoreno/Coding/rss-viewer
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: auto
+session id: 019c4a94-062e-7920-98b9-2b43880ea942
+--------
+user
+# Build
+
+You are an autonomous coding agent. Your task is to complete the work for exactly one story and record the outcome.
+
+## Paths
+- PRD: /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feed-selector.json
+- AGENTS (optional): /Users/yurimoreno/Coding/rss-viewer/AGENTS.md
+- Progress Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md
+- Guardrails: /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md
+- Guardrails Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md
+- Context Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/CONTEXT_ENGINEERING.md
+- Errors Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log
+- Activity Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log
+- Activity Logger: /Users/yurimoreno/Coding/rss-viewer/ralph log
+- No-commit: false
+- Repo Root: /Users/yurimoreno/Coding/rss-viewer
+- Run ID: 20260210-184220-46856
+- Iteration: 1
+- Run Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184220-46856-iter-1.log
+- Run Summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184220-46856-iter-1.md
+
+## Global Quality Gates (apply to every story)
+- npm test
+
+## Selected Story (Do not change scope)
+ID: US-002
+Title: Populate sidebar from imported feeds
+
+Story details:
+### US-002: Populate sidebar from imported feeds
+Status: in_progress
+Depends on: US-001
+
+Description:
+As a user, I want imported OPML feeds to appear in the sidebar under their folders.
+
+Acceptance Criteria:
+- [ ] Parse OPML folder names into categories
+- [ ] Render feeds in the sidebar grouped by category
+- [ ] Feeds without a folder appear under "Uncategorized"
+- [ ] Selecting a feed loads it in the reader
+
+
+If the story details are empty or missing, STOP and report that the PRD story format could not be parsed.
+
+## Rules (Non-Negotiable)
+- Implement **only** the work required to complete the selected story.
+- Complete all tasks associated with this story (and only this story).
+- Do NOT ask the user questions.
+- Do NOT change unrelated code.
+- Do NOT assume something is unimplemented — confirm by reading code.
+- Implement completely; no placeholders or stubs.
+- If No-commit is true, do NOT commit or push changes.
+- Do NOT edit the PRD JSON (status is handled by the loop).
+- All changes made during the run must be committed (including updates to progress/logs).
+ - Before committing, perform a final **security**, **performance**, and **regression** review of your changes.
+
+## Your Task (Do this in order)
+1. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md before any code changes.
+2. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log for repeated failures to avoid.
+3. Read /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feed-selector.json for global context (do not edit).
+4. Fully audit and read all necessary files to understand the task end-to-end before implementing. Do not assume missing functionality.
+5. If /Users/yurimoreno/Coding/rss-viewer/AGENTS.md exists, follow its build/test instructions.
+6. Implement only the tasks that belong to US-002.
+7. Run verification commands listed in the story, the global quality gates, and in /Users/yurimoreno/Coding/rss-viewer/AGENTS.md (if required).
+8. If the project has a build or dev workflow, run what applies:
+   - Build step (e.g., `npm run build`) if defined.
+   - Dev server (e.g., `npm run dev`, `wrangler dev`) if it is the normal validation path.
+   - Confirm no runtime/build errors in the console.
+9. Perform a brief audit before committing:
+   - **Security:** check for obvious vulnerabilities or unsafe handling introduced by your changes.
+   - **Performance:** check for avoidable regressions (extra queries, heavy loops, unnecessary re-renders).
+   - **Regression:** verify existing behavior that could be impacted still works.
+10. If No-commit is false, commit changes using the `$commit` skill.
+    - Stage everything: `git add -A`
+    - Confirm a clean working tree after commit: `git status --porcelain` should be empty.
+    - After committing, capture the commit hash and subject using:
+      `git show -s --format="%h %s" HEAD`.
+11. Append a progress entry to /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md with run/commit/test details (format below).
+    If No-commit is true, skip committing and note it in the progress entry.
+
+## Progress Entry Format (Append Only)
+```
+## [Date/Time] - US-002: Populate sidebar from imported feeds
+Thread: [codex exec session id if available, otherwise leave blank]
+Run: 20260210-184220-46856 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184220-46856-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-184220-46856-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: <hash> <subject> (or `none` + reason)
+- Post-commit status: `clean` or list remaining files
+- Verification:
+  - Command: <exact command> -> PASS/FAIL
+  - Command: <exact command> -> PASS/FAIL
+- Files changed:
+  - <file path>
+  - <file path>
+- What was implemented
+- **Learnings for future iterations:**
+  - Patterns discovered
+  - Gotchas encountered
+  - Useful context
+---
+```
+
+## Completion Signal
+Only output the completion signal when the **selected story** is fully complete and verified.
+When the selected story is complete, output:
+<promise>COMPLETE</promise>
+
+Otherwise, end normally without the signal.
+
+## Additional Guardrails
+- When authoring documentation, capture the why (tests + implementation intent).
+- If you learn how to run/build/test the project, update /Users/yurimoreno/Coding/rss-viewer/AGENTS.md briefly (operational only).
+- Keep AGENTS operational only; progress notes belong in /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md.
+- If you hit repeated errors, log them in /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log and add a Sign to /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md using /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md as the template.
+
+## Activity Logging (Required)
+Log major actions to /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log using the helper:
+```
+/Users/yurimoreno/Coding/rss-viewer/ralph log "message"
+```
+Log at least:
+- Start of work on the story
+- After major code changes
+- After tests/verification
+- After updating progress log
+
+## Browser Testing (Required for Frontend Stories)
+If the selected story changes UI, you MUST verify it in the browser:
+1. Load the `dev-browser` skill.
+2. Navigate to the relevant page.
+3. Verify the UI changes work as expected.
+4. Take a screenshot if helpful for the progress log.
+
+A frontend story is NOT complete until browser verification passes.
+
+mcp startup: no servers
+
+thinking
+**Planning skill usage and exploration**
+codex
+I’m implementing `US-002` only. First I’ll read guardrails, prior errors, and the PRD story details, then audit the current parsing/sidebar code before making any edits.
+exec
+/bin/zsh -lc "sed -n '1,220p' .ralph/guardrails.md" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,220p' .ralph/errors.log" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' .agents/tasks/prd-feed-selector.json" in /Users/yurimoreno/Coding/rss-viewer succeeded in 52ms:
+# Guardrails (Signs)
+
+> Lessons learned from failures. Read before acting.
+
+## Core Signs
+
+### Sign: Read Before Writing
+- **Trigger**: Before modifying any file
+- **Instruction**: Read the file first
+- **Added after**: Core principle
+
+### Sign: Test Before Commit
+- **Trigger**: Before committing changes
+- **Instruction**: Run required tests and verify outputs
+- **Added after**: Core principle
+
+---
+
+## Learned Signs
+
+ succeeded in 52ms:
+# Error Log
+
+> Failures and repeated issues. Use this to add guardrails.
+
+[2026-02-10 17:19:51] ITERATION 1 command failed (status=1)
+[2026-02-10 17:19:51] ITERATION 1 left uncommitted changes; review run summary at /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.md
+[2026-02-10 17:19:51] ITERATION 1 exited non-zero; review /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.log
+ succeeded in 52ms:
+{
+  "version": 1,
+  "project": "RSS Viewer Feed Selector UX",
+  "overview": "Improve the UX with a left sidebar feed selector showing categorized feeds and metrics, modeled after Feedly-style navigation.",
+  "goals": [
+    "Provide a sidebar feed selector with categories",
+    "Show basic metrics per feed and category"
+  ],
+  "nonGoals": [
+    "Full search or filtering",
+    "User accounts or sync",
+    "Server-side persistence"
+  ],
+  "successMetrics": [
+    "Users can select any imported feed from the sidebar",
+    "Categories reflect OPML outline folders and can be expanded/collapsed"
+  ],
+  "openQuestions": [
+    "Metric source for unread counts (default: items loaded in this session)",
+    "Should category ordering follow OPML order or alphabetical? (default: OPML order)"
+
+thinking
+**Starting activity log**
+codex
+I’ve confirmed the target story and constraints. Next I’m auditing the app code paths for OPML parsing, sidebar rendering, and feed selection, and I’ll log the start in `activity.log`.
+exec
+/bin/zsh -lc './ralph log "Start US-002: audit OPML parsing, sidebar grouping, feed selection"' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,220p' AGENTS.md" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'rg --files' in /Users/yurimoreno/Coding/rss-viewer exited 127 in 51ms:
+zsh:1: no such file or directory: ./ralph
+ succeeded in 51ms:
+# AGENTS
+
+## Build & test
+- No build step.
+- Tests: `npm test`
+- Dev: `npm run dev`
+- Start: `npm start`
+ succeeded in 51ms:
+AGENTS.md
+package.json
+package-lock.json
+public/app.js
+public/styles.css
+public/index.html
+tests/rss-proxy.test.js
+tests/recent-feeds.test.js
+tests/smoke.test.js
+tests/opml-import.test.js
+server.js
+
+thinking
+**Noticing executable path with space**
+exec
+/bin/zsh -lc "sed -n '1,260p' public/index.html" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc '/Users/yurimoreno/Coding/rss-viewer/ralph log "Start US-002: audit OPML parsing, sidebar grouping, feed selection"' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,280p' server.js" in /Users/yurimoreno/Coding/rss-viewer exited 127 in 51ms:
+zsh:1: no such file or directory: /Users/yurimoreno/Coding/rss-viewer/ralph
+ succeeded in 51ms:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSS Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+        <div class="sidebar-header">
+          <h2>Categories</h2>
+        </div>
+        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+          <section class="sidebar-group" aria-label="Technology feeds">
+            <h3>Technology</h3>
+            <ul class="sidebar-feed-list">
+              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+ succeeded in 50ms:
+const form = document.getElementById('feed-form');
+const urlInput = document.getElementById('feed-url');
+const loadButton = document.getElementById('load-feed');
+const opmlInput = document.getElementById('opml-file');
+const statusBanner = document.getElementById('status');
+const resultsList = document.getElementById('results');
+const recentFeedsList = document.getElementById('recent-feeds');
+const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const sidebar = document.getElementById('feed-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 640px)')
+  : { matches: false };
+
+const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+const MAX_RECENT_FEEDS = 5;
+let recentFeeds = [];
+
+function setStatus(message, kind = 'idle') {
+  statusBanner.classList.remove('loading', 'error');
+ succeeded in 51ms:
+const express = require('express');
+const path = require('path');
+const Parser = require('rss-parser');
+
+const app = express();
+const parser = new Parser();
+const port = process.env.PORT || 3000;
+
+app.get('/api/rss', async (req, res) => {
+  const { url } = req.query;
+
+  if (typeof url !== 'string' || url.trim() === '') {
+    return res.status(400).json({ error: 'invalid_url' });
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    return res.status(400).json({ error: 'invalid_url' });
+
+thinking
+**Continuing app.js and locating CLI tools**
+codex
+I found placeholder sidebar markup and existing OPML URL parsing, but I still need the rest of `app.js` and tests to map exact behavior changes. I’ll inspect those next and locate the correct activity logging command path.
+exec
+/bin/zsh -lc "sed -n '260,520p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' tests/opml-import.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' tests/smoke.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'ls -la' in /Users/yurimoreno/Coding/rss-viewer succeeded in 52ms:
+const fs = require('fs');
+const path = require('path');
+
+const requiredFiles = [
+  { name: 'server.js', path: path.join(__dirname, '..', 'server.js') },
+  { name: 'public/index.html', path: path.join(__dirname, '..', 'public', 'index.html') }
+];
+
+const missing = requiredFiles.filter((file) => !fs.existsSync(file.path));
+
+if (missing.length > 0) {
+  const names = missing.map((file) => file.name).join(', ');
+  console.error(`Smoke test failed: missing required file(s): ${names}`);
+  process.exit(1);
+}
+
+console.log('Smoke test passed: required scaffold files exist.');
+ succeeded in 52ms:
+    }
+
+    addRecentFeed(url);
+
+    const items = Array.isArray(data.items) ? data.items : [];
+    renderItems(items);
+
+    if (items.length === 0) {
+      setStatus('Feed loaded, but no items were found.');
+      return;
+    }
+
+    setStatus(`Loaded ${items.length} item${items.length === 1 ? '' : 's'}.`);
+  } catch {
+    clearResults();
+    setStatus('Could not load this feed URL. Check the URL and try again.', 'error');
+  } finally {
+    loadButton.disabled = false;
+    urlInput.disabled = false;
+  }
+ succeeded in 52ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+}
+
+class FakeElement {
+ succeeded in 51ms:
+total 120
+drwxr-xr-x@ 14 yurimoreno  staff    448 Feb 10 17:27 .
+drwxr-xr-x  14 yurimoreno  staff    448 Feb 10 17:16 ..
+-rw-r--r--@  1 yurimoreno  staff  10244 Feb 10 17:18 .DS_Store
+drwxr-xr-x@  4 yurimoreno  staff    128 Feb 10 17:16 .agents
+drwxr-xr-x@ 12 yurimoreno  staff    384 Feb 10 18:42 .git
+-rw-r--r--@  1 yurimoreno  staff     24 Feb 10 17:26 .gitignore
+drwxr-xr-x@  8 yurimoreno  staff    256 Feb 10 17:19 .ralph
+-rw-r--r--@  1 yurimoreno  staff    105 Feb 10 17:27 AGENTS.md
+drwxr-xr-x@ 73 yurimoreno  staff   2336 Feb 10 17:25 node_modules
+-rw-r--r--@  1 yurimoreno  staff  30823 Feb 10 17:25 package-lock.json
+-rw-r--r--@  1 yurimoreno  staff    475 Feb 10 18:24 package.json
+drwxr-xr-x@  5 yurimoreno  staff    160 Feb 10 17:44 public
+-rw-r--r--@  1 yurimoreno  staff   1257 Feb 10 17:41 server.js
+drwxr-xr-x@  6 yurimoreno  staff    192 Feb 10 18:25 tests
+
+thinking
+**Investigating sidebar test setup**
+exec
+/bin/zsh -lc "which ralph || command -v ralph || echo 'not-found'" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,280p' tests/recent-feeds.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,320p' tests/rss-proxy.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'rg -n "sidebar|opml|feed" tests public/app.js public/index.html' in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+/Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/.bin/ralph
+ succeeded in 50ms:
+const assert = require('assert');
+const http = require('http');
+
+const app = require('../server');
+
+function requestJson(serverPort, path) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(
+      {
+        hostname: '127.0.0.1',
+        port: serverPort,
+        path,
+        headers: {
+          Accept: 'application/json'
+        }
+      },
+      (res) => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => {
+ succeeded in 50ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+}
+
+class FakeElement {
+ succeeded in 51ms:
+tests/rss-proxy.test.js:61:  const feedServer = http.createServer((req, res) => {
+tests/rss-proxy.test.js:62:    if (req.url === '/feed.xml') {
+tests/rss-proxy.test.js:86:  const { port: feedPort } = await startServer(feedServer);
+tests/rss-proxy.test.js:99:      `/api/rss?url=${encodeURIComponent(`http://127.0.0.1:${feedPort}/feed.xml`)}`
+tests/rss-proxy.test.js:102:    assert.strictEqual(validFeed.body.feed.title, 'Example Feed');
+tests/rss-proxy.test.js:113:    console.log('RSS proxy test passed: endpoint validates URL, parses feeds, and handles failures.');
+tests/rss-proxy.test.js:115:    await Promise.all([closeServer(appServer), closeServer(feedServer)]);
+public/app.js:1:const form = document.getElementById('feed-form');
+public/app.js:2:const urlInput = document.getElementById('feed-url');
+public/app.js:3:const loadButton = document.getElementById('load-feed');
+public/app.js:4:const opmlInput = document.getElementById('opml-file');
+public/app.js:7:const recentFeedsList = document.getElementById('recent-feeds');
+public/app.js:8:const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+public/app.js:9:const sidebar = document.getElementById('feed-sidebar');
+public/app.js:10:const sidebarToggle = document.getElementById('sidebar-toggle');
+public/app.js:165:    button.className = 'recent-feed-button';
+public/app.js:206:  if (!sidebar || !sidebarToggle) {
+public/app.js:210:  sidebar.classList.toggle('is-open', isExpanded);
+public/app.js:211:  sidebarToggle.setAttribute('aria-expanded', String(isExpanded));
+public/app.js:215:  if (!sidebar || !sidebarToggle) {
+
+thinking
+**Assessing frontend test strategy**
+codex
+I confirmed `ralph` is available via PATH, so I’ll use `ralph log` directly for required activity entries. Next I’m checking scripts and current git state, then I’ll implement sidebar category rendering and selection wiring in `public/app.js` plus targeted tests.
+exec
+/bin/zsh -lc 'cat package.json' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'git status --short' in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+{
+  "name": "rss-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/recent-feeds.test.js && node tests/opml-import.test.js",
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "rss-parser": "^3.13.0"
+  }
+}
+exec
+/bin/zsh -lc 'ralph log "US-002 audit complete: identified placeholder sidebar and URL-only OPML import"' in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+ M .agents/tasks/prd-feed-selector.json
+ M .ralph/activity.log
+?? .ralph/.tmp/prompt-20260210-184220-46856-1.md
+?? .ralph/.tmp/story-20260210-184220-46856-1.json
+?? .ralph/.tmp/story-20260210-184220-46856-1.md
+?? .ralph/runs/run-20260210-184220-46856-iter-1.log
+ succeeded in 168ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+
+thinking
+**Inspecting sidebar styles**
+exec
+/bin/zsh -lc "sed -n '1,320p' public/styles.css" in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  background-color: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f5f6f8;
+}
+
+.app-shell {
+  max-width: 1120px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+
+thinking
+**Designing sidebar feed parsing**
+codex
+I’ve finished the audit and will now edit `public/app.js` and `public/index.html` to replace placeholder sidebar content with imported OPML categories/feeds, including “Uncategorized” handling and click-to-load behavior. Then I’ll update tests for this exact story behavior.
+
+thinking
+**Planning extensive app.js patch**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/app.js
+@@ -8,2 +8,3 @@
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+@@ -16,3 +17,6 @@
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+@@ -204,2 +208,30 @@
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+@@ -226,3 +258,3 @@
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+@@ -234,10 +266,36 @@
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+@@ -245,5 +303,89 @@
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+@@ -306,2 +448,4 @@
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+@@ -309,2 +453,21 @@
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+@@ -318,3 +481,4 @@
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+@@ -324,2 +488,3 @@
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+@@ -335,2 +500,3 @@
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+apply_patch(auto_approved=true) exited 0 in 29ms:
+Success. Updated the following files:
+M public/app.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+
+
+thinking
+**Updating placeholder navigation**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/index.html
+@@ -14,24 +14,3 @@
+         </div>
+-        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+-          <section class="sidebar-group" aria-label="Technology feeds">
+-            <h3>Technology</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="News feeds">
+-            <h3>News</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="Uncategorized feeds">
+-            <h3>Uncategorized</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+-            </ul>
+-          </section>
+-        </nav>
++        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+       </aside>
+apply_patch(auto_approved=true) exited 0 in 40ms:
+Success. Updated the following files:
+M public/index.html
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+diff --git a/public/index.html b/public/index.html
+index 81143972de1d2dd63be83a61d95f4c586b04c5f4..1aece628ffb096b60d2e21032615c86a0a375cec
+--- a/public/index.html
++++ b/public/index.html
+@@ -12,28 +12,7 @@
+         <div class="sidebar-header">
+           <h2>Categories</h2>
+         </div>
+-        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+-          <section class="sidebar-group" aria-label="Technology feeds">
+-            <h3>Technology</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="News feeds">
+-            <h3>News</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="Uncategorized feeds">
+-            <h3>Uncategorized</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+-            </ul>
+-          </section>
+-        </nav>
++        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+       </aside>
+ 
+       <main class="viewer" aria-live="polite">
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+diff --git a/public/index.html b/public/index.html
+index 81143972de1d2dd63be83a61d95f4c586b04c5f4..1aece628ffb096b60d2e21032615c86a0a375cec
+--- a/public/index.html
++++ b/public/index.html
+@@ -12,28 +12,7 @@
+         <div class="sidebar-header">
+           <h2>Categories</h2>
+         </div>
+-        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+-          <section class="sidebar-group" aria-label="Technology feeds">
+-            <h3>Technology</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="News feeds">
+-            <h3>News</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="Uncategorized feeds">
+-            <h3>Uncategorized</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+-            </ul>
+-          </section>
+-        </nav>
++        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+       </aside>
+ 
+       <main class="viewer" aria-live="polite">
+
+
+thinking
+**Updating sidebar-feed CSS**
+codex
+Core implementation is in place. I’m now applying a small CSS update for sidebar empty/active states and then updating the OPML test harness to validate category grouping, uncategorized fallback, and sidebar selection behavior.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/styles.css
+@@ -72,5 +72,16 @@
+ 
+-.sidebar-feed[disabled] {
+-  opacity: 1;
+-  cursor: default;
++.sidebar-feed:hover {
++  background: #edf3ff;
++}
++
++.sidebar-feed.is-active {
++  border-color: #7ea7e8;
++  background: #dfeeff;
++  color: #173b72;
++}
++
++.sidebar-empty {
++  margin: 0;
++  color: #4b5563;
++  font-size: 0.9rem;
+ }
+apply_patch(auto_approved=true) exited 0 in 43ms:
+Success. Updated the following files:
+M public/styles.css
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+diff --git a/public/index.html b/public/index.html
+index 81143972de1d2dd63be83a61d95f4c586b04c5f4..1aece628ffb096b60d2e21032615c86a0a375cec
+--- a/public/index.html
++++ b/public/index.html
+@@ -12,28 +12,7 @@
+         <div class="sidebar-header">
+           <h2>Categories</h2>
+         </div>
+-        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+-          <section class="sidebar-group" aria-label="Technology feeds">
+-            <h3>Technology</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="News feeds">
+-            <h3>News</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="Uncategorized feeds">
+-            <h3>Uncategorized</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+-            </ul>
+-          </section>
+-        </nav>
++        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+       </aside>
+ 
+       <main class="viewer" aria-live="polite">
+diff --git a/public/styles.css b/public/styles.css
+index b0367041ed1fae096c1d76106e9d4d27fa9371e1..abcc87b4ebdb96e6b953bd0c7e1a1ba987d33170
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -70,9 +70,20 @@
+   padding: 0.45rem 0.6rem;
+ }
+ 
+-.sidebar-feed[disabled] {
+-  opacity: 1;
+-  cursor: default;
++.sidebar-feed:hover {
++  background: #edf3ff;
++}
++
++.sidebar-feed.is-active {
++  border-color: #7ea7e8;
++  background: #dfeeff;
++  color: #173b72;
++}
++
++.sidebar-empty {
++  margin: 0;
++  color: #4b5563;
++  font-size: 0.9rem;
+ }
+ 
+ .viewer {
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index e4c48f44c706b80a37b4719275fc9386354b53dc..990909521b8752cbf2e18140d21a451e7df245cd
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const sidebarGroups = document.getElementById('sidebar-groups');
+ const sidebar = document.getElementById('feed-sidebar');
+ const sidebarToggle = document.getElementById('sidebar-toggle');
+ const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+@@ -14,7 +15,10 @@
+ 
+ const RECENT_FEEDS_KEY = 'rssViewer.recentFeeds';
+ const MAX_RECENT_FEEDS = 5;
++const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+ let recentFeeds = [];
++let importedFeeds = [];
++let selectedSidebarFeedUrl = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -202,6 +206,34 @@
+   mergeRecentFeeds([url]);
+ }
+ 
++function getOutlineLabel(outline) {
++  if (!outline || typeof outline.getAttribute !== 'function') {
++    return '';
++  }
++
++  const title = outline.getAttribute('title');
++  if (typeof title === 'string' && title.trim().length > 0) {
++    return title.trim();
++  }
++
++  const text = outline.getAttribute('text');
++  if (typeof text === 'string' && text.trim().length > 0) {
++    return text.trim();
++  }
++
++  return '';
++}
++
++function getOutlineChildren(node) {
++  if (!node || !node.children) {
++    return [];
++  }
++
++  return Array.from(node.children).filter((child) =>
++    child && typeof child.tagName === 'string' && child.tagName.toLowerCase() === 'outline'
++  );
++}
++
+ function setSidebarExpanded(isExpanded) {
+   if (!sidebar || !sidebarToggle) {
+     return;
+@@ -224,7 +256,7 @@
+   setSidebarExpanded(true);
+ }
+ 
+-function parseOpmlFeedUrls(opmlText) {
++function parseOpmlFeeds(opmlText) {
+   const parser = new DOMParser();
+   const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+ 
+@@ -232,20 +264,130 @@
+     throw new Error('invalid_opml');
+   }
+ 
+-  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+-  const urls = outlines
+-    .map((outline) => outline.getAttribute('xmlUrl'))
+-    .filter((value) => typeof value === 'string')
+-    .map((value) => value.trim())
+-    .filter((value) => value.length > 0 && isValidHttpUrl(value));
++  const body = xmlDoc.querySelector('body');
++  const rootOutlines = getOutlineChildren(body);
++  const parsedFeeds = [];
+ 
+-  if (urls.length === 0) {
++  function walkOutlines(outlines, currentCategory = '') {
++    outlines.forEach((outline) => {
++      const xmlUrl = outline.getAttribute('xmlUrl');
++      const label = getOutlineLabel(outline);
++      const hasUrl = typeof xmlUrl === 'string' && xmlUrl.trim().length > 0;
++      const nextCategory = hasUrl ? currentCategory : label || currentCategory;
++      const childOutlines = getOutlineChildren(outline);
++
++      if (hasUrl) {
++        const normalizedUrl = xmlUrl.trim();
++        if (!isValidHttpUrl(normalizedUrl)) {
++          return;
++        }
++
++        parsedFeeds.push({
++          url: normalizedUrl,
++          title: label || normalizedUrl,
++          category: currentCategory || UNCATEGORIZED_CATEGORY
++        });
++      }
++
++      if (childOutlines.length > 0) {
++        walkOutlines(childOutlines, nextCategory);
++      }
++    });
++  }
++
++  walkOutlines(rootOutlines);
++
++  if (parsedFeeds.length === 0) {
+     throw new Error('invalid_opml');
+   }
+ 
+-  return urls;
++  return parsedFeeds;
++}
++
++function groupFeedsByCategory(feeds) {
++  const grouped = new Map();
++
++  feeds.forEach((feed) => {
++    const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
++      ? feed.category.trim()
++      : UNCATEGORIZED_CATEGORY;
++
++    if (!grouped.has(categoryName)) {
++      grouped.set(categoryName, []);
++    }
++
++    grouped.get(categoryName).push(feed);
++  });
++
++  return grouped;
++}
++
++function renderSidebarFeeds() {
++  if (!sidebarGroups) {
++    return;
++  }
++
++  sidebarGroups.innerHTML = '';
++
++  if (importedFeeds.length === 0) {
++    const empty = document.createElement('p');
++    empty.className = 'sidebar-empty';
++    empty.textContent = 'Import an OPML file to list feeds by category.';
++    sidebarGroups.appendChild(empty);
++    return;
++  }
++
++  const fragment = document.createDocumentFragment();
++  const grouped = groupFeedsByCategory(importedFeeds);
++
++  grouped.forEach((feeds, categoryName) => {
++    const section = document.createElement('section');
++    section.className = 'sidebar-group';
++    section.setAttribute('aria-label', `${categoryName} feeds`);
++
++    const heading = document.createElement('h3');
++    heading.textContent = categoryName;
++    section.appendChild(heading);
++
++    const list = document.createElement('ul');
++    list.className = 'sidebar-feed-list';
++
++    feeds.forEach((feed) => {
++      const li = document.createElement('li');
++      const button = document.createElement('button');
++      button.type = 'button';
++      button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
++      button.dataset.url = feed.url;
++      button.textContent = feed.title;
++      li.appendChild(button);
++      list.appendChild(li);
++    });
++
++    section.appendChild(list);
++    fragment.appendChild(section);
++  });
++
++  sidebarGroups.appendChild(fragment);
+ }
+ 
++function setImportedFeeds(feeds) {
++  const seenUrls = new Set();
++  importedFeeds = feeds.filter((feed) => {
++    if (!feed || seenUrls.has(feed.url)) {
++      return false;
++    }
++
++    seenUrls.add(feed.url);
++    return true;
++  });
++
++  if (!importedFeeds.some((feed) => feed.url === selectedSidebarFeedUrl)) {
++    selectedSidebarFeedUrl = '';
++  }
++
++  renderSidebarFeeds();
++}
++
+ async function loadFeed(url) {
+   setStatus('Loading feed...', 'loading');
+   loadButton.disabled = true;
+@@ -304,9 +446,30 @@
+ 
+   const { url } = button.dataset;
+   urlInput.value = url;
++  selectedSidebarFeedUrl = importedFeeds.some((feed) => feed.url === url) ? url : '';
++  renderSidebarFeeds();
+   await loadFeed(url);
+ });
+ 
++if (sidebarGroups) {
++  sidebarGroups.addEventListener('click', async (event) => {
++    const target = event.target;
++    const button = target && typeof target.closest === 'function'
++      ? target.closest('button[data-url]')
++      : null;
++
++    if (!button || !button.dataset || typeof button.dataset.url !== 'string') {
++      return;
++    }
++
++    const { url } = button.dataset;
++    urlInput.value = url;
++    selectedSidebarFeedUrl = url;
++    renderSidebarFeeds();
++    await loadFeed(url);
++  });
++}
++
+ if (opmlInput) {
+   opmlInput.addEventListener('change', async () => {
+     const [file] = opmlInput.files || [];
+@@ -316,12 +479,14 @@
+ 
+     try {
+       const content = await file.text();
+-      const importedUrls = parseOpmlFeedUrls(content);
++      const imported = parseOpmlFeeds(content);
++      const importedUrls = imported.map((feed) => feed.url);
+ 
+       if (!mergeRecentFeeds(importedUrls)) {
+         throw new Error('invalid_opml');
+       }
+ 
++      setImportedFeeds(imported);
+       setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+     } catch {
+       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+@@ -333,6 +498,7 @@
+ 
+ recentFeeds = readRecentFeeds();
+ renderRecentFeeds();
++renderSidebarFeeds();
+ syncSidebarToViewport();
+ 
+ if (sidebarToggle) {
+diff --git a/public/index.html b/public/index.html
+index 81143972de1d2dd63be83a61d95f4c586b04c5f4..1aece628ffb096b60d2e21032615c86a0a375cec
+--- a/public/index.html
++++ b/public/index.html
+@@ -12,28 +12,7 @@
+         <div class="sidebar-header">
+           <h2>Categories</h2>
+         </div>
+-        <nav class="sidebar-groups" aria-label="Feed list placeholders">
+-          <section class="sidebar-group" aria-label="Technology feeds">
+-            <h3>Technology</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Example Tech Feed</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Daily Engineering Notes</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="News feeds">
+-            <h3>News</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>World Headlines</button></li>
+-              <li><button type="button" class="sidebar-feed" disabled>Local Updates</button></li>
+-            </ul>
+-          </section>
+-          <section class="sidebar-group" aria-label="Uncategorized feeds">
+-            <h3>Uncategorized</h3>
+-            <ul class="sidebar-feed-list">
+-              <li><button type="button" class="sidebar-feed" disabled>Imported Feed Placeholder</button></li>
+-            </ul>
+-          </section>
+-        </nav>
++        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+       </aside>
+ 
+       <main class="viewer" aria-live="polite">
+diff --git a/public/styles.css b/public/styles.css
+index b0367041ed1fae096c1d76106e9d4d27fa9371e1..abcc87b4ebdb96e6b953bd0c7e1a1ba987d33170
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -70,9 +70,20 @@
+   padding: 0.45rem 0.6rem;
+ }
+ 
+-.sidebar-feed[disabled] {
+-  opacity: 1;
+-  cursor: default;
++.sidebar-feed:hover {
++  background: #edf3ff;
++}
++
++.sidebar-feed.is-active {
++  border-color: #7ea7e8;
++  background: #dfeeff;
++  color: #173b72;
++}
++
++.sidebar-empty {
++  margin: 0;
++  color: #4b5563;
++  font-size: 0.9rem;
+ }
+ 
+ .viewer {
+
+
+thinking
+**Extending fake DOM parser and tests**

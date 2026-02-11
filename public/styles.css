@@ -70,9 +70,20 @@ body {
   padding: 0.45rem 0.6rem;
 }
 
-.sidebar-feed[disabled] {
-  opacity: 1;
-  cursor: default;
+.sidebar-feed:hover {
+  background: #edf3ff;
+}
+
+.sidebar-feed.is-active {
+  border-color: #7ea7e8;
+  background: #dfeeff;
+  color: #173b72;
+}
+
+.sidebar-empty {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.9rem;
 }
 
 .viewer {

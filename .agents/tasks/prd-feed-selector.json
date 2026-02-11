@@ -84,7 +84,7 @@
     {
       "id": "US-002",
       "title": "Populate sidebar from imported feeds",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -94,7 +94,10 @@
         "Render feeds in the sidebar grouped by category",
         "Feeds without a folder appear under \"Uncategorized\"",
         "Selecting a feed loads it in the reader"
-      ]
+      ],
+      "startedAt": "2026-02-11T02:42:20.527904+00:00",
+      "completedAt": "2026-02-11T02:46:42.000Z",
+      "updatedAt": "2026-02-11T02:46:42.000Z"
     },
     {
       "id": "US-003",

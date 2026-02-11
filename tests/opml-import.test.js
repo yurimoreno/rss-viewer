@@ -104,12 +104,49 @@ class FakeDocumentFragment {
 class FakeDOMParser {
   parseFromString(text) {
     const isValid = /<opml[\s>]/i.test(text);
-    const urls = [];
-    const regex = /xmlUrl\s*=\s*["']([^"']+)["']/gi;
-    let match = regex.exec(text);
+    const rootOutlines = [];
+    const stack = [];
+    const tagRegex = /<\/?outline\b[^>]*>/gi;
+    let match = tagRegex.exec(text);
+
     while (match) {
-      urls.push(match[1]);
-      match = regex.exec(text);
+      const tag = match[0];
+      const isClosing = tag.startsWith('</');
+      const isSelfClosing = tag.endsWith('/>');
+
+      if (isClosing) {
+        stack.pop();
+      } else {
+        const attributes = {};
+        const attrRegex = /(\w+)\s*=\s*["']([^"']+)["']/g;
+        let attrMatch = attrRegex.exec(tag);
+        while (attrMatch) {
+          attributes[attrMatch[1]] = attrMatch[2];
+          attrMatch = attrRegex.exec(tag);
+        }
+
+        const node = {
+          tagName: 'outline',
+          children: [],
+          getAttribute(name) {
+            return Object.prototype.hasOwnProperty.call(attributes, name)
+              ? attributes[name]
+              : null;
+          }
+        };
+
+        if (stack.length > 0) {
+          stack[stack.length - 1].children.push(node);
+        } else {
+          rootOutlines.push(node);
+        }
+
+        if (!isSelfClosing) {
+          stack.push(node);
+        }
+      }
+
+      match = tagRegex.exec(text);
     }
 
     return {
@@ -117,17 +154,13 @@ class FakeDOMParser {
         if (selector === 'parsererror') {
           return isValid ? null : {};
         }
+        if (selector === 'body') {
+          return { children: rootOutlines };
+        }
         return null;
       },
-      querySelectorAll(selector) {
-        if (selector !== 'outline[xmlUrl]') {
-          return [];
-        }
-        return urls.map((url) => ({
-          getAttribute(name) {
-            return name === 'xmlUrl' ? url : null;
-          }
-        }));
+      querySelectorAll() {
+        return [];
       }
     };
   }
@@ -157,7 +190,8 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
     status: new FakeElement('section'),
     results: new FakeElement('ul'),
     'recent-feeds': new FakeElement('ul'),
-    'recent-feeds-empty': new FakeElement('p')
+    'recent-feeds-empty': new FakeElement('p'),
+    'sidebar-groups': new FakeElement('nav')
   };
 
   const document = {
@@ -199,8 +233,10 @@ async function run() {
   const opml = `<?xml version="1.0"?>
     <opml version="1.0">
       <body>
-        <outline text="Feed A" xmlUrl="https://feed-a.example/rss.xml" />
-        <outline text="Feed B" xmlUrl="https://feed-b.example/rss.xml" />
+        <outline text="Tech">
+          <outline text="Feed A" xmlUrl="https://feed-a.example/rss.xml" />
+          <outline text="Feed B" xmlUrl="https://feed-b.example/rss.xml" />
+        </outline>
         <outline text="Existing" xmlUrl="${existingUrl}" />
       </body>
     </opml>`;
@@ -229,6 +265,11 @@ async function run() {
       ['https://feed-a.example/rss.xml', 'https://feed-b.example/rss.xml', existingUrl],
       'OPML import should merge, dedupe, and keep most-recent-first'
     );
+
+    const sidebarSections = elements['sidebar-groups'].children;
+    assert.strictEqual(sidebarSections.length, 2, 'Sidebar should render Tech and Uncategorized groups');
+    const techSection = sidebarSections[0];
+    assert.ok(techSection.children[1].children.length === 2, 'Tech category should include two feeds');
   }
 
   {
