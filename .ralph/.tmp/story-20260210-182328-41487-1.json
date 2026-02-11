@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "total": 2,
+  "remaining": 2,
+  "quality_gates": [
+    "npm test"
+  ]
+}

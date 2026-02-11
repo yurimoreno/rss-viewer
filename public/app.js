@@ -1,6 +1,7 @@
 const form = document.getElementById('feed-form');
 const urlInput = document.getElementById('feed-url');
 const loadButton = document.getElementById('load-feed');
+const opmlInput = document.getElementById('opml-file');
 const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
@@ -166,10 +167,56 @@ function renderRecentFeeds() {
   recentFeedsList.appendChild(fragment);
 }
 
-function addRecentFeed(url) {
-  recentFeeds = [url, ...recentFeeds.filter((entry) => entry !== url)].slice(0, MAX_RECENT_FEEDS);
+function mergeRecentFeeds(urls) {
+  const uniqueIncoming = [];
+  const seen = new Set();
+
+  urls.forEach((url) => {
+    if (!isValidHttpUrl(url) || seen.has(url)) {
+      return;
+    }
+    seen.add(url);
+    uniqueIncoming.push(url);
+  });
+
+  if (uniqueIncoming.length === 0) {
+    return false;
+  }
+
+  recentFeeds = [
+    ...uniqueIncoming,
+    ...recentFeeds.filter((entry) => !seen.has(entry))
+  ].slice(0, MAX_RECENT_FEEDS);
+
   saveRecentFeeds(recentFeeds);
   renderRecentFeeds();
+  return true;
+}
+
+function addRecentFeed(url) {
+  mergeRecentFeeds([url]);
+}
+
+function parseOpmlFeedUrls(opmlText) {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(opmlText, 'application/xml');
+
+  if (xmlDoc.querySelector('parsererror')) {
+    throw new Error('invalid_opml');
+  }
+
+  const outlines = Array.from(xmlDoc.querySelectorAll('outline[xmlUrl]'));
+  const urls = outlines
+    .map((outline) => outline.getAttribute('xmlUrl'))
+    .filter((value) => typeof value === 'string')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0 && isValidHttpUrl(value));
+
+  if (urls.length === 0) {
+    throw new Error('invalid_opml');
+  }
+
+  return urls;
 }
 
 async function loadFeed(url) {
@@ -232,6 +279,30 @@ recentFeedsList.addEventListener('click', async (event) => {
   urlInput.value = url;
   await loadFeed(url);
 });
+
+if (opmlInput) {
+  opmlInput.addEventListener('change', async () => {
+    const [file] = opmlInput.files || [];
+    if (!file) {
+      return;
+    }
+
+    try {
+      const content = await file.text();
+      const importedUrls = parseOpmlFeedUrls(content);
+
+      if (!mergeRecentFeeds(importedUrls)) {
+        throw new Error('invalid_opml');
+      }
+
+      setStatus(`Imported ${importedUrls.length} feed${importedUrls.length === 1 ? '' : 's'} from OPML.`);
+    } catch {
+      setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
+    } finally {
+      opmlInput.value = '';
+    }
+  });
+}
 
 recentFeeds = readRecentFeeds();
 renderRecentFeeds();

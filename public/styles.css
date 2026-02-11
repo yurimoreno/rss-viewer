@@ -83,6 +83,26 @@ button[disabled] {
   gap: 0.6rem;
 }
 
+.opml-import {
+  margin-top: 0.9rem;
+}
+
+.opml-import label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.opml-import input[type="file"] {
+  display: block;
+  width: 100%;
+  border: 1px solid #c7ced8;
+  border-radius: 8px;
+  padding: 0.5rem;
+  font: inherit;
+  background: #ffffff;
+}
+
 .recent-feeds {
   margin-top: 1rem;
 }
