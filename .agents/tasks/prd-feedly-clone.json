@@ -141,7 +141,7 @@
     {
       "id": "US-004",
       "title": "Search across cached items",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-002"
       ],
@@ -150,7 +150,10 @@
         "Add a search input that filters cached items by title/summary",
         "Search results render in the list pane",
         "Clearing search restores the current feed list"
-      ]
+      ],
+      "startedAt": "2026-02-11T03:21:22.856411+00:00",
+      "completedAt": "2026-02-11T03:25:18.000Z",
+      "updatedAt": "2026-02-11T03:25:18.000Z"
     },
     {
       "id": "US-005",

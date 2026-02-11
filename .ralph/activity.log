@@ -68,3 +68,10 @@
 [2026-02-10 19:19:57] US-003: saved toggle and saved view implemented
 [2026-02-10 19:20:04] US-003: verification complete (npm test, dev startup, browser check)
 [2026-02-10 19:21:03] US-003: progress log updated
+[2026-02-10 19:21:22] ITERATION 1 start (mode=build story=US-004)
+[2026-02-10 19:21:55] US-004 audit complete; implementing cached-item search UI and filter behavior
+[2026-02-10 19:22:25] US-004 implementation starting: patching index/app/styles and extending tests for search behavior
+[2026-02-10 19:23:46] US-004: tests and dev startup complete
+[2026-02-10 19:25:08] US-004: search UI and filtering implemented
+[2026-02-10 19:25:12] US-004: browser verification complete
+[2026-02-10 19:26:18] US-004: progress log updated

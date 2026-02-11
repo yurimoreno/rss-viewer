@@ -6,6 +6,37 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 19:25:45 PST - US-004: Search across cached items
+Thread: 019c4ab7-c584-7ca0-ae0d-f5bdae26d0fe
+Run: 20260210-192122-59973 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6db6027 feat: add cached item search
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/app.js
+  - public/index.html
+  - public/styles.css
+  - tests/unread-cache.test.js
+  - .agents/tasks/prd-feedly-clone.json
+  - .ralph/runs/run-20260210-192122-59973-iter-1.log
+  - .ralph/.tmp/prompt-20260210-192122-59973-1.md
+  - .ralph/.tmp/story-20260210-192122-59973-1.json
+  - .ralph/.tmp/story-20260210-192122-59973-1.md
+- What was implemented
+  - Added a cached-item search input and filter logic across feeds.
+  - Search results render in the list pane with feed labels.
+  - Clearing the query restores the selected feed list.
+- **Learnings for future iterations:**
+  - Searching over the cached item map avoids extra network work.
+---
+
 ## 2026-02-10 19:20:28 PST - US-003: Saved/Read Later view
 Thread: 019c4aaf-e831-7002-8856-b09fe77507c8
 Run: 20260210-191247-57714 (iteration 1)

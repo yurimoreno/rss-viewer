@@ -1,0 +1,3888 @@
+OpenAI Codex v0.98.0 (research preview)
+--------
+workdir: /Users/yurimoreno/Coding/rss-viewer
+model: gpt-5.3-codex
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: none
+reasoning summaries: auto
+session id: 019c4ab7-c584-7ca0-ae0d-f5bdae26d0fe
+--------
+user
+# Build
+
+You are an autonomous coding agent. Your task is to complete the work for exactly one story and record the outcome.
+
+## Paths
+- PRD: /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feedly-clone.json
+- AGENTS (optional): /Users/yurimoreno/Coding/rss-viewer/AGENTS.md
+- Progress Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md
+- Guardrails: /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md
+- Guardrails Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md
+- Context Reference: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/CONTEXT_ENGINEERING.md
+- Errors Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log
+- Activity Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log
+- Activity Logger: /Users/yurimoreno/Coding/rss-viewer/ralph log
+- No-commit: false
+- Repo Root: /Users/yurimoreno/Coding/rss-viewer
+- Run ID: 20260210-192122-59973
+- Iteration: 1
+- Run Log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.log
+- Run Summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.md
+
+## Global Quality Gates (apply to every story)
+- npm test
+
+## Selected Story (Do not change scope)
+ID: US-004
+Title: Search across cached items
+
+Story details:
+### US-004: Search across cached items
+Status: in_progress
+Depends on: US-002
+
+Description:
+As a user, I want to search items across my library.
+
+Acceptance Criteria:
+- [ ] Add a search input that filters cached items by title/summary
+- [ ] Search results render in the list pane
+- [ ] Clearing search restores the current feed list
+
+
+If the story details are empty or missing, STOP and report that the PRD story format could not be parsed.
+
+## Rules (Non-Negotiable)
+- Implement **only** the work required to complete the selected story.
+- Complete all tasks associated with this story (and only this story).
+- Do NOT ask the user questions.
+- Do NOT change unrelated code.
+- Do NOT assume something is unimplemented — confirm by reading code.
+- Implement completely; no placeholders or stubs.
+- If No-commit is true, do NOT commit or push changes.
+- Do NOT edit the PRD JSON (status is handled by the loop).
+- All changes made during the run must be committed (including updates to progress/logs).
+ - Before committing, perform a final **security**, **performance**, and **regression** review of your changes.
+
+## Your Task (Do this in order)
+1. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md before any code changes.
+2. Read /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log for repeated failures to avoid.
+3. Read /Users/yurimoreno/Coding/rss-viewer/.agents/tasks/prd-feedly-clone.json for global context (do not edit).
+4. Fully audit and read all necessary files to understand the task end-to-end before implementing. Do not assume missing functionality.
+5. If /Users/yurimoreno/Coding/rss-viewer/AGENTS.md exists, follow its build/test instructions.
+6. Implement only the tasks that belong to US-004.
+7. Run verification commands listed in the story, the global quality gates, and in /Users/yurimoreno/Coding/rss-viewer/AGENTS.md (if required).
+8. If the project has a build or dev workflow, run what applies:
+   - Build step (e.g., `npm run build`) if defined.
+   - Dev server (e.g., `npm run dev`, `wrangler dev`) if it is the normal validation path.
+   - Confirm no runtime/build errors in the console.
+9. Perform a brief audit before committing:
+   - **Security:** check for obvious vulnerabilities or unsafe handling introduced by your changes.
+   - **Performance:** check for avoidable regressions (extra queries, heavy loops, unnecessary re-renders).
+   - **Regression:** verify existing behavior that could be impacted still works.
+10. If No-commit is false, commit changes using the `$commit` skill.
+    - Stage everything: `git add -A`
+    - Confirm a clean working tree after commit: `git status --porcelain` should be empty.
+    - After committing, capture the commit hash and subject using:
+      `git show -s --format="%h %s" HEAD`.
+11. Append a progress entry to /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md with run/commit/test details (format below).
+    If No-commit is true, skip committing and note it in the progress entry.
+
+## Progress Entry Format (Append Only)
+```
+## [Date/Time] - US-004: Search across cached items
+Thread: [codex exec session id if available, otherwise leave blank]
+Run: 20260210-192122-59973 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-192122-59973-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: <hash> <subject> (or `none` + reason)
+- Post-commit status: `clean` or list remaining files
+- Verification:
+  - Command: <exact command> -> PASS/FAIL
+  - Command: <exact command> -> PASS/FAIL
+- Files changed:
+  - <file path>
+  - <file path>
+- What was implemented
+- **Learnings for future iterations:**
+  - Patterns discovered
+  - Gotchas encountered
+  - Useful context
+---
+```
+
+## Completion Signal
+Only output the completion signal when the **selected story** is fully complete and verified.
+When the selected story is complete, output:
+<promise>COMPLETE</promise>
+
+Otherwise, end normally without the signal.
+
+## Additional Guardrails
+- When authoring documentation, capture the why (tests + implementation intent).
+- If you learn how to run/build/test the project, update /Users/yurimoreno/Coding/rss-viewer/AGENTS.md briefly (operational only).
+- Keep AGENTS operational only; progress notes belong in /Users/yurimoreno/Coding/rss-viewer/.ralph/progress.md.
+- If you hit repeated errors, log them in /Users/yurimoreno/Coding/rss-viewer/.ralph/errors.log and add a Sign to /Users/yurimoreno/Coding/rss-viewer/.ralph/guardrails.md using /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph/references/GUARDRAILS.md as the template.
+
+## Activity Logging (Required)
+Log major actions to /Users/yurimoreno/Coding/rss-viewer/.ralph/activity.log using the helper:
+```
+/Users/yurimoreno/Coding/rss-viewer/ralph log "message"
+```
+Log at least:
+- Start of work on the story
+- After major code changes
+- After tests/verification
+- After updating progress log
+
+## Browser Testing (Required for Frontend Stories)
+If the selected story changes UI, you MUST verify it in the browser:
+1. Load the `dev-browser` skill.
+2. Navigate to the relevant page.
+3. Verify the UI changes work as expected.
+4. Take a screenshot if helpful for the progress log.
+
+A frontend story is NOT complete until browser verification passes.
+
+mcp startup: no servers
+
+thinking
+**Clarifying skill availability and fallback plan**
+codex
+I’m starting US-004 now and will first read the guardrails, error history, and PRD context before touching code, then audit the current implementation to scope only this story.
+exec
+/bin/zsh -lc 'cat .agents/tasks/prd-feedly-clone.json' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat .ralph/guardrails.md' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat .ralph/errors.log' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'cat AGENTS.md' in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+# Guardrails (Signs)
+
+> Lessons learned from failures. Read before acting.
+
+## Core Signs
+
+### Sign: Read Before Writing
+- **Trigger**: Before modifying any file
+- **Instruction**: Read the file first
+- **Added after**: Core principle
+
+### Sign: Test Before Commit
+- **Trigger**: Before committing changes
+- **Instruction**: Run required tests and verify outputs
+- **Added after**: Core principle
+
+---
+
+## Learned Signs
+
+ succeeded in 51ms:
+# Error Log
+
+> Failures and repeated issues. Use this to add guardrails.
+
+[2026-02-10 17:19:51] ITERATION 1 command failed (status=1)
+[2026-02-10 17:19:51] ITERATION 1 left uncommitted changes; review run summary at /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.md
+[2026-02-10 17:19:51] ITERATION 1 exited non-zero; review /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-171948-5593-iter-1.log
+ succeeded in 51ms:
+{
+  "version": 1,
+  "project": "RSS Viewer Feedly-Style v1",
+  "overview": "Evolve the RSS viewer into a Feedly-style experience with a multi-feed library, categories, unread tracking, saved items, search, and OPML import/export, all without accounts.",
+  "goals": [
+    "Multi-feed library with categories and counts",
+    "Unread tracking with per-feed and per-category totals",
+    "Saved/Read Later list",
+    "Search across loaded items",
+    "OPML import and export"
+  ],
+  "nonGoals": [
+    "Authentication or accounts",
+    "Cross-device sync",
+    "Keyboard shortcuts",
+    "Full-text article extraction"
+  ],
+  "successMetrics": [
+    "User can manage a library of feeds and categories locally",
+    "Unread counts update accurately as items are marked read",
+ succeeded in 51ms:
+# AGENTS
+
+## Build & test
+- No build step.
+- Tests: `npm test`
+- Dev: `npm run dev`
+- Start: `npm start`
+
+thinking
+**Starting activity log and inspecting files**
+codex
+I’ve confirmed the story context and guardrails. Next I’m logging story start and auditing the code paths for list rendering, caching, and current filters so the search behavior is added without changing unrelated flows.
+exec
+/bin/zsh -lc './ralph log "Start US-004 implementation: audit existing item list/filter flow and add cached-item search"' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'git status --short' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'rg --files' in /Users/yurimoreno/Coding/rss-viewer exited 127 in 52ms:
+zsh:1: no such file or directory: ./ralph
+ succeeded in 52ms:
+ M .agents/tasks/prd-feedly-clone.json
+ M .ralph/activity.log
+?? .ralph/.tmp/prompt-20260210-192122-59973-1.md
+?? .ralph/.tmp/story-20260210-192122-59973-1.json
+?? .ralph/.tmp/story-20260210-192122-59973-1.md
+?? .ralph/runs/run-20260210-192122-59973-iter-1.log
+ succeeded in 52ms:
+AGENTS.md
+package.json
+package-lock.json
+public/app.js
+public/styles.css
+public/index.html
+tests/rss-proxy.test.js
+tests/recent-feeds.test.js
+tests/unread-cache.test.js
+tests/smoke.test.js
+tests/opml-import.test.js
+tests/saved-view.test.js
+server.js
+
+thinking
+**Clarifying commit scope and file handling**
+codex
+I found the activity logger path issue and will use the absolute path next. I’m now reading the frontend and test files to map where list state and filtering currently happen.
+exec
+/bin/zsh -lc '/Users/yurimoreno/Coding/rss-viewer/ralph log "Start US-004 implementation: audit existing item list/filter flow and add cached-item search"' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' public/index.html" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '261,520p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' public/styles.css" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' tests/saved-view.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' tests/unread-cache.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '1,260p' tests/smoke.test.js" in /Users/yurimoreno/Coding/rss-viewer exited 127 in 52ms:
+zsh:1: no such file or directory: /Users/yurimoreno/Coding/rss-viewer/ralph
+ succeeded in 51ms:
+const form = document.getElementById('feed-form');
+const urlInput = document.getElementById('feed-url');
+const loadButton = document.getElementById('load-feed');
+const opmlInput = document.getElementById('opml-file');
+const statusBanner = document.getElementById('status');
+const resultsList = document.getElementById('results');
+const recentFeedsList = document.getElementById('recent-feeds');
+const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const sidebarGroups = document.getElementById('sidebar-groups');
+const feedView = document.getElementById('feed-view');
+const savedView = document.getElementById('saved-view');
+const savedResultsList = document.getElementById('saved-results');
+const savedEmpty = document.getElementById('saved-empty');
+const savedViewToggle = document.getElementById('saved-view-toggle');
+const feedViewToggle = document.getElementById('feed-view-toggle');
+const sidebar = document.getElementById('feed-sidebar');
+const sidebarToggle = document.getElementById('sidebar-toggle');
+const smallScreenMediaQuery = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 640px)')
+  : { matches: false };
+ succeeded in 51ms:
+  try {
+    const raw = localStorage.getItem(LIBRARY_KEY);
+    if (!raw) {
+      return buildLibrary([]);
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return buildLibrary([]);
+    }
+
+    const feeds = Array.isArray(parsed.feeds) ? parsed.feeds : [];
+    const categories = Array.isArray(parsed.categories) ? parsed.categories : [];
+    return buildLibrary(feeds, categories);
+  } catch {
+    return buildLibrary([]);
+  }
+}
+
+function saveLibrary(library) {
+ succeeded in 51ms:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSS Viewer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+        <div class="sidebar-header">
+          <h2>Categories</h2>
+          <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
+        </div>
+        <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+      </aside>
+
+      <main class="viewer" aria-live="polite">
+        <button
+ succeeded in 52ms:
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937;
+  background-color: #f5f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #f5f6f8;
+}
+
+.app-shell {
+  max-width: 1120px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+ succeeded in 52ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+
+  toggle(name, force) {
+    if (typeof force === 'boolean') {
+ succeeded in 51ms:
+const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
+
+class ClassList {
+  constructor() {
+    this.classes = new Set();
+  }
+
+  add(...names) {
+    names.forEach((name) => this.classes.add(name));
+  }
+
+  remove(...names) {
+    names.forEach((name) => this.classes.delete(name));
+  }
+
+  toggle(name, force) {
+    if (typeof force === 'boolean') {
+ succeeded in 51ms:
+const fs = require('fs');
+const path = require('path');
+
+const requiredFiles = [
+  { name: 'server.js', path: path.join(__dirname, '..', 'server.js') },
+  { name: 'public/index.html', path: path.join(__dirname, '..', 'public', 'index.html') }
+];
+
+const missing = requiredFiles.filter((file) => !fs.existsSync(file.path));
+
+if (missing.length > 0) {
+  const names = missing.map((file) => file.name).join(', ');
+  console.error(`Smoke test failed: missing required file(s): ${names}`);
+  process.exit(1);
+}
+
+console.log('Smoke test passed: required scaffold files exist.');
+
+thinking
+**Inspecting app.js tail and logger command**
+codex
+I still need the rest of `public/app.js` to identify render flow hooks. I’ll also locate the activity logger binary since the provided path isn’t present, then continue with targeted edits.
+exec
+/bin/zsh -lc "sed -n '521,900p' public/app.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc 'ls -la' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "rg -n \"ralph log|activity.log|sidebar-toggle|renderItems\\(|selectedFeedUrl|results\" public/app.js tests/*.test.js .ralph -g '"'!node_modules'"'" in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+  recentFeedsEmpty.hidden = true;
+  const fragment = document.createDocumentFragment();
+
+  recentFeeds.forEach((url) => {
+    const li = document.createElement('li');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'recent-feed-button';
+    button.dataset.url = url;
+    button.textContent = url;
+    li.appendChild(button);
+    fragment.appendChild(li);
+  });
+
+  recentFeedsList.appendChild(fragment);
+}
+
+function mergeRecentFeeds(urls) {
+  const uniqueIncoming = [];
+  const seen = new Set();
+ succeeded in 51ms:
+total 120
+drwxr-xr-x@ 14 yurimoreno  staff    448 Feb 10 17:27 .
+drwxr-xr-x  14 yurimoreno  staff    448 Feb 10 17:16 ..
+-rw-r--r--@  1 yurimoreno  staff  10244 Feb 10 17:18 .DS_Store
+drwxr-xr-x@  4 yurimoreno  staff    128 Feb 10 17:16 .agents
+drwxr-xr-x@ 12 yurimoreno  staff    384 Feb 10 19:21 .git
+-rw-r--r--@  1 yurimoreno  staff     24 Feb 10 17:26 .gitignore
+drwxr-xr-x@  8 yurimoreno  staff    256 Feb 10 17:19 .ralph
+-rw-r--r--@  1 yurimoreno  staff    105 Feb 10 17:27 AGENTS.md
+drwxr-xr-x@ 73 yurimoreno  staff   2336 Feb 10 17:25 node_modules
+-rw-r--r--@  1 yurimoreno  staff  30823 Feb 10 17:25 package-lock.json
+-rw-r--r--@  1 yurimoreno  staff    543 Feb 10 19:17 package.json
+drwxr-xr-x@  5 yurimoreno  staff    160 Feb 10 17:44 public
+-rw-r--r--@  1 yurimoreno  staff   1257 Feb 10 17:41 server.js
+drwxr-xr-x@  8 yurimoreno  staff    256 Feb 10 19:18 tests
+ succeeded in 52ms:
+Total output lines: 420
+
+tests/saved-view.test.js:233:    results: new FakeElement('ul'),
+tests/saved-view.test.js:239:    'saved-results': new FakeElement('ul'),
+tests/saved-view.test.js:312:  const firstItem = elements.results.children[0];
+tests/saved-view.test.js:321:  assert.strictEqual(elements['saved-results'].children.length, 1, 'Saved view should render saved items');
+tests/saved-view.test.js:346:    reloaded.elements['saved-results'].children.length,
+tests/unread-cache.test.js:233:    results: new FakeElement('ul'),
+tests/unread-cache.test.js:239:    'saved-results': new FakeElement('ul'),
+tests/unread-cache.test.js:323:  const firstItem = elements.results.children[0];
+public/app.js:6:const resultsList = document.getElementById('results');
+public/app.js:12:const savedResultsList = document.getElementById('saved-results');
+public/app.js:17:const sidebarToggle = document.getElementById('sidebar-toggle');
+public/app.js:31:let selectedFeedUrl = '';
+public/app.js:59:  resultsList.innerHTML = '';
+public/app.js:152:function renderItems(feedUrl, items) {
+public/app.js:158:  resultsList.appendChild(fragment);
+public/app.js:450:  if (!selectedFeedUrl) {
+public/app.js:454:  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+public/app.js:786:    selectedFeedUrl = url;
+
+thinking
+**Scoping browser testing fallback**
+codex
+I found that `ralph` works via PATH (not the repo-local path), so I’ll use that going forward. I’m now reviewing the full frontend test harness to add focused search coverage and keep behavior regression-safe.
+exec
+/bin/zsh -lc 'cat package.json' in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '260,520p' tests/unread-cache.test.js" in /Users/yurimoreno/Coding/rss-viewerexec
+/bin/zsh -lc "sed -n '260,560p' tests/saved-view.test.js" in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+{
+  "name": "rss-viewer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/recent-feeds.test.js && node tests/opml-import.test.js && node tests/unread-cache.test.js && node tests/saved-view.test.js",
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1",
+    "rss-parser": "^3.13.0"
+  }
+}
+ succeeded in 53ms:
+    document,
+    localStorage,
+    fetch: fetchImpl,
+    DOMParser: FakeDOMParser,
+    URL,
+    Intl,
+    Date,
+    setTimeout,
+    clearTimeout,
+    console
+  };
+
+  const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  vm.runInNewContext(source, context, { filename: 'public/app.js' });
+
+  return { elements, localStorage };
+}
+
+async function run() {
+  const libraryKey = 'rssViewer.library';
+ succeeded in 53ms:
+    document,
+    localStorage,
+    fetch: fetchImpl,
+    DOMParser: FakeDOMParser,
+    URL,
+    Intl,
+    Date,
+    setTimeout,
+    clearTimeout,
+    console
+  };
+
+  const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
+  vm.runInNewContext(source, context, { filename: 'public/app.js' });
+
+  return { elements, localStorage };
+}
+
+async function run() {
+  const libraryKey = 'rssViewer.library';
+exec
+/bin/zsh -lc 'ralph log "US-004 audit complete; implementing cached-item search UI and filter behavior"' in /Users/yurimoreno/Coding/rss-viewer succeeded in 108ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+
+thinking
+**Planning search input and filtering**
+codex
+I have enough context and I’m moving to implementation: add a list-pane search input, wire cross-cache filtering in `app.js`, and extend frontend tests to prove search results and clear-to-restore behavior. Then I’ll run full verification and dev/start runtime checks.
+exec
+/bin/zsh -lc "sed -n '260,520p' public/styles.css" in /Users/yurimoreno/Coding/rss-viewer succeeded in 51ms:
+
+.recent-feeds-empty {
+  margin: 0.6rem 0 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.recent-feed-button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid #d7deea;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: #f8faff;
+  color: #0f4fb7;
+  font-weight: 500;
+}
+
+.recent-feed-button:hover {
+  background: #edf3ff;
+exec
+/bin/zsh -lc 'ralph log "US-004 implementation starting: patching index/app/styles and extending tests for search behavior"' in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+Using bundled templates: /Users/yurimoreno/.npm/_npx/3fbde570d56e1b0c/node_modules/@iannuttall/ralph/.agents/ralph
+
+thinking
+**Applying targeted patches**
+codex
+I’m editing `public/index.html`, `public/styles.css`, `public/app.js`, and `tests/unread-cache.test.js` now to add search UI/state and acceptance coverage without widening scope.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/index.html
+@@ -60,2 +60,13 @@
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+apply_patch(auto_approved=true) exited 0 in 21ms:
+Success. Updated the following files:
+M public/index.html
+file update:
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+
+file update:
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/styles.css
+@@ -281,2 +281,21 @@
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+apply_patch(auto_approved=true) exited 0 in 31ms:
+Success. Updated the following files:
+M public/styles.css
+file update:
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+file update:
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+
+thinking
+**Applying large patch carefully**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/app.js
+@@ -8,2 +8,3 @@
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+@@ -34,2 +35,3 @@
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+@@ -87,3 +89,8 @@
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+@@ -120,3 +127,3 @@
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+@@ -160,2 +167,47 @@
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+@@ -449,3 +501,9 @@
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
++    return;
++  }
++
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+     return;
+@@ -453,3 +511,3 @@
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  clearResults();
+ }
+@@ -895,2 +953,9 @@
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+apply_patch(auto_approved=true) exited 0 in 42ms:
+Success. Updated the following files:
+M public/app.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..251cba5416967abdc399d09bc80d5f71d757ea66
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
++    return;
++  }
++
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..251cba5416967abdc399d09bc80d5f71d757ea66
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
++    return;
++  }
++
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+
+thinking
+**Adjusting feed rendering for search**
+codex
+I’ve wired core search state; I’m making one follow-up adjustment so loading a feed while a query is active keeps rendering filtered search results instead of overriding the list.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/public/app.js
+@@ -847,3 +847,3 @@
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+apply_patch(auto_approved=true) exited 0 in 53ms:
+Success. Updated the following files:
+M public/app.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+
+
+thinking
+**Updating unread-cache tests**
+codex
+I’m now extending `tests/unread-cache.test.js` to validate cross-feed search results and clear-to-restore behavior, while preserving existing unread-count assertions.
+file update
+M /Users/yurimoreno/Coding/rss-viewer/tests/unread-cache.test.js
+@@ -235,2 +235,3 @@
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+@@ -281,2 +282,3 @@
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+@@ -286,2 +288,3 @@
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+@@ -334,2 +337,50 @@
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+apply_patch(auto_approved=true) exited 0 in 50ms:
+Success. Updated the following files:
+M tests/unread-cache.test.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..d7fb55050b7634a1f6f20ae2fbcf0b4fe7c5fa5d
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -332,6 +335,54 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+ }
+ 
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..d7fb55050b7634a1f6f20ae2fbcf0b4fe7c5fa5d
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -332,6 +335,54 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+ }
+ 
+
+
+thinking
+**Planning fetch function update**
+exec
+/bin/zsh -lc "rg -n \"fetchImpl|return \\{ items \\}|secondFeedItems|feed-form\" tests/unread-cache.test.js && sed -n '280,420p' tests/unread-cache.test.js" in /Users/yurimoreno/Coding/rss-viewer succeeded in 53ms:
+226:function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
+228:    'feed-form': new FakeElement('form'),
+263:    fetch: fetchImpl,
+302:    fetchImpl: async () => ({
+305:        return { items };
+318:  await elements['feed-form'].dispatch('submit');
+338:  const secondFeedItems = [
+354:  await elements['feed-form'].dispatch('submit');
+  const libraryKey = 'rssViewer.library';
+  const cacheKey = 'rssViewer.feedItemCache';
+  const feedUrl = 'https://feed-a.example/rss.xml';
+  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+  const opml = `<?xml version="1.0"?>
+    <opml version="1.0">
+      <body>
+        <outline text="Tech">
+          <outline text="Feed A" xmlUrl="${feedUrl}" />
+          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+        </outline>
+      </body>
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..d7fb55050b7634a1f6f20ae2fbcf0b4fe7c5fa5d
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -332,6 +335,54 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+ }
+ 
+
+
+thinking
+**Planning dynamic fetch adjustments**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/tests/unread-cache.test.js
+@@ -299,10 +299,30 @@
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
+   const { elements, localStorage } = bootstrapApp({
+     localStorageSeed: {},
+-    fetchImpl: async () => ({
+-      ok: true,
+-      async json() {
+-        return { items };
+-      }
+-    })
++    fetchImpl: async (requestUrl) => {
++      const parsed = new URL(`http://localhost${requestUrl}`);
++      const target = parsed.searchParams.get('url');
++
++      return {
++        ok: true,
++        async json() {
++          return { items: target === secondFeedUrl ? secondFeedItems : items };
++        }
++      };
++    }
+   });
+@@ -314,3 +334,3 @@
+   const library = JSON.parse(localStorage.dump()[libraryKey]);
+-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
++  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
+ 
+@@ -336,17 +356,2 @@
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+-
+-  const secondFeedItems = [
+-    {
+-      title: 'Searchable Match',
+-      link: 'https://example.com/match',
+-      pubDate: '2024-02-01',
+-      summary: 'This summary includes alpha keyphrase.'
+-    },
+-    {
+-      title: 'Unrelated',
+-      link: 'https://example.com/unrelated',
+-      pubDate: '2024-02-02',
+-      summary: 'No matching keywords here.'
+-    }
+-  ];
+ 
+apply_patch(auto_approved=true) exited 0 in 49ms:
+Success. Updated the following files:
+M tests/unread-cache.test.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..1826861e80e56636e8f6f1ce6aa2f5bbe841da99
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -294,14 +297,34 @@
+     pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
+   }));
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
+   const { elements, localStorage } = bootstrapApp({
+     localStorageSeed: {},
+-    fetchImpl: async () => ({
+-      ok: true,
+-      async json() {
+-        return { items };
+-      }
+-    })
++    fetchImpl: async (requestUrl) => {
++      const parsed = new URL(`http://localhost${requestUrl}`);
++      const target = parsed.searchParams.get('url');
++
++      return {
++        ok: true,
++        async json() {
++          return { items: target === secondFeedUrl ? secondFeedItems : items };
++        }
++      };
++    }
+   });
+ 
+   const file = { text: async () => opml };
+@@ -309,7 +332,7 @@
+   await elements['opml-file'].dispatch('change');
+ 
+   const library = JSON.parse(localStorage.dump()[libraryKey]);
+-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
++  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
+ 
+   elements['feed-url'].value = feedUrl;
+   await elements['feed-form'].dispatch('submit');
+@@ -332,6 +355,39 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+ }
+ 
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..1826861e80e56636e8f6f1ce6aa2f5bbe841da99
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -294,14 +297,34 @@
+     pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
+   }));
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
+   const { elements, localStorage } = bootstrapApp({
+     localStorageSeed: {},
+-    fetchImpl: async () => ({
+-      ok: true,
+-      async json() {
+-        return { items };
+-      }
+-    })
++    fetchImpl: async (requestUrl) => {
++      const parsed = new URL(`http://localhost${requestUrl}`);
++      const target = parsed.searchParams.get('url');
++
++      return {
++        ok: true,
++        async json() {
++          return { items: target === secondFeedUrl ? secondFeedItems : items };
++        }
++      };
++    }
+   });
+ 
+   const file = { text: async () => opml };
+@@ -309,7 +332,7 @@
+   await elements['opml-file'].dispatch('change');
+ 
+   const library = JSON.parse(localStorage.dump()[libraryKey]);
+-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
++  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
+ 
+   elements['feed-url'].value = feedUrl;
+   await elements['feed-form'].dispatch('submit');
+@@ -332,6 +355,39 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
+   console.log('Unread cache test passed: cap, read state, and counts verified.');
+ }
+ 
+
+
+thinking
+**Updating log messages for search context**
+file update
+M /Users/yurimoreno/Coding/rss-viewer/tests/unread-cache.test.js
+@@ -390,3 +390,3 @@
+ 
+-  console.log('Unread cache test passed: cap, read state, and counts verified.');
++  console.log('Unread cache test passed: cap, read state, counts, and search behavior verified.');
+ }
+apply_patch(auto_approved=true) exited 0 in 58ms:
+Success. Updated the following files:
+M tests/unread-cache.test.js
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..09386b83e3419bdd3113adba17c9623c831dd00c
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -294,14 +297,34 @@
+     pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
+   }));
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
+   const { elements, localStorage } = bootstrapApp({
+     localStorageSeed: {},
+-    fetchImpl: async () => ({
+-      ok: true,
+-      async json() {
+-        return { items };
+-      }
+-    })
++    fetchImpl: async (requestUrl) => {
++      const parsed = new URL(`http://localhost${requestUrl}`);
++      const target = parsed.searchParams.get('url');
++
++      return {
++        ok: true,
++        async json() {
++          return { items: target === secondFeedUrl ? secondFeedItems : items };
++        }
++      };
++    }
+   });
+ 
+   const file = { text: async () => opml };
+@@ -309,7 +332,7 @@
+   await elements['opml-file'].dispatch('change');
+ 
+   const library = JSON.parse(localStorage.dump()[libraryKey]);
+-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
++  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
+ 
+   elements['feed-url'].value = feedUrl;
+   await elements['feed-form'].dispatch('submit');
+@@ -332,7 +355,40 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
+-  console.log('Unread cache test passed: cap, read state, and counts verified.');
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
++  console.log('Unread cache test passed: cap, read state, counts, and search behavior verified.');
+ }
+ 
+ run().catch((error) => {
+
+file update:
+diff --git a/public/app.js b/public/app.js
+index 285ddbdd3f7b82428d26ed0177dbe2396703c94d..fcf518b14b2994707dd695bf313836a5bca8e793
+--- a/public/app.js
++++ b/public/app.js
+@@ -6,6 +6,7 @@
+ const resultsList = document.getElementById('results');
+ const recentFeedsList = document.getElementById('recent-feeds');
+ const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
++const searchInput = document.getElementById('item-search');
+ const sidebarGroups = document.getElementById('sidebar-groups');
+ const feedView = document.getElementById('feed-view');
+ const savedView = document.getElementById('saved-view');
+@@ -32,6 +33,7 @@
+ let feedItemCache = {};
+ const feedUnreadCounts = new Map();
+ let currentView = 'feed';
++let currentSearchQuery = '';
+ 
+ function setStatus(message, kind = 'idle') {
+   statusBanner.classList.remove('loading', 'error');
+@@ -85,7 +87,12 @@
+   }).format(parsed);
+ }
+ 
+-function createItemElement(feedUrl, item) {
++function getFeedLabel(feedUrl) {
++  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
++  return matchedFeed ? matchedFeed.title : feedUrl;
++}
++
++function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
+   const li = document.createElement('li');
+   li.className = 'item';
+   if (item.isRead) {
+@@ -118,7 +125,7 @@
+ 
+   const meta = document.createElement('div');
+   meta.className = 'meta';
+-  meta.textContent = pubDate;
++  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
+ 
+   const readToggle = document.createElement('button');
+   readToggle.type = 'button';
+@@ -158,6 +165,51 @@
+   resultsList.appendChild(fragment);
+ }
+ 
++function getAllCachedItems() {
++  const allItems = [];
++
++  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
++    items.forEach((item) => {
++      allItems.push({ ...item, feedUrl });
++    });
++  });
++
++  return allItems;
++}
++
++function getSearchResults(query) {
++  const normalizedQuery = query.trim().toLowerCase();
++  if (normalizedQuery.length === 0) {
++    return [];
++  }
++
++  const results = getAllCachedItems().filter((item) => {
++    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
++    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
++    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
++  });
++
++  results.sort((a, b) => {
++    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
++    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
++    return bTime - aTime;
++  });
++
++  return results;
++}
++
++function renderSearchResults() {
++  const results = getSearchResults(currentSearchQuery);
++  const fragment = document.createDocumentFragment();
++
++  results.forEach((item) => {
++    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
++  });
++
++  clearResults();
++  resultsList.appendChild(fragment);
++}
++
+ function isValidHttpUrl(value) {
+   try {
+     const candidate = new URL(value);
+@@ -447,11 +499,17 @@
+ }
+ 
+ function rerenderSelectedFeed() {
+-  if (!selectedFeedUrl) {
++  if (currentSearchQuery.length > 0) {
++    renderSearchResults();
+     return;
+   }
+ 
+-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++  if (selectedFeedUrl) {
++    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
++    return;
++  }
++
++  clearResults();
+ }
+ 
+ function getSavedItems() {
+@@ -787,7 +845,7 @@
+     const cachedItems = buildCachedItemsFromFetch(url, items);
+     setCachedFeedItems(url, cachedItems);
+     renderSidebarFeeds();
+-    renderItems(url, cachedItems);
++    rerenderSelectedFeed();
+ 
+     if (cachedItems.length === 0) {
+       setStatus('Feed loaded, but no items were found.');
+@@ -893,6 +951,13 @@
+   });
+ }
+ 
++if (searchInput) {
++  searchInput.addEventListener('input', () => {
++    currentSearchQuery = searchInput.value.trim().toLowerCase();
++    rerenderSelectedFeed();
++  });
++}
++
+ recentFeeds = readRecentFeeds();
+ feedItemCache = readFeedItemCache();
+ refreshUnreadCounts();
+diff --git a/public/index.html b/public/index.html
+index 2b6bb597e38f48977c57df19431dcdae850af31b..f6f272f0ff6b8ed2b05ad0f11df4dfd4291ff9f0
+--- a/public/index.html
++++ b/public/index.html
+@@ -58,6 +58,17 @@
+             <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
+           </section>
+ 
++          <section class="item-search" aria-label="Search cached items">
++            <label for="item-search">Search items</label>
++            <input
++              id="item-search"
++              name="item-search"
++              type="search"
++              placeholder="Search by title or summary"
++              autocomplete="off"
++            />
++          </section>
++
+           <ul id="results" class="results" aria-label="Feed items"></ul>
+         </section>
+ 
+diff --git a/public/styles.css b/public/styles.css
+index bbc57cb6be857a72ca77ee437481c2ed2f2f5427..396e28a8b8283fa23eb9a1a09c625fe05b43e049
+--- a/public/styles.css
++++ b/public/styles.css
+@@ -279,6 +279,25 @@
+   background: #edf3ff;
+ }
+ 
++.item-search {
++  margin-top: 1rem;
++}
++
++.item-search label {
++  display: block;
++  font-weight: 600;
++  margin-bottom: 0.5rem;
++}
++
++.item-search input[type="search"] {
++  display: block;
++  width: 100%;
++  border: 1px solid #c7ced8;
++  border-radius: 8px;
++  padding: 0.6rem 0.75rem;
++  font: inherit;
++}
++
+ .spinner {
+   width: 14px;
+   height: 14px;
+diff --git a/tests/unread-cache.test.js b/tests/unread-cache.test.js
+index 600c79be5ce1d58817ac5ddc46341a3f3a116c89..09386b83e3419bdd3113adba17c9623c831dd00c
+--- a/tests/unread-cache.test.js
++++ b/tests/unread-cache.test.js
+@@ -233,6 +233,7 @@
+     results: new FakeElement('ul'),
+     'recent-feeds': new FakeElement('ul'),
+     'recent-feeds-empty': new FakeElement('p'),
++    'item-search': new FakeElement('input'),
+     'sidebar-groups': new FakeElement('nav'),
+     'feed-view': new FakeElement('section'),
+     'saved-view': new FakeElement('section'),
+@@ -279,11 +280,13 @@
+   const libraryKey = 'rssViewer.library';
+   const cacheKey = 'rssViewer.feedItemCache';
+   const feedUrl = 'https://feed-a.example/rss.xml';
++  const secondFeedUrl = 'https://feed-b.example/rss.xml';
+   const opml = `<?xml version="1.0"?>
+     <opml version="1.0">
+       <body>
+         <outline text="Tech">
+           <outline text="Feed A" xmlUrl="${feedUrl}" />
++          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
+         </outline>
+       </body>
+     </opml>`;
+@@ -294,14 +297,34 @@
+     pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
+   }));
+ 
++  const secondFeedItems = [
++    {
++      title: 'Searchable Match',
++      link: 'https://example.com/match',
++      pubDate: '2024-02-01',
++      summary: 'This summary includes alpha keyphrase.'
++    },
++    {
++      title: 'Unrelated',
++      link: 'https://example.com/unrelated',
++      pubDate: '2024-02-02',
++      summary: 'No matching keywords here.'
++    }
++  ];
++
+   const { elements, localStorage } = bootstrapApp({
+     localStorageSeed: {},
+-    fetchImpl: async () => ({
+-      ok: true,
+-      async json() {
+-        return { items };
+-      }
+-    })
++    fetchImpl: async (requestUrl) => {
++      const parsed = new URL(`http://localhost${requestUrl}`);
++      const target = parsed.searchParams.get('url');
++
++      return {
++        ok: true,
++        async json() {
++          return { items: target === secondFeedUrl ? secondFeedItems : items };
++        }
++      };
++    }
+   });
+ 
+   const file = { text: async () => opml };
+@@ -309,7 +332,7 @@
+   await elements['opml-file'].dispatch('change');
+ 
+   const library = JSON.parse(localStorage.dump()[libraryKey]);
+-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
++  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
+ 
+   elements['feed-url'].value = feedUrl;
+   await elements['feed-form'].dispatch('submit');
+@@ -332,7 +355,40 @@
+   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
+   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
+ 
+-  console.log('Unread cache test passed: cap, read state, and counts verified.');
++  elements['feed-url'].value = secondFeedUrl;
++  await elements['feed-form'].dispatch('submit');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Selecting second feed should render second feed items before searching'
++  );
++
++  const searchInput = elements['item-search'];
++  searchInput.value = 'alpha';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    1,
++    'Search should filter cached items across all feeds by title/summary'
++  );
++  assert.strictEqual(
++    elements.results.children[0].children[0].children[0].textContent,
++    'Searchable Match',
++    'Search result should render in the feed list pane'
++  );
++
++  searchInput.value = '';
++  await searchInput.dispatch('input');
++
++  assert.strictEqual(
++    elements.results.children.length,
++    2,
++    'Clearing search should restore the selected feed list'
++  );
++
++  console.log('Unread cache test passed: cap, read state, counts, and search behavior verified.');
+ }
+ 
+ run().catch((error) => {
+
