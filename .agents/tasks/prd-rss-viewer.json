@@ -81,7 +81,7 @@
     {
       "id": "US-001",
       "title": "Initialize project and basic server",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "description": "As a developer, I want a minimal project scaffold so I can run the app locally.",
       "acceptanceCriteria": [
@@ -93,13 +93,13 @@
         "Negative case: if `public/index.html` is missing, `npm test` exits non-zero with a clear message"
       ],
       "startedAt": "2026-02-11T01:24:49.602538+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-11T01:24:49.602702+00:00"
+      "completedAt": "2026-02-11T01:40:21.000Z",
+      "updatedAt": "2026-02-11T01:40:21.000Z"
     },
     {
       "id": "US-002",
       "title": "Create RSS proxy endpoint",
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-001"
       ],
@@ -110,7 +110,10 @@
         "Example: requesting a valid feed returns JSON with `feed.title` and a non-empty `items` array",
         "Negative case: missing or invalid `url` returns 400 with `{\"error\":\"invalid_url\"}`",
         "Negative case: fetch or parse failure returns 502 with `{\"error\":\"fetch_failed\"}`"
-      ]
+      ],
+      "startedAt": "2026-02-11T01:40:28.160238+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-11T01:40:28.160557+00:00"
     },
     {
       "id": "US-003",
