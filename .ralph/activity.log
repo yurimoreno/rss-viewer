@@ -22,3 +22,9 @@
 [2026-02-10 17:44:47] US-003: completed core UI files (index/styles/app) with loading/error/results states
 [2026-02-10 17:48:01] US-003: browser verification passed (invalid URL + valid feed rendered items)
 [2026-02-10 17:49:10] US-003: progress log updated
+[2026-02-10 17:49:23] ITERATION 1 start (mode=build story=US-004)
+[2026-02-10 17:51:09] US-004 major code changes: added recent feed UI, localStorage persistence, and tests
+[2026-02-10 17:51:29] US-004 start: auditing current feed load flow and UI state
+[2026-02-10 17:51:32] US-004: added recent feeds UI, localStorage persistence, and tests
+[2026-02-10 17:52:09] US-004: verification complete (npm test, dev startup, browser check)
+[2026-02-10 17:52:58] US-004: progress log updated

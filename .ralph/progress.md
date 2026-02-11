@@ -6,6 +6,40 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 17:52:40 PST - US-004: Remember recent feeds
+Thread: 019c4a63-8a21-7aa0-8dff-698fa6b2f0d0
+Run: 20260210-174923-30606 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-174923-30606-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-174923-30606-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cf4aacc feat: add recent feed persistence
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/index.html
+  - public/styles.css
+  - public/app.js
+  - tests/recent-feeds.test.js
+  - package.json
+  - .agents/tasks/prd-rss-viewer.json
+  - .ralph/activity.log
+  - .ralph/progress.md
+  - .ralph/runs/run-20260210-174923-30606-iter-1.log
+  - .ralph/.tmp/prompt-20260210-174923-30606-1.md
+  - .ralph/.tmp/story-20260210-174923-30606-1.json
+  - .ralph/.tmp/story-20260210-174923-30606-1.md
+- What was implemented
+  - Added recent feeds UI and styling for saved URLs.
+  - Persisted successful feed loads to localStorage with recency and max-5 rules.
+  - Added tests for persistence, reload, and failure guardrails.
+- **Learnings for future iterations:**
+  - Recent feeds behavior can be tested with a lightweight DOM/localStorage harness.
+---
+
 ## 2026-02-10 17:48:17 PST - US-003: Build the minimal viewer UI
 Thread: 019c4a5e-0a2f-77a2-a7b0-6dc5662d2b00
 Run: 20260210-174322-29159 (iteration 1)

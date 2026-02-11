@@ -137,7 +137,7 @@
     {
       "id": "US-004",
       "title": "Remember recent feeds",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-003"
       ],
@@ -147,7 +147,10 @@
         "Show a recent feeds list that lets users re-load a feed with one click",
         "Example: loading a valid feed adds it to the recent list and persists after refresh",
         "Negative case: failed/invalid URLs are not added to the recent list"
-      ]
+      ],
+      "startedAt": "2026-02-11T01:49:23.085583+00:00",
+      "completedAt": "2026-02-11T01:52:11.000Z",
+      "updatedAt": "2026-02-11T01:52:11.000Z"
     }
   ]
 }
