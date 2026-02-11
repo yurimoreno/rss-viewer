@@ -2,6 +2,7 @@ const form = document.getElementById('feed-form');
 const urlInput = document.getElementById('feed-url');
 const loadButton = document.getElementById('load-feed');
 const opmlInput = document.getElementById('opml-file');
+const opmlExportButton = document.getElementById('opml-export');
 const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
@@ -721,6 +722,71 @@ function parseOpmlFeeds(opmlText) {
   return parsedFeeds;
 }
 
+function escapeXml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
+function buildOpmlTextFromLibrary(library) {
+  const normalizedLibrary = buildLibrary(
+    library && Array.isArray(library.feeds) ? library.feeds : [],
+    library && Array.isArray(library.categories) ? library.categories : []
+  );
+  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
+  const outlineLines = [];
+
+  grouped.forEach((feeds, categoryName) => {
+    outlineLines.push(`    <outline text="${escapeXml(categoryName)}" title="${escapeXml(categoryName)}">`);
+
+    feeds.forEach((feed) => {
+      const title = feed.title || feed.url;
+      outlineLines.push(
+        `      <outline type="rss" text="${escapeXml(title)}" title="${escapeXml(title)}" xmlUrl="${escapeXml(feed.url)}" />`
+      );
+    });
+
+    outlineLines.push('    </outline>');
+  });
+
+  const now = new Date().toUTCString();
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+  <head>
+    <title>RSS Viewer Library</title>
+    <dateCreated>${escapeXml(now)}</dateCreated>
+  </head>
+  <body>
+${outlineLines.join('\n')}
+  </body>
+</opml>`;
+}
+
+function downloadLibraryAsOpml() {
+  const library = readLibrary();
+  if (!library.feeds.length) {
+    setStatus('Add at least one feed before exporting OPML.', 'error');
+    return;
+  }
+
+  const opmlText = buildOpmlTextFromLibrary(library);
+  const blob = new Blob([opmlText], { type: 'text/x-opml+xml;charset=utf-8' });
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  link.href = objectUrl;
+  link.download = `rss-viewer-library-${dateStamp}.opml`;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+  setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
+}
+
 function groupFeedsByCategory(feeds) {
   const grouped = new Map();
 
@@ -947,6 +1013,16 @@ if (opmlInput) {
       setStatus('Could not import OPML. Please upload a valid OPML file.', 'error');
     } finally {
       opmlInput.value = '';
+    }
+  });
+}
+
+if (opmlExportButton) {
+  opmlExportButton.addEventListener('click', () => {
+    try {
+      downloadLibraryAsOpml();
+    } catch {
+      setStatus('Could not export OPML. Please try again.', 'error');
     }
   });
 }

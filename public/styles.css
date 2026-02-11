@@ -241,6 +241,10 @@ button[disabled] {
   background: #ffffff;
 }
 
+#opml-export {
+  margin-top: 0.6rem;
+}
+
 .recent-feeds {
   margin-top: 1rem;
 }

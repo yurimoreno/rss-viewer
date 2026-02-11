@@ -32,6 +32,9 @@ class FakeElement {
     this.listeners = {};
     this.classList = new ClassList();
     this.files = null;
+    this.style = {};
+    this.href = '';
+    this.download = '';
   }
 
   append(...nodes) {
@@ -87,6 +90,17 @@ class FakeElement {
   set innerHTML(_) {
     this.children = [];
     this.textContent = '';
+  }
+
+  click() {}
+
+  remove() {
+    if (!this.parentElement) {
+      return;
+    }
+
+    this.parentElement.children = this.parentElement.children.filter((child) => child !== this);
+    this.parentElement = null;
   }
 }
 
@@ -182,11 +196,16 @@ function createLocalStorage(seed = {}) {
 }
 
 function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
+  const downloadLinks = [];
+  const createdBlobs = [];
+  const revokedUrls = [];
+
   const elements = {
     'feed-form': new FakeElement('form'),
     'feed-url': new FakeElement('input'),
     'load-feed': new FakeElement('button'),
     'opml-file': new FakeElement('input'),
+    'opml-export': new FakeElement('button'),
     status: new FakeElement('section'),
     results: new FakeElement('ul'),
     'recent-feeds': new FakeElement('ul'),
@@ -194,25 +213,51 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
     'sidebar-groups': new FakeElement('nav')
   };
 
+  const body = new FakeElement('body');
+
   const document = {
     createElement(tagName) {
-      return new FakeElement(tagName);
+      const element = new FakeElement(tagName);
+      if (tagName.toLowerCase() === 'a') {
+        element.click = () => {
+          downloadLinks.push({
+            href: element.href,
+            download: element.download
+          });
+        };
+      }
+      return element;
     },
     createDocumentFragment() {
       return new FakeDocumentFragment();
     },
     getElementById(id) {
       return elements[id];
-    }
+    },
+    body
   };
 
   const localStorage = createLocalStorage(localStorageSeed);
+  class FakeBlob {
+    constructor(parts, options = {}) {
+      this.parts = Array.isArray(parts) ? parts : [];
+      this.type = options.type || '';
+    }
+  }
+  URL.createObjectURL = (blob) => {
+    createdBlobs.push(blob);
+    return `blob:mock-${createdBlobs.length}`;
+  };
+  URL.revokeObjectURL = (url) => {
+    revokedUrls.push(url);
+  };
 
   const context = {
     document,
     localStorage,
     fetch: fetchImpl,
     DOMParser: FakeDOMParser,
+    Blob: FakeBlob,
     URL,
     Intl,
     Date,
@@ -224,7 +269,15 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
   const source = fs.readFileSync(path.join(__dirname, '..', 'public', 'app.js'), 'utf8');
   vm.runInNewContext(source, context, { filename: 'public/app.js' });
 
-  return { elements, localStorage };
+  return {
+    elements,
+    localStorage,
+    downloads: {
+      links: downloadLinks,
+      blobs: createdBlobs,
+      revokedUrls
+    }
+  };
 }
 
 async function run() {
@@ -246,7 +299,7 @@ async function run() {
     const seed = {};
     seed[storageKey] = JSON.stringify([existingUrl]);
 
-    const { elements, localStorage } = bootstrapApp({
+    const { elements, localStorage, downloads } = bootstrapApp({
       localStorageSeed: seed,
       fetchImpl: async (requestUrl) => {
         let itemCount = 1;
@@ -320,6 +373,37 @@ async function run() {
       rerenderedTechSection.children[0].children[1].textContent,
       '5',
       'Category count should equal the sum of feed counts'
+    );
+
+    await elements['opml-export'].dispatch('click');
+
+    assert.strictEqual(downloads.links.length, 1, 'OPML export should trigger one download');
+    assert.ok(
+      /^rss-viewer-library-\d{4}-\d{2}-\d{2}\.opml$/.test(downloads.links[0].download),
+      'OPML export should use a dated filename'
+    );
+    assert.strictEqual(downloads.blobs.length, 1, 'OPML export should generate one blob');
+    const exportedOpml = downloads.blobs[0].parts.join('');
+    assert.ok(
+      exportedOpml.includes('<outline text="Tech" title="Tech">'),
+      'OPML export should preserve categories as folder outlines'
+    );
+    assert.ok(
+      exportedOpml.includes('<outline text="Uncategorized" title="Uncategorized">'),
+      'OPML export should include Uncategorized folder when needed'
+    );
+    assert.ok(
+      exportedOpml.includes('xmlUrl="https://feed-a.example/rss.xml"'),
+      'OPML export should include feed entries in folder outlines'
+    );
+    assert.ok(
+      exportedOpml.includes('xmlUrl="https://feed-b.example/rss.xml"'),
+      'OPML export should include feed entries in folder outlines'
+    );
+    assert.deepStrictEqual(
+      downloads.revokedUrls,
+      [downloads.links[0].href],
+      'OPML export should revoke the generated object URL'
     );
   }
 
