@@ -164,6 +164,10 @@ button:hover {
   color: var(--muted);
 }
 
+.sidebar-category-header {
+  cursor: grab;
+}
+
 .sidebar-group h3 .sidebar-category-name {
   flex: 1;
 }
@@ -179,6 +183,10 @@ button:hover {
 .sidebar-feed-list li {
   display: flex;
   align-items: center;
+}
+
+.sidebar-feed-row {
+  cursor: grab;
 }
 
 .sidebar-group.is-collapsed .sidebar-feed-list {
@@ -255,6 +263,10 @@ button:hover {
 .category-action:hover,
 .feed-action:hover {
   background: #1a2330;
+}
+
+.is-dragging {
+  opacity: 0.6;
 }
 
 .sidebar-empty {

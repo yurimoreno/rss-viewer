@@ -49,6 +49,7 @@ let selectedItemFeedUrl = '';
 let currentVisibleItems = [];
 let currentListElement = resultsList;
 let categoryState = {};
+let dragState = null;
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -747,6 +748,88 @@ function markCategoryAllRead(categoryName) {
   return count;
 }
 
+function moveArrayItem(items, fromIndex, toIndex) {
+  const next = [...items];
+  const [item] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, item);
+  return next;
+}
+
+function persistLibraryOrdering(feeds, categories) {
+  const normalized = buildLibrary(feeds, categories);
+  saveLibrary(normalized);
+  setImportedFeeds(normalized.feeds);
+}
+
+function reorderCategories(draggedCategory, targetCategory) {
+  if (!draggedCategory || !targetCategory || draggedCategory === targetCategory) {
+    return;
+  }
+
+  const library = readLibrary();
+  const normalized = buildLibrary(library.feeds, library.categories);
+  const categories = [...normalized.categories];
+  const fromIndex = categories.indexOf(draggedCategory);
+  const toIndex = categories.indexOf(targetCategory);
+  if (fromIndex === -1 || toIndex === -1) {
+    return;
+  }
+
+  const nextCategories = moveArrayItem(categories, fromIndex, toIndex);
+  persistLibraryOrdering(normalized.feeds, nextCategories);
+}
+
+function findInsertIndexForCategory(feeds, categoryName) {
+  let lastIndex = -1;
+  feeds.forEach((feed, index) => {
+    if (normalizeCategory(feed.category) === normalizeCategory(categoryName)) {
+      lastIndex = index;
+    }
+  });
+
+  return lastIndex === -1 ? feeds.length : lastIndex + 1;
+}
+
+function reorderFeed(draggedUrl, targetUrl, targetCategory) {
+  if (!draggedUrl || draggedUrl === targetUrl) {
+    return;
+  }
+
+  const library = readLibrary();
+  const normalized = buildLibrary(library.feeds, library.categories);
+  const feeds = [...normalized.feeds];
+  const draggedIndex = feeds.findIndex((feed) => feed.url === draggedUrl);
+  if (draggedIndex === -1) {
+    return;
+  }
+
+  const dragged = feeds[draggedIndex];
+  feeds.splice(draggedIndex, 1);
+
+  let updated = dragged;
+  if (targetCategory) {
+    updated = { ...dragged, category: normalizeCategory(targetCategory) };
+  }
+
+  if (targetUrl) {
+    const targetIndex = feeds.findIndex((feed) => feed.url === targetUrl);
+    if (targetIndex === -1) {
+      return;
+    }
+    feeds.splice(targetIndex, 0, updated);
+  } else if (targetCategory) {
+    const insertIndex = findInsertIndexForCategory(feeds, targetCategory);
+    feeds.splice(insertIndex, 0, updated);
+  } else {
+    feeds.push(updated);
+  }
+
+  const categories = normalized.categories.includes(updated.category)
+    ? normalized.categories
+    : [...normalized.categories, updated.category];
+  persistLibraryOrdering(feeds, categories);
+}
+
 function updateFeedUnreadCount(feedUrl) {
   const unreadCount = getCachedFeedItems(feedUrl).reduce((count, item) => (
     item.isRead ? count : count + 1
@@ -1051,7 +1134,7 @@ function buildOpmlTextFromLibrary(library) {
     library && Array.isArray(library.feeds) ? library.feeds : [],
     library && Array.isArray(library.categories) ? library.categories : []
   );
-  const grouped = groupFeedsByCategory(normalizedLibrary.feeds);
+  const grouped = groupFeedsByCategory(normalizedLibrary.feeds, normalizedLibrary.categories);
   const outlineLines = [];
 
   grouped.forEach((feeds, categoryName) => {
@@ -1102,8 +1185,17 @@ function downloadLibraryAsOpml() {
   setStatus(`Exported ${library.feeds.length} feed${library.feeds.length === 1 ? '' : 's'} as OPML.`);
 }
 
-function groupFeedsByCategory(feeds) {
+function groupFeedsByCategory(feeds, categoryOrder = []) {
   const grouped = new Map();
+  const normalizedOrder = categoryOrder
+    .filter((name) => typeof name === 'string')
+    .map((name) => normalizeCategory(name));
+
+  normalizedOrder.forEach((name) => {
+    if (!grouped.has(name)) {
+      grouped.set(name, []);
+    }
+  });
 
   feeds.forEach((feed) => {
     const categoryName = typeof feed.category === 'string' && feed.category.trim().length > 0
@@ -1144,7 +1236,8 @@ function renderSidebarFeeds() {
   }
 
   const fragment = document.createDocumentFragment();
-  const grouped = groupFeedsByCategory(importedFeeds);
+  const library = readLibrary();
+  const grouped = groupFeedsByCategory(importedFeeds, library.categories);
 
   grouped.forEach((feeds, categoryName) => {
     const section = document.createElement('section');
@@ -1157,6 +1250,10 @@ function renderSidebarFeeds() {
     }
 
     const heading = document.createElement('h3');
+    heading.className = 'sidebar-category-header';
+    heading.dataset.dndType = 'category';
+    heading.dataset.category = categoryName;
+    heading.setAttribute('draggable', 'true');
     const headingLabel = document.createElement('span');
     headingLabel.className = 'sidebar-category-name';
     headingLabel.textContent = categoryName;
@@ -1192,10 +1289,16 @@ function renderSidebarFeeds() {
 
     feeds.forEach((feed) => {
       const li = document.createElement('li');
+      li.className = 'sidebar-feed-row';
+      li.dataset.dndType = 'feed';
+      li.dataset.url = feed.url;
+      li.dataset.category = feed.category;
+      li.setAttribute('draggable', 'true');
       const button = document.createElement('button');
       button.type = 'button';
       button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
       button.dataset.url = feed.url;
+      button.setAttribute('draggable', 'true');
       const feedName = document.createElement('span');
       feedName.className = 'sidebar-feed-name';
       feedName.textContent = feed.title;
@@ -1420,6 +1523,100 @@ if (sidebarGroups) {
     selectedSidebarFeedUrl = url;
     renderSidebarFeeds();
     await loadFeed(url);
+  });
+}
+
+if (sidebarGroups) {
+  sidebarGroups.addEventListener('dragstart', (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== 'function') {
+      return;
+    }
+
+    const closestButton = target.closest('button');
+    if (closestButton) {
+      const isFeedButton = closestButton.classList
+        && typeof closestButton.classList.contains === 'function'
+        && closestButton.classList.contains('sidebar-feed');
+      if (!isFeedButton) {
+        return;
+      }
+    }
+
+    const categoryHeader = target.closest('[data-dnd-type="category"]');
+    const feedRow = target.closest('[data-dnd-type="feed"]');
+    if (categoryHeader && categoryHeader.dataset.category) {
+      dragState = {
+        type: 'category',
+        category: categoryHeader.dataset.category,
+        element: categoryHeader
+      };
+      categoryHeader.classList.add('is-dragging');
+    } else if (feedRow && feedRow.dataset.url) {
+      dragState = {
+        type: 'feed',
+        url: feedRow.dataset.url,
+        category: feedRow.dataset.category,
+        element: feedRow
+      };
+      feedRow.classList.add('is-dragging');
+    }
+
+    if (event.dataTransfer && dragState) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', JSON.stringify(dragState));
+    }
+  });
+
+  sidebarGroups.addEventListener('dragover', (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== 'function' || !dragState) {
+      return;
+    }
+
+    const canDropOnCategory = Boolean(target.closest('[data-dnd-type="category"]'));
+    const canDropOnFeed = Boolean(target.closest('[data-dnd-type="feed"]'));
+    if (canDropOnCategory || canDropOnFeed) {
+      event.preventDefault();
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = 'move';
+      }
+    }
+  });
+
+  sidebarGroups.addEventListener('drop', (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== 'function' || !dragState) {
+      return;
+    }
+
+    const categoryHeader = target.closest('[data-dnd-type="category"]');
+    const feedRow = target.closest('[data-dnd-type="feed"]');
+
+    if (dragState.type === 'category' && categoryHeader && categoryHeader.dataset.category) {
+      reorderCategories(dragState.category, categoryHeader.dataset.category);
+    }
+
+    if (dragState.type === 'feed') {
+      if (feedRow && feedRow.dataset.url) {
+        reorderFeed(dragState.url, feedRow.dataset.url, feedRow.dataset.category);
+      } else if (categoryHeader && categoryHeader.dataset.category) {
+        reorderFeed(dragState.url, null, categoryHeader.dataset.category);
+      }
+    }
+
+    if (dragState && dragState.element && dragState.element.classList) {
+      dragState.element.classList.remove('is-dragging');
+    }
+    dragState = null;
+    renderSidebarFeeds();
+  });
+
+  sidebarGroups.addEventListener('dragend', () => {
+    if (dragState && dragState.element && dragState.element.classList) {
+      dragState.element.classList.remove('is-dragging');
+    }
+    dragState = null;
   });
 }
 
