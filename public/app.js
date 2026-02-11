@@ -19,6 +19,7 @@ const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 let recentFeeds = [];
 let importedFeeds = [];
 let selectedSidebarFeedUrl = '';
+const feedItemCounts = new Map();
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -322,6 +323,14 @@ function groupFeedsByCategory(feeds) {
   return grouped;
 }
 
+function getFeedCount(feedUrl) {
+  return feedItemCounts.get(feedUrl) || 0;
+}
+
+function getCategoryCount(feeds) {
+  return feeds.reduce((total, feed) => total + getFeedCount(feed.url), 0);
+}
+
 function renderSidebarFeeds() {
   if (!sidebarGroups) {
     return;
@@ -346,7 +355,13 @@ function renderSidebarFeeds() {
     section.setAttribute('aria-label', `${categoryName} feeds`);
 
     const heading = document.createElement('h3');
-    heading.textContent = categoryName;
+    const headingLabel = document.createElement('span');
+    headingLabel.className = 'sidebar-category-name';
+    headingLabel.textContent = categoryName;
+    const headingCount = document.createElement('span');
+    headingCount.className = 'sidebar-count';
+    headingCount.textContent = String(getCategoryCount(feeds));
+    heading.append(headingLabel, headingCount);
     section.appendChild(heading);
 
     const list = document.createElement('ul');
@@ -358,7 +373,13 @@ function renderSidebarFeeds() {
       button.type = 'button';
       button.className = feed.url === selectedSidebarFeedUrl ? 'sidebar-feed is-active' : 'sidebar-feed';
       button.dataset.url = feed.url;
-      button.textContent = feed.title;
+      const feedName = document.createElement('span');
+      feedName.className = 'sidebar-feed-name';
+      feedName.textContent = feed.title;
+      const feedCount = document.createElement('span');
+      feedCount.className = 'sidebar-count';
+      feedCount.textContent = String(getFeedCount(feed.url));
+      button.append(feedName, feedCount);
       li.appendChild(button);
       list.appendChild(li);
     });
@@ -404,6 +425,8 @@ async function loadFeed(url) {
     addRecentFeed(url);
 
     const items = Array.isArray(data.items) ? data.items : [];
+    feedItemCounts.set(url, items.length);
+    renderSidebarFeeds();
     renderItems(items);
 
     if (items.length === 0) {

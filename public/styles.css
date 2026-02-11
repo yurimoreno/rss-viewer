@@ -44,6 +44,9 @@ body {
 }
 
 .sidebar-group h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin: 0;
   font-size: 0.84rem;
   text-transform: uppercase;
@@ -60,6 +63,10 @@ body {
 }
 
 .sidebar-feed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   width: 100%;
   text-align: left;
   border-radius: 8px;
@@ -78,6 +85,24 @@ body {
   border-color: #7ea7e8;
   background: #dfeeff;
   color: #173b72;
+}
+
+.sidebar-feed-name,
+.sidebar-category-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sidebar-count {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid #c9d4e8;
+  background: #eef3fd;
+  color: #27456f;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
 }
 
 .sidebar-empty {

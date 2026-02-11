@@ -247,12 +247,21 @@ async function run() {
 
     const { elements, localStorage } = bootstrapApp({
       localStorageSeed: seed,
-      fetchImpl: async () => ({
-        ok: true,
-        async json() {
-          return { items: [] };
+      fetchImpl: async (requestUrl) => {
+        let itemCount = 1;
+        if (requestUrl.includes(encodeURIComponent('https://feed-a.example/rss.xml'))) {
+          itemCount = 3;
+        } else if (requestUrl.includes(encodeURIComponent('https://feed-b.example/rss.xml'))) {
+          itemCount = 2;
         }
-      })
+
+        return {
+          ok: true,
+          async json() {
+            return { items: new Array(itemCount).fill({ title: 'Item' }) };
+          }
+        };
+      }
     });
 
     const file = { text: async () => opml };
@@ -270,6 +279,28 @@ async function run() {
     assert.strictEqual(sidebarSections.length, 2, 'Sidebar should render Tech and Uncategorized groups');
     const techSection = sidebarSections[0];
     assert.ok(techSection.children[1].children.length === 2, 'Tech category should include two feeds');
+
+    const techHeadingCount = techSection.children[0].children[1];
+    assert.strictEqual(techHeadingCount.textContent, '0', 'Tech category count should start at zero');
+
+    const feedAButton = techSection.children[1].children[0].children[0];
+    const feedBButton = techSection.children[1].children[1].children[0];
+    assert.strictEqual(feedAButton.children[1].textContent, '0', 'Feed count should start at zero');
+    assert.strictEqual(feedBButton.children[1].textContent, '0', 'Feed count should start at zero');
+
+    await elements['sidebar-groups'].dispatch('click', { target: feedAButton });
+    await elements['sidebar-groups'].dispatch('click', { target: feedBButton });
+
+    const rerenderedTechSection = elements['sidebar-groups'].children[0];
+    const rerenderedFeedAButton = rerenderedTechSection.children[1].children[0].children[0];
+    const rerenderedFeedBButton = rerenderedTechSection.children[1].children[1].children[0];
+    assert.strictEqual(rerenderedFeedAButton.children[1].textContent, '3', 'Feed A count should update after loading');
+    assert.strictEqual(rerenderedFeedBButton.children[1].textContent, '2', 'Feed B count should update after loading');
+    assert.strictEqual(
+      rerenderedTechSection.children[0].children[1].textContent,
+      '5',
+      'Category count should equal the sum of feed counts'
+    );
   }
 
   {
@@ -297,7 +328,7 @@ async function run() {
     );
   }
 
-  console.log('OPML import test passed: merge and error handling verified.');
+  console.log('OPML import test passed: merge, sidebar metrics, and error handling verified.');
 }
 
 run().catch((error) => {
