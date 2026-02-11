@@ -279,6 +279,25 @@ button[disabled] {
   background: #edf3ff;
 }
 
+.item-search {
+  margin-top: 1rem;
+}
+
+.item-search label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.item-search input[type="search"] {
+  display: block;
+  width: 100%;
+  border: 1px solid #c7ced8;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+}
+
 .spinner {
   width: 14px;
   height: 14px;

@@ -233,6 +233,7 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} }) {
     results: new FakeElement('ul'),
     'recent-feeds': new FakeElement('ul'),
     'recent-feeds-empty': new FakeElement('p'),
+    'item-search': new FakeElement('input'),
     'sidebar-groups': new FakeElement('nav'),
     'feed-view': new FakeElement('section'),
     'saved-view': new FakeElement('section'),
@@ -279,11 +280,13 @@ async function run() {
   const libraryKey = 'rssViewer.library';
   const cacheKey = 'rssViewer.feedItemCache';
   const feedUrl = 'https://feed-a.example/rss.xml';
+  const secondFeedUrl = 'https://feed-b.example/rss.xml';
   const opml = `<?xml version="1.0"?>
     <opml version="1.0">
       <body>
         <outline text="Tech">
           <outline text="Feed A" xmlUrl="${feedUrl}" />
+          <outline text="Feed B" xmlUrl="${secondFeedUrl}" />
         </outline>
       </body>
     </opml>`;
@@ -294,14 +297,34 @@ async function run() {
     pubDate: `2024-01-${String((index % 30) + 1).padStart(2, '0')}`
   }));
 
+  const secondFeedItems = [
+    {
+      title: 'Searchable Match',
+      link: 'https://example.com/match',
+      pubDate: '2024-02-01',
+      summary: 'This summary includes alpha keyphrase.'
+    },
+    {
+      title: 'Unrelated',
+      link: 'https://example.com/unrelated',
+      pubDate: '2024-02-02',
+      summary: 'No matching keywords here.'
+    }
+  ];
+
   const { elements, localStorage } = bootstrapApp({
     localStorageSeed: {},
-    fetchImpl: async () => ({
-      ok: true,
-      async json() {
-        return { items };
-      }
-    })
+    fetchImpl: async (requestUrl) => {
+      const parsed = new URL(`http://localhost${requestUrl}`);
+      const target = parsed.searchParams.get('url');
+
+      return {
+        ok: true,
+        async json() {
+          return { items: target === secondFeedUrl ? secondFeedItems : items };
+        }
+      };
+    }
   });
 
   const file = { text: async () => opml };
@@ -309,7 +332,7 @@ async function run() {
   await elements['opml-file'].dispatch('change');
 
   const library = JSON.parse(localStorage.dump()[libraryKey]);
-  assert.strictEqual(library.feeds.length, 1, 'Library should store imported feed');
+  assert.strictEqual(library.feeds.length, 2, 'Library should store imported feeds');
 
   elements['feed-url'].value = feedUrl;
   await elements['feed-form'].dispatch('submit');
@@ -332,7 +355,40 @@ async function run() {
   const updatedSidebarFeed = elements['sidebar-groups'].children[0].children[1].children[0].children[0];
   assert.strictEqual(updatedSidebarFeed.children[1].textContent, '49', 'Unread count should update after read');
 
-  console.log('Unread cache test passed: cap, read state, and counts verified.');
+  elements['feed-url'].value = secondFeedUrl;
+  await elements['feed-form'].dispatch('submit');
+
+  assert.strictEqual(
+    elements.results.children.length,
+    2,
+    'Selecting second feed should render second feed items before searching'
+  );
+
+  const searchInput = elements['item-search'];
+  searchInput.value = 'searchable';
+  await searchInput.dispatch('input');
+
+  assert.strictEqual(
+    elements.results.children.length,
+    1,
+    'Search should filter cached items across all feeds by title/summary'
+  );
+  assert.strictEqual(
+    elements.results.children[0].children[0].children[0].textContent,
+    'Searchable Match',
+    'Search result should render in the feed list pane'
+  );
+
+  searchInput.value = '';
+  await searchInput.dispatch('input');
+
+  assert.strictEqual(
+    elements.results.children.length,
+    2,
+    'Clearing search should restore the selected feed list'
+  );
+
+  console.log('Unread cache test passed: cap, read state, counts, and search behavior verified.');
 }
 
 run().catch((error) => {

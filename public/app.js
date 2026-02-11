@@ -6,6 +6,7 @@ const statusBanner = document.getElementById('status');
 const resultsList = document.getElementById('results');
 const recentFeedsList = document.getElementById('recent-feeds');
 const recentFeedsEmpty = document.getElementById('recent-feeds-empty');
+const searchInput = document.getElementById('item-search');
 const sidebarGroups = document.getElementById('sidebar-groups');
 const feedView = document.getElementById('feed-view');
 const savedView = document.getElementById('saved-view');
@@ -32,6 +33,7 @@ let selectedFeedUrl = '';
 let feedItemCache = {};
 const feedUnreadCounts = new Map();
 let currentView = 'feed';
+let currentSearchQuery = '';
 
 function setStatus(message, kind = 'idle') {
   statusBanner.classList.remove('loading', 'error');
@@ -85,7 +87,12 @@ function formatDate(rawDate) {
   }).format(parsed);
 }
 
-function createItemElement(feedUrl, item) {
+function getFeedLabel(feedUrl) {
+  const matchedFeed = importedFeeds.find((feed) => feed.url === feedUrl);
+  return matchedFeed ? matchedFeed.title : feedUrl;
+}
+
+function createItemElement(feedUrl, item, { includeFeedLabel = false } = {}) {
   const li = document.createElement('li');
   li.className = 'item';
   if (item.isRead) {
@@ -118,7 +125,7 @@ function createItemElement(feedUrl, item) {
 
   const meta = document.createElement('div');
   meta.className = 'meta';
-  meta.textContent = pubDate;
+  meta.textContent = includeFeedLabel ? `${getFeedLabel(feedUrl)} • ${pubDate}` : pubDate;
 
   const readToggle = document.createElement('button');
   readToggle.type = 'button';
@@ -154,6 +161,51 @@ function renderItems(feedUrl, items) {
   items.forEach((item) => {
     fragment.appendChild(createItemElement(feedUrl, item));
   });
+  clearResults();
+  resultsList.appendChild(fragment);
+}
+
+function getAllCachedItems() {
+  const allItems = [];
+
+  Object.entries(feedItemCache).forEach(([feedUrl, items]) => {
+    items.forEach((item) => {
+      allItems.push({ ...item, feedUrl });
+    });
+  });
+
+  return allItems;
+}
+
+function getSearchResults(query) {
+  const normalizedQuery = query.trim().toLowerCase();
+  if (normalizedQuery.length === 0) {
+    return [];
+  }
+
+  const results = getAllCachedItems().filter((item) => {
+    const title = typeof item.title === 'string' ? item.title.toLowerCase() : '';
+    const summary = typeof item.summary === 'string' ? item.summary.toLowerCase() : '';
+    return title.includes(normalizedQuery) || summary.includes(normalizedQuery);
+  });
+
+  results.sort((a, b) => {
+    const aTime = a.pubDate ? Date.parse(a.pubDate) : 0;
+    const bTime = b.pubDate ? Date.parse(b.pubDate) : 0;
+    return bTime - aTime;
+  });
+
+  return results;
+}
+
+function renderSearchResults() {
+  const results = getSearchResults(currentSearchQuery);
+  const fragment = document.createDocumentFragment();
+
+  results.forEach((item) => {
+    fragment.appendChild(createItemElement(item.feedUrl, item, { includeFeedLabel: true }));
+  });
+
   clearResults();
   resultsList.appendChild(fragment);
 }
@@ -447,11 +499,17 @@ function updateItemSavedState(feedUrl, itemId, isSaved) {
 }
 
 function rerenderSelectedFeed() {
-  if (!selectedFeedUrl) {
+  if (currentSearchQuery.length > 0) {
+    renderSearchResults();
     return;
   }
 
-  renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+  if (selectedFeedUrl) {
+    renderItems(selectedFeedUrl, getCachedFeedItems(selectedFeedUrl));
+    return;
+  }
+
+  clearResults();
 }
 
 function getSavedItems() {
@@ -787,7 +845,7 @@ async function loadFeed(url) {
     const cachedItems = buildCachedItemsFromFetch(url, items);
     setCachedFeedItems(url, cachedItems);
     renderSidebarFeeds();
-    renderItems(url, cachedItems);
+    rerenderSelectedFeed();
 
     if (cachedItems.length === 0) {
       setStatus('Feed loaded, but no items were found.');
@@ -890,6 +948,13 @@ if (opmlInput) {
     } finally {
       opmlInput.value = '';
     }
+  });
+}
+
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    currentSearchQuery = searchInput.value.trim().toLowerCase();
+    rerenderSelectedFeed();
   });
 }
 
