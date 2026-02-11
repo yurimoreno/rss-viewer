@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "total": 5,
+  "remaining": 4,
+  "quality_gates": [
+    "npm test"
+  ],
+  "id": "US-002",
+  "title": "Item caching and unread tracking"
+}

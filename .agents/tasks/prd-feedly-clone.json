@@ -107,7 +107,7 @@
     {
       "id": "US-002",
       "title": "Item caching and unread tracking",
-      "status": "open",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -116,7 +116,10 @@
         "Cache up to 50 items per feed in localStorage",
         "Track read/unread state per item",
         "Unread counts roll up to feed and category levels"
-      ]
+      ],
+      "startedAt": "2026-02-11T03:05:54.734385+00:00",
+      "completedAt": "2026-02-11T03:11:34.000Z",
+      "updatedAt": "2026-02-11T03:11:34.000Z"
     },
     {
       "id": "US-003",

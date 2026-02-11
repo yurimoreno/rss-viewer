@@ -6,6 +6,38 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 19:11:53 PST - US-002: Item caching and unread tracking
+Thread: 019c4aa9-9a1f-7910-ba96-404e38bf29b2
+Run: 20260210-190554-55481 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-190554-55481-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-190554-55481-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 8d5ccc7 feat: cache feed items and track unread
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/app.js
+  - public/styles.css
+  - package.json
+  - tests/opml-import.test.js
+  - tests/unread-cache.test.js
+  - .agents/tasks/prd-feedly-clone.json
+  - .ralph/runs/run-20260210-190554-55481-iter-1.log
+  - .ralph/.tmp/prompt-20260210-190554-55481-1.md
+  - .ralph/.tmp/story-20260210-190554-55481-1.json
+  - .ralph/.tmp/story-20260210-190554-55481-1.md
+- What was implemented
+  - Added a localStorage-backed cache of up to 50 items per feed with read state.
+  - Unread counts now reflect cached items and update when items are marked read.
+  - Added test coverage for cache limits, read toggles, and count updates.
+- **Learnings for future iterations:**
+  - Normalizing item IDs avoids read-state drift across refreshes.
+---
+
 ## 2026-02-10 19:05:11 PST - US-001: Library persistence and data model
 Thread: 019c4aa5-9af7-7622-a36f-e1a635060d00
 Run: 20260210-190132-52838 (iteration 1)

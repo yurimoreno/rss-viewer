@@ -58,3 +58,8 @@
 [2026-02-10 19:04:32] US-001: verification complete (npm test, dev startup)
 [2026-02-10 19:05:07] US-001: browser verification complete
 [2026-02-10 19:05:37] US-001: progress log updated
+[2026-02-10 19:05:54] ITERATION 1 start (mode=build story=US-002)
+[2026-02-10 19:06:50] US-002 audit complete; implementing item cache and unread tracking
+[2026-02-10 19:09:51] US-002: tests and dev startup complete
+[2026-02-10 19:11:28] US-002: browser verification complete
+[2026-02-10 19:12:34] US-002: progress log updated
