@@ -41,3 +41,8 @@
 [2026-02-11] Implemented US-001 layout/styles/js changes for sidebar and mobile collapse behavior
 [2026-02-11] Verification complete: npm test PASS; npm run dev startup PASS
 [2026-02-10 18:39:55] US-001 verification: npm test, npm run dev, browser check
+[2026-02-10 18:42:20] ITERATION 1 start (mode=build story=US-002)
+[2026-02-10 18:42:47] US-002 audit complete: identified placeholder sidebar and URL-only OPML import
+[2026-02-10 18:46:33] US-002: sidebar feeds grouped by OPML categories and clickable
+[2026-02-10 18:46:37] US-002: verification complete (npm test, dev startup, browser check)
+[2026-02-10 18:47:38] US-002: progress log updated
