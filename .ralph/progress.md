@@ -6,6 +6,35 @@ Started: Tue Feb 10 17:19:48 PST 2026
 
 ---
 
+## 2026-02-10 19:05:11 PST - US-001: Library persistence and data model
+Thread: 019c4aa5-9af7-7622-a36f-e1a635060d00
+Run: 20260210-190132-52838 (iteration 1)
+Run log: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-190132-52838-iter-1.log
+Run summary: /Users/yurimoreno/Coding/rss-viewer/.ralph/runs/run-20260210-190132-52838-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7d41372 feat: persist library model for imported feeds
+- Post-commit status: clean
+- Verification:
+  - Command: npm test -> PASS
+  - Command: npm run dev -> PASS
+  - Command: NODE_PATH=/Users/yurimoreno/.nvm/versions/node/v22.20.0/lib/node_modules node /Users/yurimoreno/rss-viewer-browser-check.js -> PASS
+- Files changed:
+  - public/app.js
+  - tests/opml-import.test.js
+  - .agents/tasks/prd-feedly-clone.json
+  - .ralph/runs/run-20260210-190132-52838-iter-1.log
+  - .ralph/.tmp/prompt-20260210-190132-52838-1.md
+  - .ralph/.tmp/story-20260210-190132-52838-1.json
+  - .ralph/.tmp/story-20260210-190132-52838-1.md
+- What was implemented
+  - Added a localStorage-backed library model with normalized feeds and categories.
+  - OPML import now merges feeds into the library and persists them.
+  - Library hydrates on startup to populate the sidebar.
+- **Learnings for future iterations:**
+  - Normalizing feed/category data at the storage boundary prevents drift.
+---
+
 ## 2026-02-10 18:51:22 PST - US-003: Add metrics to sidebar
 Thread: 019c4a99-258b-7251-8807-a00a089163e8
 Run: 20260210-184756-49168 (iteration 1)

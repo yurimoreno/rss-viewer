@@ -92,7 +92,7 @@
     {
       "id": "US-001",
       "title": "Library persistence and data model",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "description": "As a user, I want my feed library and categories to persist locally.",
       "acceptanceCriteria": [
@@ -101,8 +101,8 @@
         "Library loads on startup and populates the sidebar"
       ],
       "startedAt": "2026-02-11T03:01:32.306349+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-11T03:01:32.306565+00:00"
+      "completedAt": "2026-02-11T03:04:20.000Z",
+      "updatedAt": "2026-02-11T03:04:20.000Z"
     },
     {
       "id": "US-002",
