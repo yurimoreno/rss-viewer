@@ -362,6 +362,8 @@
     const sidebarMetricEl = document.getElementById('sidebar-metric');
     const feedSearchInput = document.getElementById('feed-search-input');
     const todayContent = document.getElementById('today-content');
+    const expandAllCategories = document.getElementById('expand-all-categories');
+    const collapseAllCategories = document.getElementById('collapse-all-categories');
     const refreshWrap = document.getElementById('refresh-progress-wrap');
     const refreshBar = document.getElementById('refresh-progress-bar');
     const btnRefresh = document.getElementById('btn-refresh');
@@ -513,9 +515,40 @@
       };
       return li;
     }
+    const COLLAPSED_KEY = 'rss-viewer-collapsed-categories';
+    function getCollapsedCategories() {
+      try {
+        const raw = sessionStorage.getItem(COLLAPSED_KEY);
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+      } catch { return new Set(); }
+    }
+    function setCollapsedCategories(set) {
+      try { sessionStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set])); } catch {}
+    }
     function renderToday() {
       if (!todayContent) return;
       todayContent.innerHTML = '';
+      const collapsed = getCollapsedCategories();
+      function addGroup(title, items, feedUrl, feedTitle) {
+        const g = document.createElement('div');
+        g.className = 'feed-group' + (collapsed.has(title) ? ' is-collapsed' : '');
+        g.dataset.category = title;
+        const h3 = document.createElement('h3');
+        h3.className = 'feed-group-title';
+        h3.innerHTML = '<span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">' + escapeHtml(title) + '</span>';
+        h3.onclick = () => {
+          g.classList.toggle('is-collapsed');
+          const next = new Set(collapsed);
+          if (g.classList.contains('is-collapsed')) next.add(title); else next.delete(title);
+          setCollapsedCategories(next);
+        };
+        g.appendChild(h3);
+        const ul = document.createElement('ul');
+        ul.className = 'results';
+        items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl ?? feedUrl, i.feedTitle ?? feedTitle)));
+        g.appendChild(ul);
+        todayContent.appendChild(g);
+      }
       if (selectedSidebarFeedUrl) {
         const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
         const items = getCachedFeedItems(selectedSidebarFeedUrl)
@@ -525,14 +558,8 @@
           todayContent.innerHTML = '<p class="empty-hint">No items in this feed yet. Try refreshing.</p>';
           return;
         }
-        const g = document.createElement('div');
-        g.className = 'feed-group';
-        g.innerHTML = '<h3 class="feed-group-title">' + escapeHtml(feed ? feed.title : 'Feed') + '</h3>';
-        const ul = document.createElement('ul');
-        ul.className = 'results';
-        items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl, i.feedTitle)));
-        g.appendChild(ul);
-        todayContent.appendChild(g);
+        const title = feed ? feed.title : 'Feed';
+        addGroup(title, items, selectedSidebarFeedUrl, title);
         return;
       }
       const grouped = getAllItemsGrouped();
@@ -541,14 +568,9 @@
         return;
       }
       grouped.forEach(({ category, items }) => {
-        const g = document.createElement('div');
-        g.className = 'feed-group';
-        g.innerHTML = '<h3 class="feed-group-title">' + escapeHtml(category) + '</h3>';
-        const ul = document.createElement('ul');
-        ul.className = 'results';
-        items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl, i.feedTitle)));
-        g.appendChild(ul);
-        todayContent.appendChild(g);
+        const feedTitle = items[0]?.feedTitle || category;
+        const feedUrl = items[0]?.feedUrl || '';
+        addGroup(category, items, feedUrl, feedTitle);
       });
     }
     function renderFeedsPage() {
@@ -596,6 +618,19 @@
     });
     document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => appShell?.classList.add('sidebar-collapsed'));
     document.getElementById('sidebar-show-btn')?.addEventListener('click', () => appShell?.classList.remove('sidebar-collapsed'));
+
+    expandAllCategories?.addEventListener('click', (e) => {
+      e.preventDefault();
+      setCollapsedCategories(new Set());
+      renderToday();
+    });
+    collapseAllCategories?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const groups = todayContent?.querySelectorAll('.feed-group[data-category]') ?? [];
+      const names = [...groups].map((g) => g.dataset.category).filter(Boolean);
+      setCollapsedCategories(new Set(names));
+      renderToday();
+    });
 
     btnRefresh?.addEventListener('click', async () => {
       if (!refreshWrap || !refreshBar) return;
