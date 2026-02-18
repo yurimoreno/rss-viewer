@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSS Viewer — AI-First Mockup v2</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      /* Mockup v2: sidebar-only nav, Today + Digest */
+      .mockup-badge { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7fc2ff; margin-left: 0.35rem; }
+      .reader-summary-block { background: linear-gradient(135deg, #1a2744 0%, #0f1824 100%); border: 1px solid #2a3a52; border-radius: 12px; padding: 1rem 1.25rem; margin: 1rem 0; }
+      .reader-summary-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7fc2ff; margin-bottom: 0.5rem; }
+      .reader-summary-text { font-family: var(--reader-font); font-size: 0.95rem; line-height: 1.6; color: #c8d4e6; }
+      .btn-summarize { background: linear-gradient(120deg, #2b5a7d 0%, #3d7ab5 100%); border-color: #2a5a8a; color: #e8f2ff; font-weight: 600; }
+      .btn-summarize:hover { background: linear-gradient(120deg, #3d6a9d 0%, #4d8ac5 100%); }
+      .digest-card { background: linear-gradient(135deg, #151f2e 0%, #0d1319 100%); border: 1px solid #2a3340; border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem; }
+      .digest-card h3 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--muted-strong); }
+      .digest-bullets { list-style: none; padding: 0; margin: 0; }
+      .digest-bullets li { padding: 0.5rem 0; border-bottom: 1px solid #1e2836; font-size: 0.95rem; line-height: 1.5; color: #d4dce8; }
+      .digest-bullets li:last-child { border-bottom: none; }
+      .digest-bullets li::before { content: "•"; color: var(--accent); margin-right: 0.5rem; }
+      .digest-ref { font-size: 0.8em; color: var(--accent-strong); text-decoration: none; margin-left: 0.2rem; }
+      .digest-ref:hover { text-decoration: underline; }
+      .digest-refs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-soft); font-size: 0.85rem; color: var(--muted); }
+      .digest-refs a { color: var(--accent-strong); text-decoration: none; margin-right: 0.5rem; }
+      .digest-refs a:hover { text-decoration: underline; }
+      .btn-generate-digest { background: linear-gradient(120deg, #2b7dd9 0%, #4fa3ff 100%); border-color: #2b6fc2; color: #eef6ff; font-weight: 600; padding: 0.6rem 1.2rem; }
+      .sidebar-nav-item { display: flex; align-items: center; padding: 0.5rem 0.6rem; border-radius: 10px; margin-bottom: 0.35rem; cursor: pointer; color: var(--muted-strong); }
+      .sidebar-nav-item:hover { background: #1b222d; color: #f4f7fa; }
+      .sidebar-nav-item.is-active { background: #172235; color: #f4f7fa; border: 1px solid var(--accent); }
+      .mockup-view { display: none; }
+      .mockup-view.active { display: block; }
+
+      /* View-specific layouts - Feedly-style: single column, no list+reader side-by-side */
+      .view-reader .viewer-layout { grid-template-columns: 1fr; }
+      .view-digest .viewer-layout { grid-template-columns: 1fr; max-width: 720px; }
+      .view-settings .viewer-layout, .view-feeds .viewer-layout { grid-template-columns: 1fr; max-width: 640px; }
+
+      /* Sidebar hide/show - menu-style vertical strip when collapsed */
+      .app-shell.sidebar-collapsed { grid-template-columns: 1fr; }
+      .app-shell.sidebar-collapsed .sidebar { display: none; }
+      .sidebar-menu-strip { display: none; position: fixed; left: 0; top: 88px; bottom: 0; width: 48px; background: #12161d; border-right: 1px solid var(--border); z-index: 15; flex-direction: column; align-items: center; padding-top: 1rem; gap: 0.5rem; }
+      .app-shell.sidebar-collapsed .sidebar-menu-strip { display: flex; }
+      .sidebar-menu-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; border-radius: 8px; color: var(--muted-strong); cursor: pointer; font-size: 1.2rem; }
+      .sidebar-menu-btn:hover { background: #1a2330; color: #f4f7fa; }
+      .sidebar-menu-btn[title="Show sidebar"] { font-size: 1.1rem; }
+
+      /* Sidebar: 100 feeds - compact, scrollable */
+      .mockup-sidebar { max-height: calc(100vh - 140px); overflow-y: auto; }
+      .mockup-sidebar .sidebar-groups { gap: 0.5rem; }
+      .mockup-sidebar .sidebar-group { margin-bottom: 0.25rem; }
+      .mockup-sidebar .sidebar-group.is-collapsed .sidebar-feed-list { display: none; }
+      .mockup-sidebar .sidebar-feed-list { gap: 0.2rem; margin-top: 0.25rem; }
+      .mockup-sidebar .sidebar-feed { padding: 0.35rem 0.5rem; font-size: 0.82rem; }
+      .mockup-sidebar .sidebar-feed-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .mockup-sidebar .feed-search { margin-bottom: 0.75rem; }
+      .mockup-sidebar .feed-search input { width: 100%; padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid #2a3340; background: #0f141b; color: var(--text); }
+      .mockup-sidebar .sidebar-total { font-size: 0.7rem; color: var(--muted); margin-top: 0.5rem; }
+
+      /* Feeds: Digest-level readability (max-width, comfortable line length) */
+      .view-reader .viewer-layout > div { max-width: 720px; }
+
+      /* Card list: compact, more results */
+      .feed-group { margin-bottom: 1.25rem; }
+      .feed-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 0.4rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-soft); }
+      .feed-group .results { gap: 0.3rem; list-style: none; padding: 0; margin: 0; }
+      .feed-group .item {
+        padding: 0.55rem 0.85rem;
+        border-radius: 8px;
+        border: 1px solid #1e2836;
+        background: #0f141b;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .feed-group .item:hover { border-color: #2a3340; background: #131a22; }
+      .feed-group .item.is-selected { border-color: var(--accent); background: #111c2a; box-shadow: 0 0 0 1px rgba(79,163,255,0.2); }
+      .feed-group .item.is-read { opacity: 0.88; }
+      .feed-group .item.is-read .item-title { font-weight: 500; }
+      .item-meta-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.2rem; font-size: 0.72rem; color: var(--muted); }
+      .item-source-badge { background: #1a2432; padding: 0.15rem 0.4rem; border-radius: 4px; color: var(--muted-strong); font-weight: 500; font-size: 0.72rem; }
+      .item-metrics { display: flex; gap: 0.5rem; font-size: 0.7rem; color: var(--muted); }
+      .item-metrics span { display: flex; align-items: center; gap: 0.2rem; }
+      .item-title { margin: 0 0 0.2rem; font-size: 0.92rem; line-height: 1.3; font-weight: 600; }
+      .feed-group .item .item-title a { color: #f1f5f9; text-decoration: none; }
+      .feed-group .item .item-title a:hover { text-decoration: underline; }
+      .item-snippet { margin: 0; font-size: 0.82rem; line-height: 1.35; color: #9aa5b1; }
+      .item-expanded { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-soft); position: relative; }
+      .item:not(.is-selected) .item-expanded { display: none; }
+      .item-expanded .reader-summary-block { margin: 0.75rem 0; }
+      .item-expanded .reader-content { font-size: 1rem; line-height: 1.7; font-family: var(--reader-font); color: #d4dce8; max-width: 65ch; }
+      .btn-close-card { position: absolute; top: 0; right: 0; background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 0.25rem; font-size: 1.1rem; line-height: 1; }
+      .btn-close-card:hover { color: var(--text); }
+
+      /* Settings & Feed management pages */
+      .page-nav { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+      .page-nav a { color: var(--muted-strong); text-decoration: none; font-size: 0.9rem; }
+      .page-nav a:hover { color: #f4f7fa; }
+      .settings-page, .feeds-page { max-width: 640px; }
+      .settings-page h2, .feeds-page h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+      .settings-page .section, .feeds-page .section { margin-bottom: 1.5rem; padding: 1rem; background: #121722; border: 1px solid var(--border); border-radius: 12px; }
+      .feeds-page .add-feed { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+      .feeds-page .add-feed input { flex: 1; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid #2a3340; background: #0f141b; color: var(--text); }
+      .feeds-page .opml-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+      /* Feed health, refresh, shortcuts */
+      .feed-health { font-size: 0.65rem; color: var(--muted); margin-left: 0.25rem; }
+      .feed-health.warn { color: #c9a227; }
+      .feed-health.broken { color: #b86b6b; }
+      .btn-refresh { padding: 0.4rem 0.7rem; font-size: 0.85rem; }
+      .refresh-progress { height: 3px; background: #1e2836; border-radius: 2px; overflow: hidden; margin-top: 0.5rem; }
+      .refresh-progress-bar { height: 100%; background: var(--accent); transition: width 0.2s; }
+      .shortcuts-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 2rem; }
+      .shortcuts-modal.open { display: flex; }
+      .shortcuts-content { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; max-width: 400px; }
+      .shortcuts-content h3 { margin: 0 0 1rem; }
+      .shortcuts-content kbd { background: #1a2330; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
+      .shortcuts-content .row { display: flex; justify-content: space-between; padding: 0.4rem 0; }
+      .theme-toggle { display: flex; align-items: center; gap: 0.5rem; }
+      body.theme-light { --bg: #f4f6f9; --text: #1a1d21; --muted: #6b7280; }
+      body.theme-light .topbar { background: #fff; border-color: #e5e7eb; }
+      body.theme-light .sidebar { background: #fff; border-color: #e5e7eb; }
+      body.theme-light .viewer { background: #f9fafb; }
+      body.theme-light .feed-group .item { background: #fff; border-color: #e5e7eb; }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="sidebar-menu-btn" id="sidebar-toggle-btn" title="Hide sidebar">≡</button>
+          <span class="workspace-name">RSS Viewer <span class="mockup-badge">50 feeds</span></span>
+        </div>
+        <nav class="page-nav">
+          <button type="button" class="btn-refresh" id="btn-refresh" title="Refresh all feeds">↻ Refresh</button>
+          <button type="button" class="sidebar-menu-btn" id="btn-shortcuts" title="Keyboard shortcuts">?</button>
+          <a href="#" data-page="feeds">Feeds</a>
+          <a href="#" data-page="settings">Settings</a>
+        </nav>
+      </header>
+
+      <div class="app-shell" id="app-shell">
+        <aside class="sidebar-menu-strip" id="sidebar-menu-strip">
+          <button type="button" class="sidebar-menu-btn" id="sidebar-show-btn" title="Show sidebar">≡</button>
+        </aside>
+        <aside class="sidebar is-open mockup-sidebar">
+          <div class="sidebar-header">
+            <div>
+              <h2>Today</h2>
+              <span class="sidebar-metric-label">50 feeds across 10 categories</span>
+            </div>
+          </div>
+
+          <section class="sidebar-section">
+            <h3>Views</h3>
+            <div class="sidebar-nav-item is-active" data-view="reader">Today</div>
+            <div class="sidebar-nav-item" data-view="digest">Digest <span class="mockup-badge">AI</span></div>
+          </section>
+
+          <section class="sidebar-section">
+            <h3>Feeds</h3>
+            <div class="feed-search">
+              <input type="text" placeholder="Search feeds..." id="feed-search-input" />
+            </div>
+            <nav class="sidebar-groups" id="sidebar-groups">
+              <!-- 100 feeds injected by JS -->
+            </nav>
+            <div class="sidebar-total" id="feed-count">100 feeds</div>
+          </section>
+        </aside>
+
+        <main class="viewer">
+          <!-- View 1: Feeds - Feedly-style single column, grouped by source, inline reader -->
+          <div class="mockup-view active view-reader" data-tab="reader">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Today</p>
+                <h1>Today</h1>
+              </div>
+              <div id="refresh-progress-wrap" style="display:none;min-width:120px;">
+                <span style="font-size:0.8rem;color:var(--muted);">Fetching...</span>
+                <div class="refresh-progress"><div class="refresh-progress-bar" id="refresh-progress-bar" style="width:0%"></div></div>
+              </div>
+            </header>
+
+            <section class="viewer-layout">
+              <div>
+                <div class="feed-group">
+                  <h3 class="feed-group-title">Thinkers</h3>
+                  <ul class="results">
+                    <li class="item is-selected is-read">
+                      <div class="item-meta-row">
+                        <span class="item-source-badge">Marginal Revolution</span>
+                        <span class="item-metrics">
+                          <span>1h</span>
+                          <span>4 min read</span>
+                          <span>~320 words</span>
+                        </span>
+                      </div>
+                      <h2 class="item-title"><a href="#">In curiosity we trust.</a></h2>
+                      <p class="item-snippet">One of the leading tasks of our time is to rebuild trust in our institutions and in each other.</p>
+                      <div class="item-expanded">
+                        <button class="btn-close-card" type="button" title="Close">×</button>
+                        <div style="margin: 0.75rem 0;">
+                          <button class="btn-summarize" type="button">Summarize</button>
+                          <span class="mockup-badge" style="margin-left: 0.5rem;">AI</span>
+                        </div>
+                        <div class="reader-summary-block">
+                          <div class="reader-summary-label">TL;DR</div>
+                          <div class="reader-summary-text">
+                            The author argues that curiosity and intellectual humility are essential for progress. Rebuilding trust in institutions requires embracing uncertainty rather than dogma.
+                          </div>
+                        </div>
+                        <div class="reader-content">
+                          One of the leading tasks of our time is to rebuild trust in our institutions and in each other. In curiosity we trust—the willingness to ask questions, to admit we don't know, and to update our views when we learn more.
+                        </div>
+                        <a class="reader-open" href="#" style="display:inline-block;margin-top:0.75rem;">Open original</a>
+                      </div>
+                    </li>
+                    <li class="item">
+                      <div class="item-meta-row">
+                        <span class="item-source-badge">Jan-Lukas Else</span>
+                        <span class="item-metrics">
+                          <span>11h</span>
+                          <span>2 min read</span>
+                          <span>~180 words</span>
+                        </span>
+                      </div>
+                      <h2 class="item-title"><a href="#">AI productivity gains final</a></h2>
+                      <p class="item-snippet">New study confirms AI tools boost developer output by 40% in controlled trials.</p>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="feed-group">
+                  <h3 class="feed-group-title">Dev</h3>
+                  <ul class="results">
+                    <li class="item">
+                      <div class="item-meta-row">
+                        <span class="item-source-badge">Hacker News</span>
+                        <span class="item-metrics">
+                          <span>1d</span>
+                          <span>6 min read</span>
+                          <span>~480 words</span>
+                        </span>
+                      </div>
+                      <h2 class="item-title"><a href="#">Apple announces new M4 chip with 40% faster performance</a></h2>
+                      <p class="item-snippet">Apple unveiled the M4 chip at its spring event, promising significant gains over M3.</p>
+                    </li>
+                    <li class="item">
+                      <div class="item-meta-row">
+                        <span class="item-source-badge">Hacker News</span>
+                        <span class="item-metrics">
+                          <span>2d</span>
+                          <span>5 min read</span>
+                          <span>~420 words</span>
+                        </span>
+                      </div>
+                      <h2 class="item-title"><a href="#">OpenAI releases GPT-5 with reasoning improvements</a></h2>
+                      <p class="item-snippet">The new model shows improved chain-of-thought and fewer hallucinations in benchmarks.</p>
+                    </li>
+                    <li class="item">
+                      <div class="item-meta-row">
+                        <span class="item-source-badge">Kev Quirk</span>
+                        <span class="item-metrics">
+                          <span>5d</span>
+                          <span>8 min read</span>
+                          <span>~650 words</span>
+                        </span>
+                      </div>
+                      <h2 class="item-title"><a href="#">Rust 1.85 stabilizes async traits</a></h2>
+                      <p class="item-snippet">After years of work, the async fn in traits RFC is now stable in Rust 1.85.</p>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- View 2: Digest (full-width, single column) -->
+          <div class="mockup-view view-digest" data-tab="digest">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Digest</p>
+                <h1>Today's digest</h1>
+              </div>
+              <div style="display:flex;gap:0.5rem;align-items:center;">
+                <select id="digest-window" style="padding:0.4rem 0.6rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);font-size:0.85rem;">
+                  <option>Last 24h</option>
+                  <option>Last 7 days</option>
+                </select>
+                <button class="btn-generate-digest" type="button">Generate digest</button>
+              </div>
+            </header>
+
+            <section class="viewer-layout">
+              <div>
+                <p style="color: var(--muted); margin: 0 0 1rem; font-size: 0.9rem;">AI summarizes what matters across 50 feeds. Sources linked as [1][2].</p>
+                <div class="digest-card">
+                  <h3>Feb 17, 2026 — Top stories from your feeds</h3>
+                  <ul class="digest-bullets">
+                    <li><strong>Apple M4 chip:</strong> 40% faster CPU, new MacBooks next month. Major focus on on-device AI. <a href="#" class="digest-ref">[1]</a><a href="#" class="digest-ref">[2]</a></li>
+                    <li><strong>OpenAI GPT-5:</strong> Improved reasoning, fewer hallucinations. API available to developers. <a href="#" class="digest-ref">[3]</a></li>
+                    <li><strong>Fed rate decision:</strong> Holds at 4.5%. Signals one cut possible by mid-year. <a href="#" class="digest-ref">[4]</a><a href="#" class="digest-ref">[5]</a></li>
+                    <li><strong>SpaceX Starship:</strong> Successful landing. NASA confirms lunar mission timeline. <a href="#" class="digest-ref">[6]</a></li>
+                    <li><strong>EU AI Act:</strong> First enforcement actions expected by Q2. High-risk systems in focus. <a href="#" class="digest-ref">[7]</a><a href="#" class="digest-ref">[8]</a></li>
+                  </ul>
+                  <div class="digest-refs">
+                    <strong>References:</strong>
+                    <a href="#">[1] Hacker News</a>
+                    <a href="#">[2] TechCrunch</a>
+                    <a href="#">[3] The Verge</a>
+                    <a href="#">[4] Reuters</a>
+                    <a href="#">[5] Bloomberg</a>
+                    <a href="#">[6] Ars Technica</a>
+                    <a href="#">[7] Politico</a>
+                    <a href="#">[8] The Guardian</a>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Settings page -->
+          <div class="mockup-view view-settings" data-tab="settings">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Configuration</p>
+                <h1>Settings</h1>
+              </div>
+            </header>
+            <section class="viewer-layout">
+              <div class="settings-page">
+                <div class="section">
+                  <h2>AI / OpenRouter</h2>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem;">Summaries and digest use OpenRouter. Set a hard limit on your API key for cost safety.</p>
+                  <div class="row">
+                    <label style="display:block;margin-bottom:0.35rem;">OpenRouter API Key</label>
+                    <input type="password" placeholder="sk-or-..." style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);" />
+                  </div>
+                  <div class="row model-row">
+                    <label>Model</label>
+                    <div class="model-controls" style="display:flex;gap:0.5rem;align-items:center;">
+                      <select style="flex:1;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);">
+                        <option>— Select model —</option>
+                        <option>anthropic/claude-sonnet-4</option>
+                        <option>openai/gpt-4o</option>
+                      </select>
+                      <button type="button">Check models</button>
+                    </div>
+                    <span class="model-status success" style="font-size:0.85rem;margin-top:0.35rem;">Done</span>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Refresh</h2>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem;">How often to fetch feeds. 3–5 concurrent requests to avoid hammering servers.</p>
+                  <div class="row">
+                    <label style="display:block;margin-bottom:0.35rem;">Auto-refresh interval</label>
+                    <select style="padding:0.5rem 0.75rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);">
+                      <option>Manual only</option>
+                      <option>Every 30 min</option>
+                      <option>Every 60 min</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Storage & data</h2>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem;">Feeds and read state in localStorage.</p>
+                  <p style="font-size:0.85rem;color:var(--muted);">Data migration: Import OPML overwrites library. Existing read state preserved where URLs match.</p>
+                </div>
+                <div class="section">
+                  <h2>Appearance</h2>
+                  <div class="theme-toggle">
+                    <label style="cursor:pointer;">Light theme</label>
+                    <input type="checkbox" id="theme-toggle" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- Feed management page -->
+          <div class="mockup-view view-feeds" data-tab="feeds">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Library</p>
+                <h1>Feed management</h1>
+              </div>
+            </header>
+            <section class="viewer-layout">
+              <div class="feeds-page">
+                <div class="section">
+                  <h2>Add feed</h2>
+                  <div class="add-feed">
+                    <input type="url" placeholder="https://example.com/feed.xml" />
+                    <button type="button">Add</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>OPML</h2>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem;">Import or export your feed library.</p>
+                  <div class="opml-actions">
+                    <input type="file" accept=".opml,.xml" id="opml-import" style="display:none;" />
+                    <button type="button" onclick="document.getElementById('opml-import').click();">Import OPML</button>
+                    <button type="button">Export OPML</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Your feeds</h2>
+                  <p style="color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem;">50 feeds across 10 categories. <span class="feed-health broken">⚠ 2 failing</span></p>
+                  <div class="feed-search" style="margin-bottom:1rem;">
+                    <input type="text" placeholder="Search feeds..." id="feed-mgmt-search" style="width:100%;padding:0.5rem 0.75rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);" />
+                  </div>
+                  <ul style="list-style:none;padding:0;margin:0;max-height:300px;overflow-y:auto;">
+                    <li style="padding:0.5rem 0;border-bottom:1px solid #1e2836;display:flex;justify-content:space-between;align-items:center;">
+                      <span>Hacker News</span>
+                      <span style="font-size:0.8rem;color:var(--muted);">Tech · 2h ago</span>
+                    </li>
+                    <li style="padding:0.5rem 0;border-bottom:1px solid #1e2836;display:flex;justify-content:space-between;align-items:center;">
+                      <span>Marginal Revolution</span>
+                      <span style="font-size:0.8rem;color:var(--muted);">Thinkers · 1h ago</span>
+                    </li>
+                    <li style="padding:0.5rem 0;border-bottom:1px solid #1e2836;display:flex;justify-content:space-between;align-items:center;">
+                      <span>Freakonomics</span>
+                      <span style="font-size:0.8rem;color:#b86b6b;">Business · ⚠ 14d fail</span>
+                    </li>
+                    <li style="padding:0.5rem 0;border-bottom:1px solid #1e2836;display:flex;justify-content:space-between;align-items:center;">
+                      <span>Morning Brew</span>
+                      <span style="font-size:0.8rem;color:var(--muted);">Business · 5h ago</span>
+                    </li>
+                    <li style="padding:0.5rem 0;border-bottom:1px solid #1e2836;display:flex;justify-content:space-between;align-items:center;">
+                      <span>Google Search Central (YouTube)</span>
+                      <span style="font-size:0.8rem;color:#c9a227;">Google · 3d ago</span>
+                    </li>
+                    <li style="padding:0.5rem 0;color:var(--muted);font-size:0.9rem;">... and 45 more</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+
+        </main>
+      </div>
+
+      <!-- Keyboard shortcuts modal -->
+      <div class="shortcuts-modal" id="shortcuts-modal">
+        <div class="shortcuts-content">
+          <h3>Keyboard shortcuts</h3>
+          <div class="row"><span><kbd>j</kbd> / <kbd>k</kbd></span><span>Next / previous item</span></div>
+          <div class="row"><span><kbd>o</kbd></span><span>Open original</span></div>
+          <div class="row"><span><kbd>?</kbd></span><span>This help</span></div>
+          <button type="button" style="margin-top:1rem;" onclick="document.getElementById('shortcuts-modal').classList.remove('open')">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Your OPML: 50 feeds across 10 categories (deduped)
+      const FEEDS = [
+        { cat: "Thinkers", feeds: [
+          { name: "Wait But Why", health: "ok", lastFetch: "2h" },
+          { name: "Daniel Gross", health: "ok", lastFetch: "5h" },
+          { name: "Mad Fientist", health: "ok", lastFetch: "1d" },
+          { name: "Mike Crittenden", health: "ok", lastFetch: "3d" },
+          { name: "Julian.com", health: "ok", lastFetch: "1d" },
+          { name: "Marginal Revolution", health: "ok", lastFetch: "1h" }
+        ]},
+        { cat: "Business", feeds: [
+          { name: "VentureBeat", health: "ok", lastFetch: "2h" },
+          { name: "Tim Ferriss", health: "ok", lastFetch: "1d" },
+          { name: "TIME", health: "ok", lastFetch: "3h" },
+          { name: "Entrepreneur", health: "ok", lastFetch: "4h" },
+          { name: "Freakonomics", health: "broken", lastFetch: "14d fail" },
+          { name: "Morning Brew", health: "ok", lastFetch: "5h" },
+          { name: "Business Insider", health: "ok", lastFetch: "2h" }
+        ]},
+        { cat: "Dev", feeds: [
+          { name: "Jan-Lukas Else", health: "ok", lastFetch: "1d" },
+          { name: "Cheapskates Guide", health: "ok", lastFetch: "2d" },
+          { name: "arcana dot computer", health: "ok", lastFetch: "3d" },
+          { name: "Kev Quirk", health: "ok", lastFetch: "1d" }
+        ]},
+        { cat: "Tech", feeds: [
+          { name: "TechCrunch", health: "ok", lastFetch: "1h" },
+          { name: "Engadget", health: "ok", lastFetch: "2h" },
+          { name: "Hacker News", health: "ok", lastFetch: "2h" },
+          { name: "Lifehacker", health: "ok", lastFetch: "3h" },
+          { name: "Techmeme", health: "ok", lastFetch: "1h" },
+          { name: "Mashable", health: "ok", lastFetch: "4h" },
+          { name: "The Verge", health: "ok", lastFetch: "2h" },
+          { name: "Digital Trends", health: "ok", lastFetch: "5h" }
+        ]},
+        { cat: "Social media", feeds: [
+          { name: "Social Media Examiner", health: "ok", lastFetch: "2d" },
+          { name: "Meta Newsroom", health: "ok", lastFetch: "1d" },
+          { name: "Buffer Resources", health: "ok", lastFetch: "3d" }
+        ]},
+        { cat: "SEO", feeds: [
+          { name: "Elephate", health: "ok", lastFetch: "1d" },
+          { name: "Moz", health: "ok", lastFetch: "2d" },
+          { name: "Search Engine Journal", health: "ok", lastFetch: "4h" },
+          { name: "Diggity Marketing", health: "ok", lastFetch: "3d" },
+          { name: "Yoast", health: "ok", lastFetch: "1d" },
+          { name: "Screaming Frog", health: "ok", lastFetch: "5d" },
+          { name: "Blind Five Year Old", health: "ok", lastFetch: "2d" },
+          { name: "SEO by the Sea", health: "ok", lastFetch: "1d" },
+          { name: "Search Engine Roundtable", health: "ok", lastFetch: "2h" },
+          { name: "Search Engine Land", health: "ok", lastFetch: "3h" },
+          { name: "SEMrush", health: "ok", lastFetch: "1d" }
+        ]},
+        { cat: "Google", feeds: [
+          { name: "Google Search Central", health: "ok", lastFetch: "1d" },
+          { name: "Google Search Central (YouTube)", health: "warn", lastFetch: "3d" },
+          { name: "The Official Google Blog", health: "ok", lastFetch: "2d" }
+        ]},
+        { cat: "Marketing", feeds: [
+          { name: "Copyblogger", health: "ok", lastFetch: "2d" },
+          { name: "Contently", health: "ok", lastFetch: "1d" },
+          { name: "Noah Kagan", health: "ok", lastFetch: "3d" },
+          { name: "Quick Sprout", health: "ok", lastFetch: "5d" },
+          { name: "Hubspot", health: "ok", lastFetch: "4h" },
+          { name: "Neil Patel", health: "ok", lastFetch: "1d" },
+          { name: "Seth Godin", health: "ok", lastFetch: "2d" },
+          { name: "HubSpot Blog", health: "ok", lastFetch: "3h" }
+        ]},
+        { cat: "Meus Projetos", feeds: [
+          { name: "Digitais do Marketing", health: "ok", lastFetch: "1d" }
+        ]}
+      ];
+
+      function renderSidebar() {
+        const container = document.getElementById("sidebar-groups");
+        const search = (document.getElementById("feed-search-input")?.value || "").toLowerCase();
+        let total = 0;
+
+        container.innerHTML = FEEDS.map(({ cat, feeds }) => {
+          const filtered = feeds.filter((f) => (f.name || f).toLowerCase().includes(search));
+          if (filtered.length === 0) return "";
+          total += filtered.length;
+          const collapsed = filtered.length > 5;
+          return `
+            <section class="sidebar-group ${collapsed ? "is-collapsed" : ""}" data-cat="${cat}">
+              <h3 class="sidebar-category-header" style="cursor:pointer;display:flex;align-items:center;gap:0.5rem;margin:0;font-size:0.8rem;">
+                <span class="sidebar-category-name">${cat}</span>
+                <span class="sidebar-count">${filtered.length}</span>
+                <button class="category-toggle" type="button" style="margin-left:auto;">${collapsed ? "Show" : "Hide"}</button>
+              </h3>
+              <ul class="sidebar-feed-list">
+                ${filtered.map((f, i) => {
+                  const name = typeof f === "string" ? f : f.name;
+                  const health = f.health || "ok";
+                  const lastFetch = f.lastFetch || "";
+                  const healthClass = health === "broken" ? "broken" : health === "warn" ? "warn" : "";
+                  return `
+                  <li class="sidebar-feed-row">
+                    <button class="sidebar-feed ${name === "Hacker News" ? "is-active" : ""}">
+                      <span class="sidebar-feed-name">${name}</span>
+                      <span class="sidebar-count">${(i % 5) + 1}</span>
+                      ${lastFetch ? `<span class="feed-health ${healthClass}" title="Last fetch">${lastFetch}</span>` : ""}
+                    </button>
+                  </li>
+                `}).join("")}
+              </ul>
+            </section>
+          `;
+        }).join("");
+
+        const countEl = document.getElementById("feed-count");
+        if (countEl) countEl.textContent = `${total} feeds`;
+
+        // Toggle collapse
+        container.querySelectorAll(".sidebar-group").forEach((grp) => {
+          const toggle = grp.querySelector(".category-toggle");
+          const header = grp.querySelector(".sidebar-category-header");
+          const handler = () => {
+            grp.classList.toggle("is-collapsed");
+            toggle.textContent = grp.classList.contains("is-collapsed") ? "Show" : "Hide";
+          };
+          toggle?.addEventListener("click", handler);
+          header?.addEventListener("click", (e) => { if (!toggle.contains(e.target)) handler(); });
+        });
+      }
+
+      document.getElementById("feed-search-input").addEventListener("input", renderSidebar);
+
+      // Sidebar nav
+      document.querySelectorAll(".sidebar-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          document.querySelectorAll(".sidebar-nav-item").forEach((i) => i.classList.remove("is-active"));
+          item.classList.add("is-active");
+          document.querySelectorAll(".mockup-view").forEach((v) => v.classList.remove("active"));
+          const view = document.querySelector(`.mockup-view[data-tab="${item.dataset.view}"]`);
+          if (view) {
+            view.classList.add("active");
+            document.body.classList.remove("view-reader", "view-digest");
+            document.body.classList.add(`view-${item.dataset.view.replace("reader", "reader")}`);
+          }
+        });
+      });
+
+      renderSidebar();
+
+      // Sidebar hide/show - menu-style
+      const toggleBtn = document.getElementById("sidebar-toggle-btn");
+      const showBtn = document.getElementById("sidebar-show-btn");
+      const appShell = document.getElementById("app-shell");
+      function setSidebarCollapsed(collapsed) {
+        appShell.classList.toggle("sidebar-collapsed", collapsed);
+        toggleBtn.title = collapsed ? "Show sidebar" : "Hide sidebar";
+        toggleBtn.style.display = collapsed ? "none" : "flex";
+      }
+      toggleBtn.addEventListener("click", () => setSidebarCollapsed(true));
+      showBtn.addEventListener("click", () => setSidebarCollapsed(false));
+
+      // Page nav: Settings, Feeds
+      document.querySelectorAll(".page-nav a[data-page]").forEach((a) => {
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const page = a.dataset.page;
+          document.querySelectorAll(".mockup-view").forEach((v) => v.classList.remove("active"));
+          document.querySelectorAll(".sidebar-nav-item").forEach((i) => i.classList.remove("is-active"));
+          const view = document.querySelector(`.mockup-view[data-tab="${page}"]`);
+          if (view) view.classList.add("active");
+        });
+      });
+
+      // Sidebar nav: when on Settings/Feeds, clicking Today/Digest goes back to main
+      document.querySelectorAll(".sidebar-nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const viewName = item.dataset.view;
+          if (viewName === "reader" || viewName === "digest") {
+            document.querySelectorAll(".mockup-view").forEach((v) => v.classList.remove("active"));
+            document.querySelectorAll(".sidebar-nav-item").forEach((i) => i.classList.remove("is-active"));
+            item.classList.add("is-active");
+            const view = document.querySelector(`.mockup-view[data-tab="${viewName}"]`);
+            if (view) view.classList.add("active");
+          }
+        });
+      });
+
+      function closeCard(item) {
+        if (!item) return;
+        item.classList.remove("is-selected");
+      }
+
+      function expandCard(item, content) {
+        document.querySelectorAll(".view-reader .item.is-selected").forEach((i) => i.classList.remove("is-selected"));
+        item.classList.add("is-selected", "is-read");
+        const expanded = item.querySelector(".item-expanded");
+        if (!expanded) {
+          const div = document.createElement("div");
+          div.className = "item-expanded";
+          div.innerHTML = `
+            <button class="btn-close-card" type="button" title="Close">×</button>
+            <div style="margin: 0.75rem 0;"><button class="btn-summarize" type="button">Summarize</button> <span class="mockup-badge" style="margin-left: 0.5rem;">AI</span></div>
+            <div class="reader-summary-block"><div class="reader-summary-label">TL;DR</div><div class="reader-summary-text">Click Summarize to generate.</div></div>
+            <div class="reader-content">${content || "Article content would load here..."}</div>
+            <a class="reader-open" href="#" style="display:inline-block;margin-top:0.75rem;">Open original</a>
+          `;
+          item.appendChild(div);
+          div.querySelector(".btn-close-card").addEventListener("click", (e) => { e.stopPropagation(); closeCard(item); });
+        }
+      }
+
+      function setupItemCards(container) {
+        if (!container) return;
+        container.querySelectorAll(".item").forEach((item) => {
+          item.addEventListener("click", (e) => {
+            if (e.target.closest("a")) return;
+            const closeBtn = e.target.closest(".btn-close-card");
+            if (closeBtn) { closeBtn.click(); return; }
+            if (e.target.closest("button")) return;
+            if (item.classList.contains("is-selected")) {
+              closeCard(item);
+            } else {
+              expandCard(item);
+            }
+          });
+        });
+        container.querySelectorAll(".btn-close-card").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeCard(btn.closest(".item"));
+          });
+        });
+      }
+
+      setupItemCards(document.querySelector(".view-reader"));
+
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("a, button, input")) return;
+        const selected = document.querySelector(".item.is-selected");
+        if (!selected) return;
+        if (e.target.closest(".item") === selected) return;
+        closeCard(selected);
+      });
+
+      // Refresh all - mock progress
+      document.getElementById("btn-refresh")?.addEventListener("click", () => {
+        const wrap = document.getElementById("refresh-progress-wrap");
+        const bar = document.getElementById("refresh-progress-bar");
+        if (!wrap || !bar) return;
+        wrap.style.display = "block";
+        bar.style.width = "0%";
+        let p = 0;
+        const iv = setInterval(() => {
+          p += Math.random() * 15 + 5;
+          if (p >= 100) { p = 100; clearInterval(iv); wrap.style.display = "none"; }
+          bar.style.width = p + "%";
+        }, 300);
+      });
+
+      // Shortcuts modal
+      document.getElementById("btn-shortcuts")?.addEventListener("click", () => {
+        document.getElementById("shortcuts-modal").classList.toggle("open");
+      });
+      document.getElementById("shortcuts-modal")?.addEventListener("click", (e) => {
+        if (e.target.id === "shortcuts-modal") e.target.classList.remove("open");
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "?" && !e.target.matches("input, textarea")) {
+          e.preventDefault();
+          document.getElementById("shortcuts-modal")?.classList.toggle("open");
+        }
+      });
+
+      // Theme toggle
+      document.getElementById("theme-toggle")?.addEventListener("change", (e) => {
+        document.body.classList.toggle("theme-light", e.target.checked);
+      });
+
+    </script>
+  </body>
+</html>

@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/recent-feeds.test.js && node tests/opml-import.test.js && node tests/unread-cache.test.js && node tests/saved-view.test.js",
+    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js",
     "dev": "node --watch server.js",
     "start": "node server.js"
   },

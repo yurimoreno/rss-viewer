@@ -3,130 +3,187 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Feedly | RSS Viewer</title>
+    <title>RSS Viewer</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="page">
       <header class="topbar">
         <div class="topbar-left">
-          <span class="workspace-name">RSS Viewer</span>
+          <button type="button" class="sidebar-menu-btn" id="sidebar-toggle-btn" title="Hide sidebar">≡</button>
+          <span class="workspace-name">RSS Viewer <span class="feed-badge" id="feed-badge">0 feeds</span></span>
         </div>
+        <nav class="page-nav">
+          <button type="button" class="btn-refresh" id="btn-refresh" title="Refresh all feeds">↻ Refresh</button>
+          <button type="button" class="sidebar-menu-btn" id="btn-shortcuts" title="Keyboard shortcuts">?</button>
+          <a href="#" data-page="feeds">Feeds</a>
+          <a href="#" data-page="settings">Settings</a>
+        </nav>
       </header>
 
-      <div class="app-shell">
-        <aside id="feed-sidebar" class="sidebar is-open" aria-label="Feed categories">
+      <div class="app-shell" id="app-shell">
+        <aside class="sidebar-menu-strip" id="sidebar-menu-strip">
+          <button type="button" class="sidebar-menu-btn" id="sidebar-show-btn" title="Show sidebar">≡</button>
+        </aside>
+        <aside class="sidebar is-open mockup-sidebar">
           <div class="sidebar-header">
             <div>
               <h2>Today</h2>
-              <span class="sidebar-metric-label">Your feed map</span>
+              <span class="sidebar-metric-label" id="sidebar-metric">Import OPML to get started</span>
             </div>
-            <button id="saved-view-toggle" class="saved-view-toggle" type="button">Saved</button>
           </div>
-
-          <section class="sidebar-section" aria-label="Feeds">
+          <section class="sidebar-section">
+            <h3>Views</h3>
+            <div class="sidebar-nav-item is-active" data-view="reader">Today</div>
+            <div class="sidebar-nav-item" data-view="digest">Digest <span class="ai-badge">AI</span></div>
+          </section>
+          <section class="sidebar-section">
             <h3>Feeds</h3>
-            <nav id="sidebar-groups" class="sidebar-groups" aria-label="Imported feed list"></nav>
+            <div class="feed-search">
+              <input type="text" placeholder="Search feeds..." id="feed-search-input" />
+            </div>
+            <nav class="sidebar-groups" id="sidebar-groups"></nav>
+            <div class="sidebar-total" id="feed-count">0 feeds</div>
           </section>
         </aside>
 
-        <main class="viewer" aria-live="polite">
-          <button
-            id="sidebar-toggle"
-            class="sidebar-toggle"
-            type="button"
-            aria-controls="feed-sidebar"
-            aria-expanded="false"
-          >
-            Browse feeds
-          </button>
-
-          <section id="feed-view">
+        <main class="viewer">
+          <div class="mockup-view active view-reader" data-tab="reader">
             <header class="viewer-hero">
               <div>
                 <p class="viewer-eyebrow">Today</p>
                 <h1>Today</h1>
               </div>
+              <div id="refresh-progress-wrap" class="refresh-wrap">
+                <span class="refresh-label">Fetching...</span>
+                <div class="refresh-progress"><div class="refresh-progress-bar" id="refresh-progress-bar"></div></div>
+              </div>
             </header>
-
             <section class="viewer-layout">
-              <section class="feed-panel" aria-label="Feed list">
-                <section class="utility-panel">
-                  <form id="feed-form" class="feed-form" novalidate>
-                    <label for="feed-url">Feed URL</label>
-                    <div class="controls">
-                      <input
-                        id="feed-url"
-                        name="url"
-                        type="url"
-                        placeholder="https://example.com/feed.xml"
-                        required
-                        autocomplete="url"
-                      />
-                      <button id="load-feed" type="submit">Load</button>
-                    </div>
-                  </form>
-
-                  <section class="opml-import" aria-label="OPML import">
-                    <label for="opml-file">Import OPML</label>
-                    <input id="opml-file" type="file" accept=".opml,.xml,text/xml,application/xml" />
-                    <button id="opml-export" type="button">Export OPML</button>
-                  </section>
-
-                  <section id="status" class="status" role="status">Enter a feed URL to load recent items.</section>
-
-                  <section class="recent-feeds" aria-label="Recent feeds">
-                    <h2>Recent feeds</h2>
-                    <ul id="recent-feeds" class="recent-feeds-list"></ul>
-                    <p id="recent-feeds-empty" class="recent-feeds-empty">No recent feeds yet.</p>
-                  </section>
-
-                  <section class="item-search" aria-label="Search cached items">
-                    <label for="item-search">Search items</label>
-                    <input
-                      id="item-search"
-                      name="item-search"
-                      type="search"
-                      placeholder="Search by title or summary"
-                      autocomplete="off"
-                    />
-                  </section>
-                </section>
-
-                <section class="feed-section" aria-label="Feed items">
-                  <ul id="results" class="results" aria-label="Feed items"></ul>
-                </section>
-              </section>
-
-              <aside id="reader" class="reader" aria-label="Article reader">
-                <div id="reader-empty" class="reader-empty">Select an article to start reading.</div>
-                <article id="reader-article" class="reader-article is-hidden">
-                  <header class="reader-header">
-                    <p id="reader-source" class="reader-source"></p>
-                    <h2 id="reader-title" class="reader-title"></h2>
-                    <div class="reader-meta">
-                      <span id="reader-date" class="reader-date"></span>
-                      <a id="reader-open" class="reader-open" href="#" target="_blank" rel="noopener noreferrer">Open original</a>
-                    </div>
-                  </header>
-                  <div id="reader-content" class="reader-content"></div>
-                </article>
-              </aside>
+              <div id="today-content">
+                <p class="empty-hint">Import OPML or add feeds to see items here.</p>
+              </div>
             </section>
-          </section>
+          </div>
 
-          <section id="saved-view" class="saved-view is-hidden" aria-label="Saved items">
-            <div class="saved-header">
-              <h2>Saved items</h2>
-              <button id="feed-view-toggle" class="saved-view-toggle" type="button">Back to feeds</button>
-            </div>
-            <p id="saved-empty" class="saved-empty">No saved items yet.</p>
-            <ul id="saved-results" class="results"></ul>
-          </section>
+          <div class="mockup-view view-digest" data-tab="digest">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Digest</p>
+                <h1>Today's digest</h1>
+              </div>
+              <div class="digest-controls">
+                <select id="digest-window">
+                  <option value="24h">Last 24h</option>
+                  <option value="7d">Last 7 days</option>
+                </select>
+                <button class="btn-generate-digest" type="button" id="btn-generate-digest">Generate digest</button>
+              </div>
+            </header>
+            <section class="viewer-layout">
+              <div>
+                <p class="digest-intro">AI summarizes what matters across your feeds. Sources linked as [1][2].</p>
+                <div class="digest-card" id="digest-card">
+                  <p class="digest-placeholder">Click "Generate digest" to create an AI summary. Configure API key and model in Settings first.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="mockup-view view-settings" data-tab="settings">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Configuration</p>
+                <h1>Settings</h1>
+              </div>
+            </header>
+            <section class="viewer-layout">
+              <div class="settings-page">
+                <div class="section">
+                  <h2>AI / OpenRouter</h2>
+                  <p class="section-desc">Summaries and digest use OpenRouter.</p>
+                  <div class="row">
+                    <label>OpenRouter API Key</label>
+                    <input type="password" id="api-key" placeholder="sk-or-..." />
+                  </div>
+                  <div class="row model-row">
+                    <label>Model</label>
+                    <div class="model-controls">
+                      <select id="model-select" disabled><option value="">— Select model —</option></select>
+                      <button type="button" id="btn-check-models">Check models</button>
+                    </div>
+                    <span id="model-status" class="model-status"></span>
+                  </div>
+                  <button type="button" id="btn-save-ai" class="btn-save-ai">Save</button>
+                </div>
+                <div class="section">
+                  <h2>Refresh</h2>
+                  <div class="row">
+                    <label>Auto-refresh interval</label>
+                    <select id="refresh-interval">
+                      <option value="0">Manual only</option>
+                      <option value="30">Every 30 min</option>
+                      <option value="60">Every 60 min</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Appearance</h2>
+                  <div class="theme-toggle">
+                    <label for="theme-toggle">Light theme</label>
+                    <input type="checkbox" id="theme-toggle" />
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="mockup-view view-feeds" data-tab="feeds">
+            <header class="viewer-hero">
+              <div>
+                <p class="viewer-eyebrow">Library</p>
+                <h1>Feed management</h1>
+              </div>
+            </header>
+            <section class="viewer-layout">
+              <div class="feeds-page">
+                <div class="section">
+                  <h2>Add feed</h2>
+                  <div class="add-feed">
+                    <input type="url" id="add-feed-url" placeholder="https://example.com/feed.xml" />
+                    <button type="button" id="btn-add-feed">Add</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>OPML</h2>
+                  <div class="opml-actions">
+                    <input type="file" accept=".opml,.xml" id="opml-import" style="display:none" />
+                    <button type="button" id="btn-import-opml">Import OPML</button>
+                    <button type="button" id="btn-export-opml">Export OPML</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Your feeds</h2>
+                  <p class="section-desc" id="feeds-summary">No feeds yet.</p>
+                  <input type="text" placeholder="Search feeds..." id="feed-mgmt-search" style="width:100%;margin-bottom:1rem;padding:0.5rem;border-radius:8px;border:1px solid #2a3340;background:#0f141b;color:var(--text);" />
+                  <ul class="feeds-list" id="feeds-list"></ul>
+                </div>
+              </div>
+            </section>
+          </div>
         </main>
       </div>
-    </div>
 
+      <div class="shortcuts-modal" id="shortcuts-modal">
+        <div class="shortcuts-content">
+          <h3>Keyboard shortcuts</h3>
+          <div class="shortcut-row"><span><kbd>j</kbd> / <kbd>k</kbd></span><span>Next / previous item</span></div>
+          <div class="shortcut-row"><span><kbd>o</kbd></span><span>Open original</span></div>
+          <div class="shortcut-row"><span><kbd>?</kbd></span><span>This help</span></div>
+          <button type="button" class="btn-close-modal">Close</button>
+        </div>
+      </div>
+    </div>
     <script src="/app.js" defer></script>
   </body>
 </html>

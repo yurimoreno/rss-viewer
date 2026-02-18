@@ -3,6 +3,7 @@ const path = require('path');
 const Parser = require('rss-parser');
 
 const app = express();
+app.use(express.json());
 const parser = new Parser();
 const port = process.env.PORT || 3000;
 
@@ -104,6 +105,48 @@ app.get('/api/article', async (req, res) => {
   } catch {
     return res.status(502).json({ error: 'fetch_failed' });
   }
+});
+
+app.post('/api/openrouter/models', async (req, res) => {
+  const apiKey = typeof req.body?.apiKey === 'string' ? req.body.apiKey.trim() : '';
+  if (!apiKey) return res.status(400).json({ error: 'missing_api_key' });
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' }
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return res.status(response.status).json({ error: 'validation_failed', message: err.error?.message || 'Invalid API key' });
+    }
+    const data = await response.json();
+    const models = (data.data || []).map((m) => ({ id: m.id, name: m.name || m.id }));
+    return res.json({ models });
+  } catch { return res.status(502).json({ error: 'fetch_failed' }); }
+});
+
+app.post('/api/openrouter/chat', async (req, res) => {
+  const { apiKey, modelId, messages } = req.body || {};
+  const key = (typeof apiKey === 'string' ? apiKey : '').trim();
+  const model = (typeof modelId === 'string' ? modelId : '').trim();
+  const msgs = Array.isArray(messages) ? messages : [];
+  if (!key || !model || !msgs.length) return res.status(400).json({ error: 'missing_params' });
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + key,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': req.headers.origin || 'http://localhost:3000'
+      },
+      body: JSON.stringify({
+        model,
+        messages: msgs.map((m) => ({ role: (m.role || 'user').toString(), content: (m.content || '').toString() }))
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json({ error: 'chat_failed', message: data.error?.message || 'Request failed' });
+    return res.json({ content: data.choices?.[0]?.message?.content || '' });
+  } catch { return res.status(502).json({ error: 'fetch_failed' }); }
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
