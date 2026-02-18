@@ -5,6 +5,10 @@
   const LIBRARY_KEY = 'rssViewer.library';
   const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
   const SETTINGS_KEY = 'rssViewer.settings';
+  const SUMMARY_CACHE_KEY = 'rssViewer.summaryCache';
+  const DIGEST_CACHE_KEY = 'rssViewer.digestCache';
+  const MAX_SUMMARY_CACHE = 80;
+  const MAX_DIGEST_CACHE = 20;
   const MAX_ITEMS_PER_FEED = 50;
   const PREFETCH_CONCURRENCY = 3;
   const MAX_ARTICLE_CACHE = 40;
@@ -234,8 +238,120 @@
     } catch { return ''; }
   }
 
-  function readSettings() { try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); } catch { return {}; } }
+  const DEFAULT_DIGEST_PROMPT = `Summarize these RSS items into a short, scannable digest.
+
+## Rules
+- Deduplicate first: if multiple items cover the same story, merge them into one entry and combine their citations.
+- Group entries under 2-4 short theme headers (e.g., "AI", "Security", "Business").
+- Put the single biggest story first under a "Lead" header with 2 sentences max.
+- All other entries: **Company or Subject:** One sentence. [1][2]
+- 8-12 items total. Cut routine updates and PR.
+- If sources disagree on a key fact, note it briefly inline.
+- Tone: neutral, concise, no hype.
+
+## Format example
+**Lead**
+**Google Pixel 10a:** Google unveiled the $499 Pixel 10a with Tensor G4 and a flush camera bar, though sources differ on whether it ships March 4 or 5. [10][15][28]
+
+**AI & Security**
+- **Microsoft Copilot:** Patched a bug that let Copilot summarize confidential emails from restricted folders. [31]
+- **World Labs:** Raised $200M from Autodesk to integrate spatial AI models. [50]
+
+## Items
+{{ITEMS}}`;
+
+  const DEFAULT_SUMMARY_PROMPT = `Summarize this article in 2-4 concise sentences. TL;DR style.
+
+{{ARTICLE}}`;
+
+  function readSettings() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+      if (s.modelId && !s.modelIdDigest && !s.modelIdSummary) {
+        s.modelIdDigest = s.modelId;
+        s.modelIdSummary = s.modelId;
+      }
+      return s;
+    } catch { return {}; }
+  }
   function saveSettings(s) { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch {} }
+  function getDigestPrompt() { const s = readSettings(); return (s.digestPrompt || '').trim() || DEFAULT_DIGEST_PROMPT; }
+  function getSummaryPrompt() { const s = readSettings(); return (s.summaryPrompt || '').trim() || DEFAULT_SUMMARY_PROMPT; }
+  function readSummaryCache() {
+    try {
+      const p = JSON.parse(localStorage.getItem(SUMMARY_CACHE_KEY) || '{}');
+      return { order: p.order || [], entries: p.entries || {} };
+    } catch { return { order: [], entries: {} }; }
+  }
+  function saveSummaryCache(c) { try { localStorage.setItem(SUMMARY_CACHE_KEY, JSON.stringify(c)); } catch {} }
+  function getCachedSummary(itemId) { const c = readSummaryCache(); return c.entries[itemId] || ''; }
+  function setCachedSummary(itemId, text) {
+    const c = readSummaryCache();
+    if (c.entries[itemId]) c.order = c.order.filter((k) => k !== itemId);
+    c.order.push(itemId);
+    c.entries[itemId] = text;
+    while (c.order.length > MAX_SUMMARY_CACHE) {
+      const k = c.order.shift();
+      delete c.entries[k];
+    }
+    saveSummaryCache(c);
+  }
+  function digestCacheKey(hours, items) {
+    let h = 0;
+    const s = items.map((i) => i.id).sort().join('|');
+    for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    return hours + '-' + h;
+  }
+  function readDigestCache() {
+    try {
+      const p = JSON.parse(localStorage.getItem(DIGEST_CACHE_KEY) || '{}');
+      return { order: p.order || [], entries: p.entries || {} };
+    } catch { return { order: [], entries: {} }; }
+  }
+  function saveDigestCache(c) { try { localStorage.setItem(DIGEST_CACHE_KEY, JSON.stringify(c)); } catch {} }
+  function getCachedDigest(key) { const c = readDigestCache(); return c.entries[key] || null; }
+  function setCachedDigest(key, html) {
+    const c = readDigestCache();
+    if (c.entries[key]) c.order = c.order.filter((k) => k !== key);
+    c.order.push(key);
+    c.entries[key] = html;
+    while (c.order.length > MAX_DIGEST_CACHE) {
+      const k = c.order.shift();
+      delete c.entries[k];
+    }
+    saveDigestCache(c);
+  }
+
+  function formatDigestOutput(raw, refs) {
+    const toHtml = (text) =>
+      escapeHtml(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\[(\d+)\]/g, (_, n) => {
+          const idx = parseInt(n, 10) - 1;
+          const r = refs[idx];
+          if (r) return '<a href="' + (r.link || '#') + '" target="_blank" rel="noopener" class="digest-ref">[' + n + ']</a>';
+          return '[' + n + ']';
+        });
+
+    const lines = (raw || '').trim().split(/\n+/).map((l) => l.replace(/^#+\s*/, '').trim()).filter(Boolean);
+    if (!lines.length) return '<p class="digest-placeholder">No digest content returned.</p>';
+
+    const parts = [];
+    for (const line of lines) {
+      const soloBold = /^\*\*([^*]+)\*\*\s*$/.exec(line);
+      if (soloBold) {
+        parts.push('<div class="digest-header">' + toHtml(soloBold[1]) + '</div>');
+        continue;
+      }
+      const subItem = /^-\s+(.+)$/.exec(line);
+      if (subItem) {
+        parts.push('<div class="digest-item digest-sub">' + toHtml(subItem[1]) + '</div>');
+        continue;
+      }
+      parts.push('<div class="digest-item">' + toHtml(line) + '</div>');
+    }
+    return '<div class="digest-sections">' + parts.join('') + '</div>';
+  }
 
   function init() {
     const appShell = document.getElementById('app-shell');
@@ -252,10 +368,12 @@
     const shortcutsModal = document.getElementById('shortcuts-modal');
     const themeToggle = document.getElementById('theme-toggle');
     const apiKeyInput = document.getElementById('api-key');
-    const modelSelect = document.getElementById('model-select');
+    const modelSelectDigest = document.getElementById('model-select-digest');
+    const modelSelectSummary = document.getElementById('model-select-summary');
     const btnCheckModels = document.getElementById('btn-check-models');
     const modelStatus = document.getElementById('model-status');
-    const btnSaveAi = document.getElementById('btn-save-ai');
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+    const settingsStatus = document.getElementById('settings-status');
     const refreshIntervalSelect = document.getElementById('refresh-interval');
     const addFeedUrl = document.getElementById('add-feed-url');
     const btnAddFeed = document.getElementById('btn-add-feed');
@@ -268,6 +386,11 @@
     const digestCard = document.getElementById('digest-card');
     const digestWindow = document.getElementById('digest-window');
     const btnGenerateDigest = document.getElementById('btn-generate-digest');
+    const digestPromptInput = document.getElementById('digest-prompt');
+    const btnResetDigestPrompt = document.getElementById('btn-reset-digest-prompt');
+    const btnSaveDigestPrompt = document.getElementById('btn-save-digest-prompt');
+    const summaryPromptInput = document.getElementById('summary-prompt');
+    const btnResetSummaryPrompt = document.getElementById('btn-reset-summary-prompt');
 
     function setImportedFeeds(feeds) {
       importedFeeds = dedupeFeeds(feeds);
@@ -335,11 +458,39 @@
         if (!exp) {
           exp = document.createElement('div');
           exp.className = 'item-expanded';
-          exp.innerHTML = '<button class="btn-close-card" type="button" title="Close">×</button><div style="margin:0.75rem 0"><button class="btn-summarize" type="button">Summarize</button> <span class="ai-badge">AI</span></div><div class="reader-summary-block"><div class="reader-summary-label">TL;DR</div><div class="reader-summary-text">Click Summarize to generate. (Coming soon)</div></div><div class="reader-content">Loading...</div><a class="reader-open" href="' + (item.link || '#') + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:0.75rem">Open original</a>';
+          exp.innerHTML = '<button class="btn-close-card" type="button" title="Close">×</button><div style="margin:0.75rem 0"><button class="btn-summarize" type="button">Summarize</button> <span class="ai-badge">AI</span></div><div class="reader-summary-block"><div class="reader-summary-label">TL;DR</div><div class="reader-summary-text">Click Summarize to generate.</div></div><div class="reader-content">Loading...</div><a class="reader-open" href="' + (item.link || '#') + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:0.75rem">Open original</a>';
           li.appendChild(exp);
           exp.querySelector('.btn-close-card').onclick = (ev) => { ev.stopPropagation(); li.classList.remove('is-selected'); };
           const contentEl = exp.querySelector('.reader-content');
+          const summaryEl = exp.querySelector('.reader-summary-text');
+          const btnSum = exp.querySelector('.btn-summarize');
           loadArticle(item).then((t) => { if (contentEl) contentEl.textContent = t || 'No content available.'; });
+          const cached = getCachedSummary(item.id);
+          if (cached) summaryEl.textContent = cached;
+          btnSum.onclick = async (ev) => {
+            ev.stopPropagation();
+            const s = readSettings();
+            const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
+            const modelId = s.modelIdSummary || modelSelectSummary?.value || '';
+            if (!apiKey || !modelId) { if (summaryEl) summaryEl.textContent = 'Configure API key and Summary model in Settings, then Save.'; summaryEl.classList.add('error'); return; }
+            const text = contentEl?.textContent?.trim() || '';
+            if (!text || text === 'No content available.') { if (summaryEl) summaryEl.textContent = 'No article content to summarize.'; return; }
+            if (summaryEl) summaryEl.classList.remove('error');
+            if (summaryEl) summaryEl.textContent = 'Summarizing…';
+            if (btnSum) btnSum.disabled = true;
+            try {
+              const truncated = text.length > 12000 ? text.slice(0, 12000) + '\n\n[Article truncated…]' : text;
+              const promptTpl = getSummaryPrompt();
+              const prompt = promptTpl.includes('{{ARTICLE}}') ? promptTpl.replace('{{ARTICLE}}', truncated) : promptTpl + '\n\n' + truncated;
+              const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) { if (summaryEl) summaryEl.textContent = data.message || data.error || 'Request failed.'; summaryEl?.classList.add('error'); return; }
+              const result = (data.content || '').trim() || 'No summary returned.';
+              if (summaryEl) summaryEl.textContent = result;
+              setCachedSummary(item.id, result);
+            } catch { if (summaryEl) { summaryEl.textContent = 'Network error.'; summaryEl.classList.add('error'); } }
+            finally { if (btnSum) btnSum.disabled = false; }
+          };
         }
         if (wasSelected) li.classList.remove('is-selected');
       };
@@ -446,11 +597,19 @@
       if (apiKeyInput) apiKeyInput.value = s.apiKey || '';
       if (refreshIntervalSelect) refreshIntervalSelect.value = String(s.refreshInterval || 0);
       if (themeToggle) themeToggle.checked = !!s.themeLight;
-      if (modelSelect && Array.isArray(s.modelsCache) && s.modelsCache.length) {
-        modelSelect.innerHTML = '<option value="">— Select model —</option>';
-        s.modelsCache.forEach((m) => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name || m.id; modelSelect.appendChild(o); });
-        modelSelect.disabled = false;
-        if (s.modelId) modelSelect.value = s.modelId;
+      if (digestPromptInput) digestPromptInput.value = (s.digestPrompt || '').trim() || DEFAULT_DIGEST_PROMPT;
+      if (summaryPromptInput) summaryPromptInput.value = (s.summaryPrompt || '').trim() || DEFAULT_SUMMARY_PROMPT;
+      const models = Array.isArray(s.modelsCache) ? s.modelsCache : [];
+      if (models.length) {
+        const fillSelect = (sel, val) => {
+          if (!sel) return;
+          sel.innerHTML = '<option value="">— Select model —</option>';
+          models.forEach((m) => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name || m.id; sel.appendChild(o); });
+          sel.disabled = false;
+          if (val && models.some((m) => m.id === val)) sel.value = val;
+        };
+        fillSelect(modelSelectDigest, s.modelIdDigest || s.modelId);
+        fillSelect(modelSelectSummary, s.modelIdSummary || s.modelId);
       }
       document.body.classList.toggle('theme-light', !!s.themeLight);
     }
@@ -464,29 +623,45 @@
         const data = await res.json();
         if (!res.ok) { if (modelStatus) { modelStatus.textContent = data.message || 'Invalid API key'; modelStatus.className = 'model-status error'; } return; }
         const models = data.models || [];
-        if (modelSelect) {
-          modelSelect.innerHTML = '<option value="">— Select model —</option>';
-          models.forEach((m) => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name || m.id; modelSelect.appendChild(o); });
-          modelSelect.disabled = false;
-          const s = readSettings();
-          if (s.modelId && models.some((m) => m.id === s.modelId)) modelSelect.value = s.modelId;
-        }
-        saveSettings({ ...readSettings(), modelsCache: models });
+        const fillSelect = (sel, val) => {
+          if (!sel) return;
+          sel.innerHTML = '<option value="">— Select model —</option>';
+          models.forEach((m) => { const o = document.createElement('option'); o.value = m.id; o.textContent = m.name || m.id; sel.appendChild(o); });
+          sel.disabled = false;
+          if (val && models.some((m) => m.id === val)) sel.value = val;
+        };
+        const s = readSettings();
+        fillSelect(modelSelectDigest, s.modelIdDigest || s.modelId);
+        fillSelect(modelSelectSummary, s.modelIdSummary || s.modelId);
+        saveSettings({ ...s, modelsCache: models });
         if (modelStatus) { modelStatus.textContent = 'Done'; modelStatus.className = 'model-status success'; }
       } catch { if (modelStatus) { modelStatus.textContent = 'Request failed'; modelStatus.className = 'model-status error'; } }
       finally { if (btnCheckModels) btnCheckModels.disabled = false; }
     }
     btnCheckModels?.addEventListener('click', checkModels);
-    btnSaveAi?.addEventListener('click', () => {
-      saveSettings({ ...readSettings(), apiKey: (apiKeyInput?.value || '').trim(), modelId: modelSelect?.value || '' });
-      if (modelStatus) { modelStatus.textContent = 'Saved'; modelStatus.className = 'model-status success'; }
-    });
-    refreshIntervalSelect?.addEventListener('change', () => {
-      saveSettings({ ...readSettings(), refreshInterval: parseInt(refreshIntervalSelect.value, 10) });
+    btnSaveSettings?.addEventListener('click', () => {
+      const digestPrompt = (digestPromptInput?.value || '').trim();
+      const summaryPrompt = (summaryPromptInput?.value || '').trim();
+      saveSettings({
+        ...readSettings(),
+        apiKey: (apiKeyInput?.value || '').trim(),
+        modelIdDigest: modelSelectDigest?.value || '',
+        modelIdSummary: modelSelectSummary?.value || '',
+        digestPrompt: digestPrompt || undefined,
+        summaryPrompt: summaryPrompt || undefined,
+        refreshInterval: parseInt(refreshIntervalSelect?.value, 10) || 0
+      });
       if (refreshIntervalId) clearInterval(refreshIntervalId);
       refreshIntervalId = null;
       const mins = parseInt(readSettings().refreshInterval, 10) || 0;
       if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
+      if (settingsStatus) { settingsStatus.textContent = 'Saved'; settingsStatus.className = 'model-status success'; }
+    });
+    btnResetDigestPrompt?.addEventListener('click', () => {
+      if (digestPromptInput) digestPromptInput.value = DEFAULT_DIGEST_PROMPT;
+    });
+    btnResetSummaryPrompt?.addEventListener('click', () => {
+      if (summaryPromptInput) summaryPromptInput.value = DEFAULT_SUMMARY_PROMPT;
     });
 
     btnAddFeed?.addEventListener('click', async () => {
@@ -530,22 +705,30 @@
     btnGenerateDigest?.addEventListener('click', async () => {
       const s = readSettings();
       const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
-      const modelId = s.modelId || modelSelect?.value || '';
+      const modelId = s.modelIdDigest || modelSelectDigest?.value || '';
       if (!apiKey || !modelId) { if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder error">Configure API key and model in Settings, then Save.</p>'; return; }
       const hours = (digestWindow?.value || '24h') === '7d' ? 168 : 24;
       const items = getItemsInWindow(hours);
       if (!items.length) { if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">No items in this time window. Refresh feeds first.</p>'; return; }
+      const cacheKey = digestCacheKey(hours, items);
+      const cached = getCachedDigest(cacheKey);
+      if (cached) { if (digestCard) digestCard.innerHTML = cached; return; }
       if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">Generating digest…</p>';
       if (btnGenerateDigest) btnGenerateDigest.disabled = true;
       const refs = [];
       const lines = items.slice(0, 50).map((i, idx) => { refs.push({ title: i.feedTitle, link: i.link }); return '[' + (idx + 1) + '] ' + i.title + ' (' + i.feedTitle + ')\n   ' + truncateText(i.summary, 150); });
-      const prompt = 'Summarize these RSS feed items into a concise digest. Group by theme. Cite sources as [1][2] etc.\n\n' + lines.join('\n\n');
+      const promptTemplate = getDigestPrompt();
+      const itemsBlock = lines.join('\n\n');
+      const prompt = promptTemplate.includes('{{ITEMS}}') ? promptTemplate.replace('{{ITEMS}}', itemsBlock) : promptTemplate + '\n\nItems:\n' + itemsBlock;
       try {
         const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { digestCard.innerHTML = '<p class="digest-placeholder error">' + (data.message || 'Request failed') + '</p>'; return; }
+        const bodyHtml = formatDigestOutput(data.content || '', refs);
         const refsHtml = refs.length ? '<div class="digest-refs"><strong>References:</strong> ' + refs.map((r, i) => '<a href="' + (r.link || '#') + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>').join(' ') + '</div>' : '';
-        digestCard.innerHTML = '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3><div class="digest-body">' + (data.content || '').replace(/\n/g, '<br>') + '</div>' + refsHtml;
+        const fullHtml = '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3><div class="digest-body">' + bodyHtml + '</div>' + refsHtml;
+        digestCard.innerHTML = fullHtml;
+        setCachedDigest(cacheKey, fullHtml);
       } catch { digestCard.innerHTML = '<p class="digest-placeholder error">Network error.</p>'; }
       finally { if (btnGenerateDigest) btnGenerateDigest.disabled = false; }
     });

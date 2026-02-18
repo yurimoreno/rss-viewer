@@ -101,23 +101,52 @@
               <div class="settings-page">
                 <div class="section">
                   <h2>AI / OpenRouter</h2>
-                  <p class="section-desc">Summaries and digest use OpenRouter.</p>
+                  <p class="section-desc">API key and model discovery. Check models to populate Digest and Summaries dropdowns.</p>
                   <div class="row">
                     <label>OpenRouter API Key</label>
                     <input type="password" id="api-key" placeholder="sk-or-..." />
                   </div>
                   <div class="row model-row">
-                    <label>Model</label>
+                    <label>Check models</label>
                     <div class="model-controls">
-                      <select id="model-select" disabled><option value="">— Select model —</option></select>
                       <button type="button" id="btn-check-models">Check models</button>
                     </div>
                     <span id="model-status" class="model-status"></span>
                   </div>
-                  <button type="button" id="btn-save-ai" class="btn-save-ai">Save</button>
+                </div>
+                <div class="section">
+                  <h2>Digest</h2>
+                  <p class="section-desc">Model and prompt for the daily digest. Use <code>{{ITEMS}}</code> where feed items are inserted. Cached per item set.</p>
+                  <div class="row model-row">
+                    <label>Model</label>
+                    <select id="model-select-digest" disabled><option value="">— Select model —</option></select>
+                  </div>
+                  <div class="row">
+                    <label>Prompt template</label>
+                    <textarea id="digest-prompt" rows="10"></textarea>
+                  </div>
+                  <div class="row">
+                    <button type="button" id="btn-reset-digest-prompt" class="btn-secondary">Reset to default</button>
+                  </div>
+                </div>
+                <div class="section">
+                  <h2>Summaries</h2>
+                  <p class="section-desc">Model and prompt for article TL;DR in Today. Use <code>{{ARTICLE}}</code> where article text is inserted. Cached per article.</p>
+                  <div class="row model-row">
+                    <label>Model</label>
+                    <select id="model-select-summary" disabled><option value="">— Select model —</option></select>
+                  </div>
+                  <div class="row">
+                    <label>Prompt template</label>
+                    <textarea id="summary-prompt" rows="4"></textarea>
+                  </div>
+                  <div class="row">
+                    <button type="button" id="btn-reset-summary-prompt" class="btn-secondary">Reset to default</button>
+                  </div>
                 </div>
                 <div class="section">
                   <h2>Refresh</h2>
+                  <p class="section-desc">How often to fetch feeds.</p>
                   <div class="row">
                     <label>Auto-refresh interval</label>
                     <select id="refresh-interval">
@@ -129,10 +158,17 @@
                 </div>
                 <div class="section">
                   <h2>Appearance</h2>
-                  <div class="theme-toggle">
-                    <label for="theme-toggle">Light theme</label>
-                    <input type="checkbox" id="theme-toggle" />
+                  <p class="section-desc">Theme preference.</p>
+                  <div class="row">
+                    <div class="theme-toggle">
+                      <label for="theme-toggle">Light theme</label>
+                      <input type="checkbox" id="theme-toggle" />
+                    </div>
                   </div>
+                </div>
+                <div class="settings-footer">
+                  <button type="button" id="btn-save-settings" class="btn-primary">Save</button>
+                  <span id="settings-status" class="model-status"></span>
                 </div>
               </div>
             </section>
