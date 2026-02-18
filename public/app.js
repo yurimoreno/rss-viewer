@@ -20,6 +20,7 @@
   let articleCache = { order: [], entries: {} };
   let selectedItemId = '';
   let selectedItemFeedUrl = '';
+  let selectedSidebarFeedUrl = '';
   let refreshIntervalId = null;
 
   function isValidHttpUrl(v) {
@@ -425,9 +426,25 @@
           li.className = 'sidebar-feed-row';
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = 'sidebar-feed';
-          btn.innerHTML = '<span class="sidebar-feed-name">' + escapeHtml(f.title) + '</span>';
-          btn.onclick = () => { selectedItemFeedUrl = ''; selectedItemId = ''; renderToday(); };
+          btn.className = 'sidebar-feed' + (f.url === selectedSidebarFeedUrl ? ' is-active' : '');
+          btn.dataset.url = f.url;
+          const count = getCachedFeedItems(f.url).length;
+          btn.innerHTML = '<span class="sidebar-feed-name">' + escapeHtml(f.title) + '</span><span class="sidebar-count">' + count + '</span>';
+          btn.onclick = async () => {
+            selectedItemFeedUrl = '';
+            selectedItemId = '';
+            selectedSidebarFeedUrl = f.url;
+            const url = f.url;
+            try {
+              setCachedFeedItems(url, await fetchFeed(url));
+            } catch {}
+            document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
+            document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
+            document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
+            document.querySelector('.sidebar-nav-item[data-view="reader"]')?.classList.add('is-active');
+            renderToday();
+            renderSidebar();
+          };
           li.appendChild(btn);
           ul.appendChild(li);
         });
@@ -498,8 +515,27 @@
     }
     function renderToday() {
       if (!todayContent) return;
-      const grouped = getAllItemsGrouped();
       todayContent.innerHTML = '';
+      if (selectedSidebarFeedUrl) {
+        const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+        const items = getCachedFeedItems(selectedSidebarFeedUrl)
+          .map((i) => ({ ...i, feedUrl: selectedSidebarFeedUrl, feedTitle: feed ? feed.title : selectedSidebarFeedUrl }))
+          .sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
+        if (!items.length) {
+          todayContent.innerHTML = '<p class="empty-hint">No items in this feed yet. Try refreshing.</p>';
+          return;
+        }
+        const g = document.createElement('div');
+        g.className = 'feed-group';
+        g.innerHTML = '<h3 class="feed-group-title">' + escapeHtml(feed ? feed.title : 'Feed') + '</h3>';
+        const ul = document.createElement('ul');
+        ul.className = 'results';
+        items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl, i.feedTitle)));
+        g.appendChild(ul);
+        todayContent.appendChild(g);
+        return;
+      }
+      const grouped = getAllItemsGrouped();
       if (!grouped.length) {
         todayContent.innerHTML = '<p class="empty-hint">Import OPML or add feeds to see items here.</p>';
         return;
@@ -538,11 +574,14 @@
       item.onclick = () => {
         const v = item.dataset.view;
         if (v !== 'reader' && v !== 'digest') return;
+        if (v === 'reader') selectedSidebarFeedUrl = '';
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
         document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
         const view = document.querySelector('.mockup-view[data-tab="' + v + '"]');
         if (view) view.classList.add('active');
         item.classList.add('is-active');
+        renderToday();
+        renderSidebar();
       };
     });
     document.querySelectorAll('.page-nav a[data-page]').forEach((a) => {
