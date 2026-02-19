@@ -62,7 +62,18 @@
 
       /* Card list: compact, more results */
       .feed-group { margin-bottom: 1.25rem; }
-      .feed-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 0.4rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-soft); }
+      .feed-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 0.4rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+      .feed-group-title:hover { color: var(--muted-strong); }
+      .feed-group-title .category-chevron { font-size: 0.6rem; opacity: 0.8; transition: transform 0.2s; }
+      .feed-group.is-collapsed .feed-group-title .category-chevron { transform: rotate(-90deg); }
+      .feed-group.is-collapsed .feed-group-detail,
+      .feed-group.is-collapsed .results { display: none; }
+      .feed-group-detail { font-size: 0.75rem; color: var(--muted); margin: 0 0 0.5rem; padding: 0; }
+      /* Collapsed summary: only visible when category is collapsed */
+      .feed-group-collapsed-summary { display: none; font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px solid var(--border-soft); }
+      .feed-group.is-collapsed .feed-group-collapsed-summary { display: block; }
+      .feed-group-collapsed-metrics { margin-bottom: 0.25rem; }
+      .feed-group-collapsed-latest { color: var(--muted-strong); line-height: 1.4; }
       .feed-group .results { gap: 0.3rem; list-style: none; padding: 0; margin: 0; }
       .feed-group .item {
         padding: 0.55rem 0.85rem;
@@ -183,57 +194,32 @@
 
             <section class="viewer-layout">
               <div>
-                <div class="feed-group">
-                  <h3 class="feed-group-title">Thinkers</h3>
-                  <ul class="results">
-                    <li class="item is-selected is-read">
-                      <div class="item-meta-row">
-                        <span class="item-source-badge">Marginal Revolution</span>
-                        <span class="item-metrics">
-                          <span>1h</span>
-                          <span>4 min read</span>
-                          <span>~320 words</span>
-                        </span>
-                      </div>
-                      <h2 class="item-title"><a href="#">In curiosity we trust.</a></h2>
-                      <p class="item-snippet">One of the leading tasks of our time is to rebuild trust in our institutions and in each other.</p>
-                      <div class="item-expanded">
-                        <button class="btn-close-card" type="button" title="Close">×</button>
-                        <div style="margin: 0.75rem 0;">
-                          <button class="btn-summarize" type="button">Summarize</button>
-                          <span class="mockup-badge" style="margin-left: 0.5rem;">AI</span>
-                        </div>
-                        <div class="reader-summary-block">
-                          <div class="reader-summary-label">TL;DR</div>
-                          <div class="reader-summary-text">
-                            The author argues that curiosity and intellectual humility are essential for progress. Rebuilding trust in institutions requires embracing uncertainty rather than dogma.
-                          </div>
-                        </div>
-                        <div class="reader-content">
-                          One of the leading tasks of our time is to rebuild trust in our institutions and in each other. In curiosity we trust—the willingness to ask questions, to admit we don't know, and to update our views when we learn more.
-                        </div>
-                        <a class="reader-open" href="#" style="display:inline-block;margin-top:0.75rem;">Open original</a>
-                      </div>
-                    </li>
-                    <li class="item">
-                      <div class="item-meta-row">
-                        <span class="item-source-badge">Jan-Lukas Else</span>
-                        <span class="item-metrics">
-                          <span>11h</span>
-                          <span>2 min read</span>
-                          <span>~180 words</span>
-                        </span>
-                      </div>
-                      <h2 class="item-title"><a href="#">AI productivity gains final</a></h2>
-                      <p class="item-snippet">New study confirms AI tools boost developer output by 40% in controlled trials.</p>
-                    </li>
-                  </ul>
+                <!-- Mockup: collapsed category with new summary -->
+                <div class="feed-group is-collapsed">
+                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Thinkers</span></h3>
+                  <div class="feed-group-collapsed-summary">
+                    <div class="feed-group-collapsed-metrics">12 items · 3 feeds · 5 unread</div>
+                    <div class="feed-group-collapsed-latest">Latest: "In curiosity we trust." · "AI productivity gains final" · "Why markets fail."</div>
+                  </div>
+                  <div class="feed-group-detail">12 items · 3 feeds</div>
+                  <ul class="results" style="display:none;"><li class="item">…</li></ul>
+                </div>
+
+                <div class="feed-group is-collapsed">
+                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">News</span></h3>
+                  <div class="feed-group-collapsed-summary">
+                    <div class="feed-group-collapsed-metrics">28 items · 5 feeds · 12 unread</div>
+                    <div class="feed-group-collapsed-latest">Latest: "Fed holds rates steady amid inflation data" · "Apple announces new M4 chip" · "OpenAI releases GPT-5 with reasoning improvements"</div>
+                  </div>
+                  <div class="feed-group-detail">28 items · 5 feeds</div>
+                  <ul class="results" style="display:none;"><li class="item">…</li></ul>
                 </div>
 
                 <div class="feed-group">
-                  <h3 class="feed-group-title">Dev</h3>
+                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Dev</span></h3>
+                  <div class="feed-group-detail">3 items · 2 feeds</div>
                   <ul class="results">
-                    <li class="item">
+                    <li class="item is-selected is-read">
                       <div class="item-meta-row">
                         <span class="item-source-badge">Hacker News</span>
                         <span class="item-metrics">
@@ -244,6 +230,23 @@
                       </div>
                       <h2 class="item-title"><a href="#">Apple announces new M4 chip with 40% faster performance</a></h2>
                       <p class="item-snippet">Apple unveiled the M4 chip at its spring event, promising significant gains over M3.</p>
+                      <div class="item-expanded">
+                        <button class="btn-close-card" type="button" title="Close">×</button>
+                        <div style="margin: 0.75rem 0;">
+                          <button class="btn-summarize" type="button">Summarize</button>
+                          <span class="mockup-badge" style="margin-left: 0.5rem;">AI</span>
+                        </div>
+                        <div class="reader-summary-block">
+                          <div class="reader-summary-label">TL;DR</div>
+                          <div class="reader-summary-text">
+                            Apple's M4 chip was announced at the spring event with significant performance gains over M3 and improved power efficiency.
+                          </div>
+                        </div>
+                        <div class="reader-content">
+                          Apple unveiled the M4 chip at its spring event, promising significant gains over M3 in both performance and efficiency for Mac and iPad lineups.
+                        </div>
+                        <a class="reader-open" href="#" style="display:inline-block;margin-top:0.75rem;">Open original</a>
+                      </div>
                     </li>
                     <li class="item">
                       <div class="item-meta-row">

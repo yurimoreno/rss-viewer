@@ -528,7 +528,22 @@
     function renderToday() {
       if (!todayContent) return;
       todayContent.innerHTML = '';
-      const collapsed = getCollapsedCategories();
+      let collapsed = getCollapsedCategories();
+      // Default to all collapsed when user has no saved preference
+      if (selectedSidebarFeedUrl) {
+        const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+        const singleTitle = feed ? feed.title : 'Feed';
+        if (collapsed.size === 0) {
+          setCollapsedCategories(new Set([singleTitle]));
+          collapsed = getCollapsedCategories();
+        }
+      } else {
+        const groupedForDefault = getAllItemsGrouped();
+        if (groupedForDefault.length > 0 && collapsed.size === 0) {
+          setCollapsedCategories(new Set(groupedForDefault.map((x) => x.category)));
+          collapsed = getCollapsedCategories();
+        }
+      }
       function addGroup(title, items, feedUrl, feedTitle) {
         const g = document.createElement('div');
         g.className = 'feed-group' + (collapsed.has(title) ? ' is-collapsed' : '');
@@ -543,6 +558,18 @@
           setCollapsedCategories(next);
         };
         g.appendChild(h3);
+        const feedCount = new Set(items.map((i) => i.feedUrl || feedUrl)).size;
+        const unreadCount = items.filter((i) => !i.isRead).length;
+        const summaryEl = document.createElement('div');
+        summaryEl.className = 'feed-group-collapsed-summary';
+        const metricsLine = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') + (unreadCount ? ' · ' + unreadCount + ' unread' : '');
+        const latestTitles = items.slice(0, 3).map((i) => '"' + truncateText(i.title || '', 48) + '"').join(' · ');
+        summaryEl.innerHTML = '<div class="feed-group-collapsed-metrics">' + escapeHtml(metricsLine) + '</div><div class="feed-group-collapsed-latest">Latest: ' + escapeHtml(latestTitles) + '</div>';
+        g.appendChild(summaryEl);
+        const detailEl = document.createElement('div');
+        detailEl.className = 'feed-group-detail';
+        detailEl.textContent = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '');
+        g.appendChild(detailEl);
         const ul = document.createElement('ul');
         ul.className = 'results';
         items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl ?? feedUrl, i.feedTitle ?? feedTitle)));
