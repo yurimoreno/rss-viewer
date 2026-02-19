@@ -818,7 +818,7 @@
       el.textContent = n ? String(n) : '';
       el.classList.toggle('dimmed', n === 0);
     }
-    function renderToday() {
+    function renderToday(skipDefaultCollapse) {
       if (!todayContent) return;
       const heroEyebrow = document.getElementById('viewer-reader-eyebrow');
       const heroTitle = document.getElementById('viewer-reader-title');
@@ -863,19 +863,21 @@
       if (heroTitle) heroTitle.textContent = 'Today';
       todayContent.innerHTML = '';
       let collapsed = getCollapsedCategories();
-      // Default to all collapsed when user has no saved preference
-      if (selectedSidebarFeedUrl) {
-        const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
-        const singleTitle = feed ? feed.title : 'Feed';
-        if (collapsed.size === 0) {
-          setCollapsedCategories(new Set([singleTitle]));
-          collapsed = getCollapsedCategories();
-        }
-      } else {
-        const groupedForDefault = getAllItemsGrouped();
-        if (groupedForDefault.length > 0 && collapsed.size === 0) {
-          setCollapsedCategories(new Set(groupedForDefault.map((x) => x.category)));
-          collapsed = getCollapsedCategories();
+      // Default to all collapsed when user has no saved preference (unless they just clicked Expand all)
+      if (!skipDefaultCollapse) {
+        if (selectedSidebarFeedUrl) {
+          const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+          const singleTitle = feed ? feed.title : 'Feed';
+          if (collapsed.size === 0) {
+            setCollapsedCategories(new Set([singleTitle]));
+            collapsed = getCollapsedCategories();
+          }
+        } else {
+          const groupedForDefault = getAllItemsGrouped();
+          if (groupedForDefault.length > 0 && collapsed.size === 0) {
+            setCollapsedCategories(new Set(groupedForDefault.map((x) => x.category)));
+            collapsed = getCollapsedCategories();
+          }
         }
       }
       function addGroup(title, items, feedUrl, feedTitle) {
@@ -1046,7 +1048,7 @@
     expandAllCategories?.addEventListener('click', (e) => {
       e.preventDefault();
       setCollapsedCategories(new Set());
-      renderToday();
+      renderToday(true);
     });
     collapseAllCategories?.addEventListener('click', (e) => {
       e.preventDefault();
