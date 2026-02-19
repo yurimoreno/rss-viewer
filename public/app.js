@@ -884,16 +884,18 @@
         const g = document.createElement('div');
         g.className = 'feed-group' + (collapsed.has(title) ? ' is-collapsed' : '');
         g.dataset.category = title;
-        const h3 = document.createElement('h3');
-        h3.className = 'feed-group-title';
-        h3.innerHTML = '<span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">' + escapeHtml(title) + '</span>';
-        h3.onclick = () => {
+        const block = document.createElement('div');
+        block.className = 'feed-group-header-block';
+        block.onclick = () => {
           g.classList.toggle('is-collapsed');
           const next = new Set(collapsed);
           if (g.classList.contains('is-collapsed')) next.add(title); else next.delete(title);
           setCollapsedCategories(next);
         };
-        g.appendChild(h3);
+        const h3 = document.createElement('h3');
+        h3.className = 'feed-group-title';
+        h3.innerHTML = '<span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">' + escapeHtml(title) + '</span>';
+        block.appendChild(h3);
         const feedCount = new Set(items.map((i) => i.feedUrl || feedUrl)).size;
         const unreadCount = items.filter((i) => !i.isRead).length;
         const summaryEl = document.createElement('div');
@@ -901,7 +903,8 @@
         const metricsLine = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') + (unreadCount ? ' · ' + unreadCount + ' unread' : '');
         const latestTitles = items.slice(0, 3).map((i) => '"' + truncateText(i.title || '', 48) + '"').join(' · ');
         summaryEl.innerHTML = '<div class="feed-group-collapsed-metrics">' + escapeHtml(metricsLine) + '</div><div class="feed-group-collapsed-latest">Latest: ' + escapeHtml(latestTitles) + '</div>';
-        g.appendChild(summaryEl);
+        block.appendChild(summaryEl);
+        g.appendChild(block);
         const detailEl = document.createElement('div');
         detailEl.className = 'feed-group-detail';
         detailEl.textContent = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '');

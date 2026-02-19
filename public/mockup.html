@@ -62,8 +62,10 @@
 
       /* Card list: compact, more results */
       .feed-group { margin-bottom: 1.25rem; }
-      .feed-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 0.4rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
-      .feed-group-title:hover { color: var(--muted-strong); }
+      .feed-group-header-block { cursor: pointer; user-select: none; border-radius: 8px; padding: 0.35rem 0.5rem; margin-bottom: 0.25rem; transition: background 0.15s; }
+      .feed-group-header-block:hover { background: rgba(26, 36, 50, 0.4); }
+      .feed-group-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 0.4rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; gap: 0.5rem; }
+      .feed-group-header-block:hover .feed-group-title { color: var(--muted-strong); }
       .feed-group-title .category-chevron { font-size: 0.6rem; opacity: 0.8; transition: transform 0.2s; }
       .feed-group.is-collapsed .feed-group-title .category-chevron { transform: rotate(-90deg); }
       .feed-group.is-collapsed .feed-group-detail,
@@ -196,27 +198,34 @@
               <div>
                 <!-- Mockup: collapsed category with new summary -->
                 <div class="feed-group is-collapsed">
-                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Thinkers</span></h3>
-                  <div class="feed-group-collapsed-summary">
-                    <div class="feed-group-collapsed-metrics">12 items · 3 feeds · 5 unread</div>
-                    <div class="feed-group-collapsed-latest">Latest: "In curiosity we trust." · "AI productivity gains final" · "Why markets fail."</div>
+                  <div class="feed-group-header-block">
+                    <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Thinkers</span></h3>
+                    <div class="feed-group-collapsed-summary">
+                      <div class="feed-group-collapsed-metrics">12 items · 3 feeds · 5 unread</div>
+                      <div class="feed-group-collapsed-latest">Latest: "In curiosity we trust." · "AI productivity gains final" · "Why markets fail."</div>
+                    </div>
                   </div>
                   <div class="feed-group-detail">12 items · 3 feeds</div>
                   <ul class="results" style="display:none;"><li class="item">…</li></ul>
                 </div>
 
                 <div class="feed-group is-collapsed">
-                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">News</span></h3>
-                  <div class="feed-group-collapsed-summary">
-                    <div class="feed-group-collapsed-metrics">28 items · 5 feeds · 12 unread</div>
-                    <div class="feed-group-collapsed-latest">Latest: "Fed holds rates steady amid inflation data" · "Apple announces new M4 chip" · "OpenAI releases GPT-5 with reasoning improvements"</div>
+                  <div class="feed-group-header-block">
+                    <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">News</span></h3>
+                    <div class="feed-group-collapsed-summary">
+                      <div class="feed-group-collapsed-metrics">28 items · 5 feeds · 12 unread</div>
+                      <div class="feed-group-collapsed-latest">Latest: "Fed holds rates steady amid inflation data" · "Apple announces new M4 chip" · "OpenAI releases GPT-5 with reasoning improvements"</div>
+                    </div>
                   </div>
                   <div class="feed-group-detail">28 items · 5 feeds</div>
                   <ul class="results" style="display:none;"><li class="item">…</li></ul>
                 </div>
 
                 <div class="feed-group">
-                  <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Dev</span></h3>
+                  <div class="feed-group-header-block">
+                    <h3 class="feed-group-title"><span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">Dev</span></h3>
+                    <div class="feed-group-collapsed-summary" style="display:none;"></div>
+                  </div>
                   <div class="feed-group-detail">3 items · 2 feeds</div>
                   <ul class="results">
                     <li class="item is-selected is-read">
