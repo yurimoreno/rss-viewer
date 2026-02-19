@@ -8,26 +8,16 @@
   </head>
   <body>
     <div class="page">
-      <header class="topbar">
-        <div class="topbar-left">
-          <button type="button" class="sidebar-menu-btn" id="sidebar-toggle-btn" title="Hide sidebar">≡</button>
-          <span class="workspace-name">RSS Viewer <span class="feed-badge" id="feed-badge">0 feeds</span></span>
-        </div>
-        <nav class="page-nav">
-          <button type="button" class="btn-refresh" id="btn-refresh" title="Refresh all feeds">↻ Refresh</button>
-          <a href="#" data-page="feeds">Feeds</a>
-          <a href="#" data-page="settings">Settings</a>
-        </nav>
-      </header>
-
       <div class="app-shell" id="app-shell">
+        <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
         <aside class="sidebar-menu-strip" id="sidebar-menu-strip">
           <button type="button" class="sidebar-menu-btn" id="sidebar-show-btn" title="Show sidebar">≡</button>
         </aside>
-        <aside class="sidebar is-open mockup-sidebar">
-          <div class="sidebar-header">
+        <aside class="sidebar is-open mockup-sidebar" id="sidebar">
+          <button type="button" class="sidebar-rail-toggle" id="sidebar-rail-toggle" title="Hide sidebar" aria-label="Hide sidebar">≡</button>
+          <div class="sidebar-header sidebar-header-text">
             <div>
-              <h2>Today</h2>
+              <h2 class="sidebar-app-title">RSS Viewer</h2>
               <span class="sidebar-metric-label" id="sidebar-metric">Import OPML to get started</span>
             </div>
           </div>
@@ -35,19 +25,26 @@
             <h3>Views</h3>
             <div class="sidebar-nav-item is-active" data-view="reader">Today</div>
             <div class="sidebar-nav-item" data-view="digest">Digest <span class="ai-badge">AI</span></div>
-            <div class="sidebar-nav-item" data-view="saved">Saved <span class="sidebar-saved-count" id="saved-count"></span></div>
+            <div class="sidebar-nav-item" data-view="read_later">Read Later <span class="sidebar-saved-count" id="read-later-count"></span></div>
+            <div class="sidebar-nav-item" data-view="recently_read">Recently Read</div>
           </section>
           <section class="sidebar-section">
             <h3>Feeds</h3>
-            <div class="feed-search">
+            <div class="feed-search sidebar-search">
               <input type="text" placeholder="Search feeds..." id="feed-search-input" />
             </div>
             <nav class="sidebar-groups" id="sidebar-groups"></nav>
             <div class="sidebar-total" id="feed-count">0 feeds</div>
           </section>
+          <div class="sidebar-footer sidebar-header-text">
+            <div class="sidebar-footer-divider" aria-hidden="true"></div>
+            <a href="#" class="sidebar-footer-link" data-page="settings">⚙ Settings</a>
+            <a href="#" class="sidebar-footer-link" data-page="feeds">📡 Manage Feeds</a>
+          </div>
         </aside>
 
         <main class="viewer">
+          <button type="button" class="main-menu-btn" id="main-menu-btn" title="Open menu" aria-label="Open menu">≡</button>
           <div class="mockup-view active view-reader" data-tab="reader">
             <header class="viewer-hero">
               <div>
@@ -60,6 +57,7 @@
                   <span aria-hidden="true"> · </span>
                   <a href="#" class="category-expand-collapse-link" id="collapse-all-categories">Collapse all</a>
                 </span>
+                <button type="button" class="btn-refresh" id="btn-refresh" title="Refresh all feeds">↻ Refresh</button>
                 <div id="refresh-progress-wrap" class="refresh-wrap">
                   <span class="refresh-label">Fetching...</span>
                   <div class="refresh-progress"><div class="refresh-progress-bar" id="refresh-progress-bar"></div></div>

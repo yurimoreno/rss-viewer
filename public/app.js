@@ -7,8 +7,11 @@
   const SETTINGS_KEY = 'rssViewer.settings';
   const SUMMARY_CACHE_KEY = 'rssViewer.summaryCache';
   const DIGEST_CACHE_KEY = 'rssViewer.digestCache';
-  const SAVED_ARTICLES_KEY = 'rss_saved_articles';
-  const SAVED_VIEW_SENTINEL = '__saved__';
+  const READ_LATER_KEY = 'rss_read_later';
+  const READ_LATER_VIEW_SENTINEL = '__read_later__';
+  const RECENTLY_READ_KEY = 'rss_recently_read';
+  const RECENTLY_READ_VIEW_SENTINEL = '__recently_read__';
+  const SIDEBAR_STATE_KEY = 'rss_sidebar_state';
   const MAX_SUMMARY_CACHE = 80;
   const MAX_DIGEST_CACHE = 20;
   const MAX_ITEMS_PER_FEED = 50;
@@ -121,26 +124,57 @@
     try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(buildLibrary(lib.feeds || [], lib.categories || []))); } catch {}
   }
 
-  function getSavedArticles() {
-    try { return JSON.parse(localStorage.getItem(SAVED_ARTICLES_KEY) || '[]'); } catch { return []; }
-  }
-  function saveArticle(article) {
-    const saved = getSavedArticles();
-    if (saved.some((a) => a.guid === article.guid)) return;
-    saved.unshift({ ...article, savedAt: new Date().toISOString() });
+  function getReadLaterArticles() {
     try {
-      localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(saved));
+      let raw = localStorage.getItem(READ_LATER_KEY);
+      if (!raw && localStorage.getItem('rss_saved_articles')) {
+        raw = localStorage.getItem('rss_saved_articles');
+        if (raw) localStorage.setItem(READ_LATER_KEY, raw);
+      }
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+  function addToReadLater(article) {
+    const list = getReadLaterArticles();
+    if (list.some((a) => a.guid === article.guid)) return;
+    list.unshift({ ...article, savedAt: new Date().toISOString() });
+    try {
+      localStorage.setItem(READ_LATER_KEY, JSON.stringify(list));
     } catch (e) {
-      if (e && e.name === 'QuotaExceededError') showToast('Storage full — unsave some articles to make room.');
+      if (e && e.name === 'QuotaExceededError') showToast('Storage full — remove some articles from Read Later.');
     }
   }
-  function unsaveArticle(guid) {
-    const saved = getSavedArticles().filter((a) => a.guid !== guid);
-    localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(saved));
+  function removeFromReadLater(guid) {
+    const list = getReadLaterArticles().filter((a) => a.guid !== guid);
+    localStorage.setItem(READ_LATER_KEY, JSON.stringify(list));
   }
-  function isArticleSaved(guid) {
-    return getSavedArticles().some((a) => a.guid === guid);
+  function isInReadLater(guid) {
+    return getReadLaterArticles().some((a) => a.guid === guid);
   }
+
+  function getRecentlyRead() {
+    try {
+      const raw = localStorage.getItem(RECENTLY_READ_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+  }
+  function addToRecentlyRead(article) {
+    let recent = getRecentlyRead();
+    recent = recent.filter((a) => a.guid !== article.guid);
+    recent.unshift({
+      guid: article.guid,
+      title: article.title,
+      link: article.link,
+      summary: article.summary,
+      source: article.source,
+      readAt: new Date().toISOString()
+    });
+    recent = recent.slice(0, 20);
+    try {
+      localStorage.setItem(RECENTLY_READ_KEY, JSON.stringify(recent));
+    } catch {}
+  }
+
   function showToast(message) {
     const el = document.createElement('div');
     el.className = 'toast';
@@ -431,7 +465,6 @@
     const appShell = document.getElementById('app-shell');
     const sidebarGroups = document.getElementById('sidebar-groups');
     const feedCountEl = document.getElementById('feed-count');
-    const feedBadgeEl = document.getElementById('feed-badge');
     const sidebarMetricEl = document.getElementById('sidebar-metric');
     const feedSearchInput = document.getElementById('feed-search-input');
     const todayContent = document.getElementById('today-content');
@@ -469,7 +502,6 @@
     function setImportedFeeds(feeds) {
       importedFeeds = dedupeFeeds(feeds);
       const n = importedFeeds.length;
-      if (feedBadgeEl) feedBadgeEl.textContent = n + ' feed' + (n === 1 ? '' : 's');
       if (feedCountEl) feedCountEl.textContent = n + ' feed' + (n === 1 ? '' : 's');
       if (sidebarMetricEl) sidebarMetricEl.textContent = n ? n + ' feeds across ' + new Set(importedFeeds.map((f) => f.category)).size + ' categories' : 'Import OPML to get started';
       renderSidebar();
@@ -487,22 +519,76 @@
       const filtered = filterFeeds(q);
       const lib = readLibrary();
       const g = groupFeedsByCategory(filtered, lib.categories);
+      const expanded = getSidebarExpandedCategories();
       sidebarGroups.innerHTML = '';
+
+      const totalUnread = importedFeeds.reduce((sum, f) => {
+        const items = getCachedFeedItems(f.url);
+        return sum + items.filter((i) => !i.isRead).length;
+      }, 0);
+      const allRow = document.createElement('div');
+      allRow.className = 'sidebar-all-row';
+      const allBtn = document.createElement('button');
+      allBtn.type = 'button';
+      allBtn.className = 'sidebar-feed sidebar-all' + (selectedSidebarFeedUrl === '' ? ' is-active' : '');
+      allBtn.innerHTML = '<span class="sidebar-feed-name">All</span><span class="sidebar-count' + (totalUnread === 0 ? ' is-zero' : '') + '">' + totalUnread + '</span>';
+      allBtn.onclick = () => {
+        selectedItemFeedUrl = '';
+        selectedItemId = '';
+        selectedSidebarFeedUrl = '';
+        document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
+        document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
+        document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
+        document.querySelector('.sidebar-nav-item[data-view="reader"]')?.classList.add('is-active');
+        renderToday();
+        renderSidebar();
+        closeMobileSidebar();
+      };
+      allRow.appendChild(allBtn);
+      sidebarGroups.appendChild(allRow);
+
       g.forEach((feeds, cat) => {
+        const isExpanded = expanded.includes(cat);
         const sec = document.createElement('section');
-        sec.className = 'sidebar-group';
-        sec.innerHTML = '<h3 class="sidebar-category-header"><span class="sidebar-category-name">' + escapeHtml(cat) + '</span></h3>';
+        sec.className = 'sidebar-group' + (isExpanded ? ' is-expanded' : '');
+        sec.dataset.category = cat;
+
+        const aggregateUnread = feeds.reduce((sum, f) => {
+          const items = getCachedFeedItems(f.url);
+          return sum + items.filter((i) => !i.isRead).length;
+        }, 0);
+
+        const header = document.createElement('button');
+        header.type = 'button';
+        header.className = 'sidebar-category-row';
+        header.innerHTML =
+          '<span class="sidebar-category-chevron" aria-hidden="true">' + (isExpanded ? '▼' : '▶') + '</span>' +
+          '<span class="sidebar-category-name">' + escapeHtml(cat) + '</span>' +
+          '<span class="sidebar-category-count">' + aggregateUnread + '</span>';
+        header.onclick = () => {
+          const current = getSidebarExpandedCategories();
+          const nowExpanded = current.includes(cat);
+          const next = nowExpanded ? current.filter((c) => c !== cat) : [...current, cat];
+          setSidebarExpandedCategories(next);
+          sec.classList.toggle('is-expanded');
+          const chev = sec.querySelector('.sidebar-category-chevron');
+          if (chev) chev.textContent = sec.classList.contains('is-expanded') ? '▼' : '▶';
+        };
+        sec.appendChild(header);
+
         const ul = document.createElement('ul');
         ul.className = 'sidebar-feed-list';
         feeds.forEach((f) => {
+          const items = getCachedFeedItems(f.url);
+          const unread = items.filter((i) => !i.isRead).length;
           const li = document.createElement('li');
           li.className = 'sidebar-feed-row';
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'sidebar-feed' + (f.url === selectedSidebarFeedUrl ? ' is-active' : '');
           btn.dataset.url = f.url;
-          const count = getCachedFeedItems(f.url).length;
-          btn.innerHTML = '<span class="sidebar-feed-name">' + escapeHtml(f.title) + '</span><span class="sidebar-count">' + count + '</span>';
+          const countClass = unread === 0 ? ' is-zero' : '';
+          btn.innerHTML = '<span class="sidebar-feed-name">' + escapeHtml(f.title) + '</span><span class="sidebar-count' + countClass + '">' + unread + '</span>';
           btn.onclick = async () => {
             selectedItemFeedUrl = '';
             selectedItemId = '';
@@ -517,6 +603,7 @@
             document.querySelector('.sidebar-nav-item[data-view="reader"]')?.classList.add('is-active');
             renderToday();
             renderSidebar();
+            closeMobileSidebar();
           };
           li.appendChild(btn);
           ul.appendChild(li);
@@ -535,8 +622,8 @@
       const words = wordCount(item.summary || item.title);
       const readOriginalHref = safeHref(item.link);
       const domain = domainFromUrl(item.link);
-      const saved = isArticleSaved(item.id);
-      const savedBadge = saved ? '<span class="saved-badge" title="Saved">🔖</span>' : '';
+      const saved = isInReadLater(item.id);
+      const savedBadge = saved ? '<span class="saved-badge" title="In Read Later">🔖</span>' : '';
       li.innerHTML =
         '<div class="article-card-header">' +
         '<div class="item-meta-row"><span class="item-source-badge">' + escapeHtml(feedTitle) + '</span><span class="item-metrics"><span>' + escapeHtml(relTime) + '</span><span>' + escapeHtml(readTime) + '</span><span>~' + words + ' words</span></span>' + savedBadge + '</div>' +
@@ -548,7 +635,7 @@
         '<div class="article-toolbar">' +
         '<div class="toolbar-left">' +
         '<button type="button" class="toolbar-btn primary btn-summarize">Summarize <span class="ai-badge">AI</span></button>' +
-        '<button type="button" class="toolbar-btn btn-save' + (saved ? ' is-saved' : '') + '" title="' + (saved ? 'Saved' : 'Save') + '">' + (saved ? '🔖 Saved' : '🔖 Save') + '</button>' +
+        '<button type="button" class="toolbar-btn btn-save' + (saved ? ' is-saved' : '') + '" title="' + (saved ? 'Saved' : 'Read Later') + '">' + (saved ? '🔖 Saved ✓' : '🔖 Read Later') + '</button>' +
         '</div>' +
         '<div class="toolbar-right">' +
         '<button type="button" class="toolbar-btn btn-open-original">Open original</button>' +
@@ -595,30 +682,30 @@
       const updateSaveUi = (isSaved) => {
         const badge = li.querySelector('.saved-badge');
         if (isSaved) {
-          btnSave.textContent = '🔖 Saved';
+          btnSave.textContent = '🔖 Saved ✓';
           btnSave.title = 'Saved';
           btnSave.classList.add('is-saved');
-          if (!badge) li.querySelector('.item-meta-row').insertAdjacentHTML('beforeend', '<span class="saved-badge" title="Saved">🔖</span>');
+          if (!badge) li.querySelector('.item-meta-row').insertAdjacentHTML('beforeend', '<span class="saved-badge" title="In Read Later">🔖</span>');
         } else {
-          btnSave.textContent = '🔖 Save';
-          btnSave.title = 'Save';
+          btnSave.textContent = '🔖 Read Later';
+          btnSave.title = 'Read Later';
           btnSave.classList.remove('is-saved');
           badge?.remove();
         }
       };
       btnSave.onclick = (ev) => {
         ev.stopPropagation();
-        const currentlySaved = isArticleSaved(item.id);
+        const currentlySaved = isInReadLater(item.id);
         if (currentlySaved) {
-          unsaveArticle(item.id);
+          removeFromReadLater(item.id);
           updateSaveUi(false);
-          updateSavedCount();
-          if (selectedSidebarFeedUrl === SAVED_VIEW_SENTINEL) { renderToday(); renderSidebar(); }
+          updateReadLaterCount();
+          if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL) { renderToday(); renderSidebar(); }
         } else {
           const payload = { guid: item.id, title: item.title || '', link: item.link || '', summary: item.summary || '', content: item.content || '', source: feedTitle, author: item.author || '', pubDate: item.pubDate || '' };
-          saveArticle(payload);
+          addToReadLater(payload);
           updateSaveUi(true);
-          updateSavedCount();
+          updateReadLaterCount();
         }
       };
       btnOpen.onclick = (ev) => {
@@ -676,7 +763,8 @@
           li.classList.add('expanded', 'is-selected');
           selectedItemId = item.id;
           selectedItemFeedUrl = feedUrl;
-          if (selectedSidebarFeedUrl !== SAVED_VIEW_SENTINEL) updateItemReadState(feedUrl, item.id, true);
+          if (selectedSidebarFeedUrl !== READ_LATER_VIEW_SENTINEL) updateItemReadState(feedUrl, item.id, true);
+          addToRecentlyRead({ guid: item.id, title: item.title || '', link: item.link || '', summary: item.summary || '', source: feedTitle });
           let exp = li.querySelector('.article-expanded');
           if (exp && !exp.dataset.loaded) {
             exp.dataset.loaded = '1';
@@ -710,10 +798,23 @@
     function setCollapsedCategories(set) {
       try { sessionStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set])); } catch {}
     }
-    function updateSavedCount() {
-      const el = document.getElementById('saved-count');
+
+    function getSidebarExpandedCategories() {
+      try {
+        const raw = localStorage.getItem(SIDEBAR_STATE_KEY);
+        const o = raw ? JSON.parse(raw) : {};
+        return Array.isArray(o.expandedCategories) ? o.expandedCategories : [];
+      } catch { return []; }
+    }
+    function setSidebarExpandedCategories(arr) {
+      try {
+        localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify({ expandedCategories: arr || [] }));
+      } catch {}
+    }
+    function updateReadLaterCount() {
+      const el = document.getElementById('read-later-count');
       if (!el) return;
-      const n = getSavedArticles().length;
+      const n = getReadLaterArticles().length;
       el.textContent = n ? String(n) : '';
       el.classList.toggle('dimmed', n === 0);
     }
@@ -721,23 +822,41 @@
       if (!todayContent) return;
       const heroEyebrow = document.getElementById('viewer-reader-eyebrow');
       const heroTitle = document.getElementById('viewer-reader-title');
-      if (selectedSidebarFeedUrl === SAVED_VIEW_SENTINEL) {
-        if (heroEyebrow) heroEyebrow.textContent = 'Saved';
-        if (heroTitle) heroTitle.textContent = getSavedArticles().length === 1 ? '1 article' : getSavedArticles().length + ' articles';
+      if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL) {
+        if (heroEyebrow) heroEyebrow.textContent = 'Read Later';
+        if (heroTitle) heroTitle.textContent = getReadLaterArticles().length === 1 ? '1 article' : getReadLaterArticles().length + ' articles';
         todayContent.innerHTML = '';
-        const saved = getSavedArticles();
-        if (!saved.length) {
-          todayContent.innerHTML = '<div class="saved-empty-state"><div class="saved-empty-icon">🔖</div><p class="saved-empty-title">No saved articles yet</p><p class="saved-empty-desc">Click Save on any article to bookmark it for later.</p></div>';
+        const list = getReadLaterArticles();
+        if (!list.length) {
+          todayContent.innerHTML = '<div class="saved-empty-state"><div class="saved-empty-icon">🔖</div><p class="saved-empty-title">No read-later articles yet</p><p class="saved-empty-desc">Click Read Later on any article to save it for later.</p></div>';
           return;
         }
         const ul = document.createElement('ul');
         ul.className = 'results';
-        saved.forEach((a) => {
+        list.forEach((a) => {
           const item = { id: a.guid, title: a.title, link: a.link, pubDate: a.pubDate, summary: a.summary, content: a.content, author: a.author, feedUrl: a.link, feedTitle: a.source, isRead: true };
           ul.appendChild(createItemEl(item, a.link, a.source));
         });
         todayContent.appendChild(ul);
-        updateSavedCount();
+        updateReadLaterCount();
+        return;
+      }
+      if (selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) {
+        if (heroEyebrow) heroEyebrow.textContent = 'Recently Read';
+        if (heroTitle) heroTitle.textContent = 'Recently Read';
+        todayContent.innerHTML = '';
+        const recent = getRecentlyRead();
+        if (!recent.length) {
+          todayContent.innerHTML = '<div class="recently-read-empty"><div class="recently-read-empty-icon" aria-hidden="true">◷</div><p class="recently-read-empty-title">No recently read articles</p><p class="recently-read-empty-desc">Articles you read will appear here.</p></div>';
+          return;
+        }
+        const ul = document.createElement('ul');
+        ul.className = 'results';
+        recent.forEach((a) => {
+          const item = { id: a.guid, title: a.title, link: a.link, pubDate: a.readAt, summary: a.summary, content: '', author: '', feedUrl: a.link, feedTitle: a.source, isRead: true };
+          ul.appendChild(createItemEl(item, a.link, a.source));
+        });
+        todayContent.appendChild(ul);
         return;
       }
       if (heroEyebrow) heroEyebrow.textContent = 'Today';
@@ -838,31 +957,91 @@
     document.querySelectorAll('.sidebar-nav-item').forEach((item) => {
       item.onclick = () => {
         const v = item.dataset.view;
-        if (v !== 'reader' && v !== 'digest' && v !== 'saved') return;
+        if (v !== 'reader' && v !== 'digest' && v !== 'read_later' && v !== 'recently_read') return;
         if (v === 'reader') selectedSidebarFeedUrl = '';
-        else if (v === 'saved') selectedSidebarFeedUrl = SAVED_VIEW_SENTINEL;
+        else if (v === 'read_later') selectedSidebarFeedUrl = READ_LATER_VIEW_SENTINEL;
+        else if (v === 'recently_read') selectedSidebarFeedUrl = RECENTLY_READ_VIEW_SENTINEL;
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
         document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
-        const tab = v === 'saved' ? 'reader' : v;
+        const tab = (v === 'read_later' || v === 'recently_read') ? 'reader' : v;
         const view = document.querySelector('.mockup-view[data-tab="' + tab + '"]');
         if (view) view.classList.add('active');
         item.classList.add('is-active');
         renderToday();
         renderSidebar();
+        closeMobileSidebar();
       };
     });
-    document.querySelectorAll('.page-nav a[data-page]').forEach((a) => {
+    function openPage(p) {
+      document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
+      document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
+      const view = document.querySelector('.mockup-view[data-tab="' + p + '"]');
+      if (view) view.classList.add('active');
+    }
+    document.querySelectorAll('.sidebar-footer-link[data-page], .page-nav a[data-page]').forEach((a) => {
       a.onclick = (e) => {
         e.preventDefault();
-        const p = a.dataset.page;
-        document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
-        document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
-        const view = document.querySelector('.mockup-view[data-tab="' + p + '"]');
-        if (view) view.classList.add('active');
+        openPage(a.dataset.page);
+        closeMobileSidebar();
       };
     });
-    document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => appShell?.classList.add('sidebar-collapsed'));
-    document.getElementById('sidebar-show-btn')?.addEventListener('click', () => appShell?.classList.remove('sidebar-collapsed'));
+    const sidebarEl = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function closeMobileSidebar() {
+      sidebarEl?.classList.remove('open');
+      sidebarOverlay?.classList.remove('visible');
+    }
+
+    function isMobileSidebar() {
+      return typeof window !== 'undefined' && window.innerWidth <= 768;
+    }
+
+    function updateRailToggleLabel() {
+      const btn = document.getElementById('sidebar-rail-toggle');
+      if (!btn || isMobileSidebar()) return;
+      const collapsed = sidebarEl?.classList.contains('collapsed');
+      btn.title = collapsed ? 'Show sidebar' : 'Hide sidebar';
+      btn.setAttribute('aria-label', collapsed ? 'Show sidebar' : 'Hide sidebar');
+    }
+
+    function toggleDesktopSidebarCollapse() {
+      if (!sidebarEl) return;
+      sidebarEl.classList.toggle('collapsed');
+      try {
+        localStorage.setItem('rss_sidebar_collapsed', sidebarEl.classList.contains('collapsed') ? 'true' : 'false');
+      } catch {}
+      updateRailToggleLabel();
+    }
+
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('rss_sidebar_collapsed') === 'true') {
+      sidebarEl?.classList.add('collapsed');
+    }
+    updateRailToggleLabel();
+
+    document.getElementById('main-menu-btn')?.addEventListener('click', () => {
+      if (isMobileSidebar()) {
+        sidebarEl?.classList.add('open');
+        sidebarOverlay?.classList.add('visible');
+      }
+    });
+    document.getElementById('sidebar-show-btn')?.addEventListener('click', () => {
+      if (isMobileSidebar()) {
+        sidebarEl?.classList.add('open');
+        sidebarOverlay?.classList.add('visible');
+      } else {
+        toggleDesktopSidebarCollapse();
+      }
+    });
+    document.getElementById('sidebar-rail-toggle')?.addEventListener('click', () => {
+      if (!isMobileSidebar()) toggleDesktopSidebarCollapse();
+    });
+
+    sidebarOverlay?.addEventListener('click', closeMobileSidebar);
+
+    window.addEventListener('resize', () => {
+      if (!isMobileSidebar()) closeMobileSidebar();
+    });
 
     expandAllCategories?.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1068,7 +1247,7 @@
     const lib = readLibrary();
     setImportedFeeds(lib.feeds);
     loadSettingsIntoUI();
-    updateSavedCount();
+    updateReadLaterCount();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
     if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(renderToday), 100);
