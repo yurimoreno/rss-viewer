@@ -1,38 +1,14 @@
 const express = require('express');
 const path = require('path');
 const Parser = require('rss-parser');
+const { Readability } = require('@mozilla/readability');
+const { JSDOM } = require('jsdom');
+const { sanitizeText, sanitizeUrl, sanitizeHtml, sanitizeItem } = require('./lib/sanitize');
 
 const app = express();
 app.use(express.json());
 const parser = new Parser();
 const port = process.env.PORT || 3000;
-
-function stripHtmlTags(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function extractReadableSection(html) {
-  const candidates = [
-    /<article\b[^>]*>([\s\S]*?)<\/article>/i,
-    /<main\b[^>]*>([\s\S]*?)<\/main>/i,
-    /<body\b[^>]*>([\s\S]*?)<\/body>/i
-  ];
-
-  for (const regex of candidates) {
-    const match = html.match(regex);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-
-  return html;
-}
 
 app.get('/api/rss', async (req, res) => {
   const { url } = req.query;
@@ -57,11 +33,11 @@ app.get('/api/rss', async (req, res) => {
 
     return res.json({
       feed: {
-        title: feed.title || '',
-        description: feed.description || '',
-        link: feed.link || parsedUrl.toString()
+        title: sanitizeText(feed.title || ''),
+        description: sanitizeText(feed.description || ''),
+        link: sanitizeUrl(feed.link) || parsedUrl.toString()
       },
-      items: Array.isArray(feed.items) ? feed.items : []
+      items: (Array.isArray(feed.items) ? feed.items : []).map(sanitizeItem)
     });
   } catch {
     return res.status(502).json({ error: 'fetch_failed' });
@@ -98,10 +74,22 @@ app.get('/api/article', async (req, res) => {
 
     const html = await response.text();
     const sliced = html.slice(0, 1_000_000);
-    const section = extractReadableSection(sliced);
-    const content = stripHtmlTags(section);
+    const dom = new JSDOM(sliced, { url: parsedUrl.toString() });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
 
-    return res.json({ content });
+    if (!article) {
+      return res.status(422).json({ error: 'unreadable' });
+    }
+
+    return res.json({
+      title: sanitizeText(article.title),
+      author: sanitizeText(article.byline || ''),
+      content: sanitizeHtml(article.content),
+      excerpt: sanitizeText(article.excerpt || ''),
+      siteName: sanitizeText(article.siteName || ''),
+      length: article.length || 0
+    });
   } catch {
     return res.status(502).json({ error: 'fetch_failed' });
   }

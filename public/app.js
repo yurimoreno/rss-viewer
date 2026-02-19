@@ -26,11 +26,51 @@
   function isValidHttpUrl(v) {
     try { return ['http:', 'https:'].includes(new URL(v).protocol); } catch { return false; }
   }
-  function stripHtml(v) {
-    if (typeof v !== 'string') return '';
-    const d = document.createElement('div');
-    d.innerHTML = v;
-    return (d.textContent || '').trim();
+  function safeHref(url) {
+    if (!url) return '#';
+    try {
+      const parsed = new URL(url);
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return url;
+    } catch {}
+    return '#';
+  }
+  function stripHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function setArticleBody(el, htmlOrText) {
+    if (!el) return;
+    const s = (htmlOrText || '').trim();
+    if (!s) { el.textContent = 'No content available.'; return; }
+    if (s.startsWith('<')) {
+      el.innerHTML = s;
+      el.querySelectorAll('a[href]').forEach((a) => {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      });
+      el.querySelectorAll('img').forEach((img) => img.setAttribute('loading', 'lazy'));
+    } else {
+      el.textContent = s;
+    }
+  }
+  function isContentSufficient(content) {
+    const s = (content || '').trim();
+    return s.length > 200 && !s.endsWith('...');
+  }
+  function domainFromUrl(url) {
+    try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'source'; }
+  }
+  function articleBodySkeletonHtml() {
+    return '<div class="article-body-skeleton"><span></span><span></span><span></span><span></span></div>';
   }
   function truncateText(v, n) {
     if (typeof v !== 'string') return '';
@@ -330,7 +370,7 @@
         .replace(/\[(\d+)\]/g, (_, n) => {
           const idx = parseInt(n, 10) - 1;
           const r = refs[idx];
-          if (r) return '<a href="' + (r.link || '#') + '" target="_blank" rel="noopener" class="digest-ref">[' + n + ']</a>';
+          if (r) return '<a href="' + safeHref(r.link) + '" target="_blank" rel="noopener" class="digest-ref">[' + n + ']</a>';
           return '[' + n + ']';
         });
 
@@ -367,8 +407,6 @@
     const refreshWrap = document.getElementById('refresh-progress-wrap');
     const refreshBar = document.getElementById('refresh-progress-bar');
     const btnRefresh = document.getElementById('btn-refresh');
-    const btnShortcuts = document.getElementById('btn-shortcuts');
-    const shortcutsModal = document.getElementById('shortcuts-modal');
     const themeToggle = document.getElementById('theme-toggle');
     const apiKeyInput = document.getElementById('api-key');
     const modelSelectDigest = document.getElementById('model-select-digest');
@@ -456,63 +494,148 @@
     }
     function createItemEl(item, feedUrl, feedTitle) {
       const li = document.createElement('li');
-      li.className = 'item' + (item.isRead ? ' is-read' : '') + (item.id === selectedItemId ? ' is-selected' : '');
+      li.className = 'item article-card' + (item.isRead ? ' is-read' : '') + (item.id === selectedItemId ? ' is-selected expanded' : '');
       li.dataset.itemId = item.id;
       li.dataset.feedUrl = feedUrl;
       const relTime = formatRelativeTime(item.pubDate);
       const readTime = estimateReadTime(item.summary || item.title);
       const words = wordCount(item.summary || item.title);
-      li.innerHTML = '<div class="item-meta-row"><span class="item-source-badge">' + escapeHtml(feedTitle) + '</span><span class="item-metrics"><span>' + escapeHtml(relTime) + '</span><span>' + escapeHtml(readTime) + '</span><span>~' + words + ' words</span></span></div><h2 class="item-title"><a href="' + (item.link || '#') + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.title || 'Untitled') + '</a></h2><p class="item-snippet">' + escapeHtml(truncateText(item.summary, 120)) + '</p>';
-      li.onclick = async function (e) {
-        if (e.target.closest('a')) return;
-        if (e.target.closest('.btn-close-card')) return;
-        if (e.target.closest('button')) return;
-        const wasSelected = item.id === selectedItemId;
-        selectedItemId = item.id;
-        selectedItemFeedUrl = feedUrl;
-        updateItemReadState(feedUrl, item.id, true);
-        document.querySelectorAll('.view-reader .item.is-selected').forEach((x) => x.classList.remove('is-selected'));
-        li.classList.add('is-selected', 'is-read');
-        let exp = li.querySelector('.item-expanded');
-        if (!exp) {
-          exp = document.createElement('div');
-          exp.className = 'item-expanded';
-          exp.innerHTML = '<button class="btn-close-card" type="button" title="Close">×</button><div style="margin:0.75rem 0"><button class="btn-summarize" type="button">Summarize</button> <span class="ai-badge">AI</span></div><div class="reader-summary-block"><div class="reader-summary-label">TL;DR</div><div class="reader-summary-text">Click Summarize to generate.</div></div><div class="reader-content">Loading...</div><a class="reader-open" href="' + (item.link || '#') + '" target="_blank" rel="noopener" style="display:inline-block;margin-top:0.75rem">Open original</a>';
-          li.appendChild(exp);
-          exp.querySelector('.btn-close-card').onclick = (ev) => { ev.stopPropagation(); li.classList.remove('is-selected'); };
-          const contentEl = exp.querySelector('.reader-content');
-          const summaryEl = exp.querySelector('.reader-summary-text');
-          const btnSum = exp.querySelector('.btn-summarize');
-          loadArticle(item).then((t) => { if (contentEl) contentEl.textContent = t || 'No content available.'; });
-          const cached = getCachedSummary(item.id);
-          if (cached) summaryEl.textContent = cached;
-          btnSum.onclick = async (ev) => {
-            ev.stopPropagation();
-            const s = readSettings();
-            const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
-            const modelId = s.modelIdSummary || modelSelectSummary?.value || '';
-            if (!apiKey || !modelId) { if (summaryEl) summaryEl.textContent = 'Configure API key and Summary model in Settings, then Save.'; summaryEl.classList.add('error'); return; }
-            const text = contentEl?.textContent?.trim() || '';
-            if (!text || text === 'No content available.') { if (summaryEl) summaryEl.textContent = 'No article content to summarize.'; return; }
-            if (summaryEl) summaryEl.classList.remove('error');
-            if (summaryEl) summaryEl.textContent = 'Summarizing…';
-            if (btnSum) btnSum.disabled = true;
-            try {
-              const truncated = text.length > 12000 ? text.slice(0, 12000) + '\n\n[Article truncated…]' : text;
-              const promptTpl = getSummaryPrompt();
-              const prompt = promptTpl.includes('{{ARTICLE}}') ? promptTpl.replace('{{ARTICLE}}', truncated) : promptTpl + '\n\n' + truncated;
-              const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
-              const data = await res.json().catch(() => ({}));
-              if (!res.ok) { if (summaryEl) summaryEl.textContent = data.message || data.error || 'Request failed.'; summaryEl?.classList.add('error'); return; }
-              const result = (data.content || '').trim() || 'No summary returned.';
-              if (summaryEl) summaryEl.textContent = result;
-              setCachedSummary(item.id, result);
-            } catch { if (summaryEl) { summaryEl.textContent = 'Network error.'; summaryEl.classList.add('error'); } }
-            finally { if (btnSum) btnSum.disabled = false; }
-          };
+      const readOriginalHref = safeHref(item.link);
+      const domain = domainFromUrl(item.link);
+      li.innerHTML =
+        '<div class="article-card-header">' +
+        '<div class="item-meta-row"><span class="item-source-badge">' + escapeHtml(feedTitle) + '</span><span class="item-metrics"><span>' + escapeHtml(relTime) + '</span><span>' + escapeHtml(readTime) + '</span><span>~' + words + ' words</span></span></div>' +
+        '<h2 class="item-title"><a href="' + readOriginalHref + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.title || 'Untitled') + '</a></h2>' +
+        '<p class="item-snippet">' + escapeHtml(truncateText(item.summary, 120)) + '</p>' +
+        '</div>' +
+        '<div class="article-expanded">' +
+        '<div class="article-expanded-inner">' +
+        '<div class="article-toolbar">' +
+        '<div class="toolbar-left">' +
+        '<button type="button" class="toolbar-btn primary btn-summarize">Summarize <span class="ai-badge">AI</span></button>' +
+        '<button type="button" class="toolbar-btn btn-save">Save</button>' +
+        '<button type="button" class="toolbar-btn btn-more">More</button>' +
+        '</div>' +
+        '<div class="toolbar-right">' +
+        '<button type="button" class="toolbar-btn btn-open-original">Open original</button>' +
+        '</div>' +
+        '</div>' +
+        '<div class="ai-summary is-hidden"><div class="ai-summary-header"><span class="ai-icon">✦</span><span>TL;DR</span></div><div class="ai-summary-text"></div></div>' +
+        '<div class="article-body">' + (isContentSufficient(item.content) ? '' : articleBodySkeletonHtml()) + '</div>' +
+        '<a class="read-original" href="' + readOriginalHref + '" target="_blank" rel="noopener noreferrer">Read on ' + escapeHtml(domain) + ' ↗</a>' +
+        '</div></div>';
+      const bodyEl = li.querySelector('.article-body');
+      const summaryBlock = li.querySelector('.ai-summary');
+      const summaryTextEl = li.querySelector('.ai-summary-text');
+      const btnSum = li.querySelector('.btn-summarize');
+      const btnOpen = li.querySelector('.btn-open-original');
+
+      function loadBody() {
+        if (isContentSufficient(item.content)) {
+          setArticleBody(bodyEl, item.content);
+          return;
         }
-        if (wasSelected) li.classList.remove('is-selected');
+        loadArticle(item)
+          .then((t) => {
+            bodyEl.innerHTML = '';
+            bodyEl.classList.remove('article-body-skeleton');
+            setArticleBody(bodyEl, t);
+          })
+          .catch(() => {
+            bodyEl.innerHTML = '';
+            bodyEl.classList.remove('article-body-skeleton');
+            const p = document.createElement('p');
+            p.textContent = item.summary || 'No summary available.';
+            bodyEl.appendChild(p);
+            const a = document.createElement('a');
+            a.href = safeHref(item.link);
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            a.className = 'read-original-inline';
+            a.textContent = 'Read on ' + domain + ' →';
+            bodyEl.appendChild(a);
+          });
+      }
+
+      li.querySelector('.btn-save').onclick = (ev) => { ev.stopPropagation(); };
+      li.querySelector('.btn-more').onclick = (ev) => { ev.stopPropagation(); };
+      btnOpen.onclick = (ev) => {
+        ev.stopPropagation();
+        const u = safeHref(item.link);
+        if (u !== '#') window.open(u, '_blank');
       };
+
+      btnSum.onclick = async (ev) => {
+        ev.stopPropagation();
+        summaryBlock.classList.remove('is-hidden');
+        const s = readSettings();
+        const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
+        const modelId = s.modelIdSummary || modelSelectSummary?.value || '';
+        if (!apiKey || !modelId) {
+          summaryTextEl.textContent = 'Configure API key and Summary model in Settings, then Save.';
+          summaryTextEl.classList.add('error');
+          return;
+        }
+        const text = (bodyEl.innerText || bodyEl.textContent || '').trim();
+        if (!text || text === 'No content available.') {
+          summaryTextEl.textContent = 'No article content to summarize.';
+          return;
+        }
+        summaryTextEl.classList.remove('error');
+        summaryTextEl.textContent = 'Summarizing…';
+        btnSum.disabled = true;
+        try {
+          const truncated = text.length > 12000 ? text.slice(0, 12000) + '\n\n[Article truncated…]' : text;
+          const promptTpl = getSummaryPrompt();
+          const prompt = promptTpl.includes('{{ARTICLE}}') ? promptTpl.replace('{{ARTICLE}}', truncated) : promptTpl + '\n\n' + truncated;
+          const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            summaryTextEl.textContent = data.message || data.error || 'Request failed.';
+            summaryTextEl.classList.add('error');
+            return;
+          }
+          const result = (data.content || '').trim() || 'No summary returned.';
+          summaryTextEl.textContent = result;
+          setCachedSummary(item.id, result);
+        } catch {
+          summaryTextEl.textContent = 'Network error.';
+          summaryTextEl.classList.add('error');
+        } finally {
+          btnSum.disabled = false;
+        }
+      };
+
+      li.onclick = function (e) {
+        if (e.target.closest('a') || e.target.closest('button')) return;
+        const wasExpanded = li.classList.contains('expanded');
+        (todayContent?.querySelectorAll('.article-card') ?? []).forEach((c) => c.classList.remove('expanded', 'is-selected'));
+        if (!wasExpanded) {
+          li.classList.add('expanded', 'is-selected');
+          selectedItemId = item.id;
+          selectedItemFeedUrl = feedUrl;
+          updateItemReadState(feedUrl, item.id, true);
+          let exp = li.querySelector('.article-expanded');
+          if (exp && !exp.dataset.loaded) {
+            exp.dataset.loaded = '1';
+            loadBody();
+          }
+          setTimeout(() => li.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+        } else {
+          selectedItemId = '';
+        }
+      };
+
+      const cachedSummary = getCachedSummary(item.id);
+      if (cachedSummary) {
+        summaryBlock.classList.remove('is-hidden');
+        summaryTextEl.textContent = cachedSummary;
+      }
+
+      if (li.classList.contains('expanded')) {
+        li.querySelector('.article-expanded')?.setAttribute('data-loaded', '1');
+        loadBody();
+      }
       return li;
     }
     const COLLAPSED_KEY = 'rss-viewer-collapsed-categories';
@@ -614,9 +737,10 @@
     }
     document.addEventListener('click', (e) => {
       if (e.target.closest('a, button, input')) return;
-      const sel = document.querySelector('.view-reader .item.is-selected');
-      if (!sel || e.target.closest('.item') === sel) return;
-      sel.classList.remove('is-selected');
+      const sel = document.querySelector('.view-reader .article-card.expanded');
+      if (!sel || e.target.closest('.article-card') === sel) return;
+      sel.classList.remove('expanded', 'is-selected');
+      selectedItemId = '';
     });
 
     document.querySelectorAll('.sidebar-nav-item').forEach((item) => {
@@ -668,24 +792,32 @@
       renderToday();
       renderSidebar();
     });
-    btnShortcuts?.addEventListener('click', () => shortcutsModal?.classList.toggle('open'));
-    shortcutsModal?.addEventListener('click', (e) => { if (e.target === shortcutsModal) shortcutsModal.classList.remove('open'); });
-    shortcutsModal?.querySelector('.btn-close-modal')?.addEventListener('click', () => shortcutsModal?.classList.remove('open'));
     document.addEventListener('keydown', (e) => {
-      if (e.key === '?' && !e.target.matches('input, textarea')) { e.preventDefault(); shortcutsModal?.classList.toggle('open'); }
-      if (e.key === 'j' || e.key === 'k') {
-        const items = document.querySelectorAll('.view-reader .item');
+      const expandedCard = document.querySelector('.view-reader .article-card.expanded');
+      if (e.key === 'Escape' && expandedCard) {
+        expandedCard.classList.remove('expanded', 'is-selected');
+        selectedItemId = '';
+        e.preventDefault();
+        return;
+      }
+      if (expandedCard && ['j', 'k', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
+        const items = document.querySelectorAll('.view-reader .article-card');
         if (!items.length) return;
-        const sel = document.querySelector('.view-reader .item.is-selected');
-        let idx = sel ? Array.from(items).indexOf(sel) : -1;
-        idx = e.key === 'j' ? idx + 1 : idx - 1;
+        let idx = Array.from(items).indexOf(expandedCard);
+        idx = (e.key === 'j' || e.key === 'ArrowDown') ? idx + 1 : idx - 1;
         idx = Math.max(0, Math.min(items.length - 1, idx));
         if (items[idx]) items[idx].click();
+        e.preventDefault();
+        return;
       }
-      if (e.key === 'o') {
-        const sel = document.querySelector('.view-reader .item.is-selected');
-        const link = sel?.querySelector('.reader-open');
+      if (expandedCard && (e.key === 'o' || e.key === 'Enter')) {
+        const link = expandedCard.querySelector('.read-original');
         if (link?.href && link.href !== '#') window.open(link.href, '_blank');
+        e.preventDefault();
+        return;
+      }
+      if (expandedCard && (e.key === 'm' || e.key === 's')) {
+        e.preventDefault();
       }
     });
     themeToggle?.addEventListener('change', (e) => {
@@ -826,7 +958,7 @@
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { digestCard.innerHTML = '<p class="digest-placeholder error">' + (data.message || 'Request failed') + '</p>'; return; }
         const bodyHtml = formatDigestOutput(data.content || '', refs);
-        const refsHtml = refs.length ? '<div class="digest-refs"><strong>References:</strong> ' + refs.map((r, i) => '<a href="' + (r.link || '#') + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>').join(' ') + '</div>' : '';
+        const refsHtml = refs.length ? '<div class="digest-refs"><strong>References:</strong> ' + refs.map((r, i) => '<a href="' + safeHref(r.link) + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>').join(' ') + '</div>' : '';
         const fullHtml = '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3><div class="digest-body">' + bodyHtml + '</div>' + refsHtml;
         digestCard.innerHTML = fullHtml;
         setCachedDigest(cacheKey, fullHtml);
