@@ -20,6 +20,15 @@
   const MAX_ARTICLE_LENGTH = 20000;
   const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 
+  const readState = typeof window !== 'undefined' && window.RSS_READ_STATE ? window.RSS_READ_STATE : {
+    isRead: function () { return false; },
+    markAsRead: function () {},
+    markAsUnread: function () {},
+    toggleRead: function () { return false; },
+    markMultipleAsRead: function () {},
+    cleanupReadArticles: function () {}
+  };
+
   let importedFeeds = [];
   let feedItemCache = {};
   let articleCache = { order: [], entries: {} };
@@ -193,7 +202,7 @@
     const content = (item.content || item['content:encoded'] || '').trim();
     const author = (item.creator || item.author || '').trim();
     const id = (item.id || item.guid || feedUrl + '|' + link + '|' + title + '|' + pubDate).toString();
-    return { id: id.startsWith(feedUrl + '|') ? id : feedUrl + '|' + id, title, link, pubDate, summary, content, author, isRead: !!item.isRead };
+    return { id: id.startsWith(feedUrl + '|') ? id : feedUrl + '|' + id, title, link, pubDate, summary, content, author };
   }
   function normalizeFeedItemList(url, items) {
     const seen = new Set();
@@ -220,10 +229,6 @@
     const n = normalizeFeedItemList(url, items);
     if (n.length) feedItemCache[url] = n; else delete feedItemCache[url];
     saveFeedItemCache(feedItemCache);
-  }
-  function updateItemReadState(url, id, read) {
-    if (!isValidHttpUrl(url) || !id) return;
-    setCachedFeedItems(url, getCachedFeedItems(url).map((i) => (i.id === id ? { ...i, isRead: read } : i)));
   }
   function getFeedLabel(url) { return (importedFeeds.find((f) => f.url === url) || {}).title || url; }
 
@@ -287,8 +292,7 @@
   }
 
   function buildCachedFromFetch(url, items) {
-    const existing = new Map(getCachedFeedItems(url).map((i) => [i.id, { isRead: i.isRead }]));
-    return normalizeFeedItemList(url, items).map((i) => ({ ...i, isRead: existing.has(i.id) ? existing.get(i.id).isRead : false }));
+    return normalizeFeedItemList(url, items);
   }
   async function fetchFeed(url) {
     const res = await fetch('/api/rss?url=' + encodeURIComponent(url));
@@ -524,7 +528,7 @@
 
       const totalUnread = importedFeeds.reduce((sum, f) => {
         const items = getCachedFeedItems(f.url);
-        return sum + items.filter((i) => !i.isRead).length;
+        return sum + items.filter((i) => !readState.isRead(i.id)).length;
       }, 0);
       const allRow = document.createElement('div');
       allRow.className = 'sidebar-all-row';
@@ -555,7 +559,7 @@
 
         const aggregateUnread = feeds.reduce((sum, f) => {
           const items = getCachedFeedItems(f.url);
-          return sum + items.filter((i) => !i.isRead).length;
+          return sum + items.filter((i) => !readState.isRead(i.id)).length;
         }, 0);
 
         const header = document.createElement('button');
@@ -580,7 +584,7 @@
         ul.className = 'sidebar-feed-list';
         feeds.forEach((f) => {
           const items = getCachedFeedItems(f.url);
-          const unread = items.filter((i) => !i.isRead).length;
+          const unread = items.filter((i) => !readState.isRead(i.id)).length;
           const li = document.createElement('li');
           li.className = 'sidebar-feed-row';
           const btn = document.createElement('button');
@@ -614,7 +618,7 @@
     }
     function createItemEl(item, feedUrl, feedTitle) {
       const li = document.createElement('li');
-      li.className = 'item article-card' + (item.isRead ? ' is-read' : '') + (item.id === selectedItemId ? ' is-selected expanded' : '');
+      li.className = 'item article-card' + (readState.isRead(item.id) ? ' is-read' : '') + (item.id === selectedItemId ? ' is-selected expanded' : '');
       li.dataset.itemId = item.id;
       li.dataset.feedUrl = feedUrl;
       const relTime = formatRelativeTime(item.pubDate);
@@ -638,6 +642,7 @@
         '<button type="button" class="toolbar-btn btn-save' + (saved ? ' is-saved' : '') + '" title="' + (saved ? 'Saved' : 'Read Later') + '">' + (saved ? '🔖 Saved ✓' : '🔖 Read Later') + '</button>' +
         '</div>' +
         '<div class="toolbar-right">' +
+        '<button type="button" class="toolbar-btn btn-read-toggle" title="' + (readState.isRead(item.id) ? 'Mark unread' : 'Mark read') + '">' + (readState.isRead(item.id) ? '○ Mark unread' : '● Mark read') + '</button>' +
         '<button type="button" class="toolbar-btn btn-open-original">Open original</button>' +
         '</div>' +
         '</div>' +
@@ -650,6 +655,7 @@
       const summaryTextEl = li.querySelector('.ai-summary-text');
       const btnSum = li.querySelector('.btn-summarize');
       const btnOpen = li.querySelector('.btn-open-original');
+      const btnReadToggle = li.querySelector('.btn-read-toggle');
 
       function loadBody() {
         if (isContentSufficient(item.content)) {
@@ -713,6 +719,20 @@
         const u = safeHref(item.link);
         if (u !== '#') window.open(u, '_blank');
       };
+      function updateReadToggleButton() {
+        const read = readState.isRead(item.id);
+        if (btnReadToggle) {
+          btnReadToggle.textContent = read ? '○ Mark unread' : '● Mark read';
+          btnReadToggle.title = read ? 'Mark unread' : 'Mark read';
+        }
+        li.classList.toggle('is-read', read);
+      }
+      btnReadToggle.onclick = (ev) => {
+        ev.stopPropagation();
+        readState.toggleRead(item.id);
+        updateReadToggleButton();
+        updateUnreadCounts();
+      };
 
       btnSum.onclick = async (ev) => {
         ev.stopPropagation();
@@ -763,7 +783,11 @@
           li.classList.add('expanded', 'is-selected');
           selectedItemId = item.id;
           selectedItemFeedUrl = feedUrl;
-          if (selectedSidebarFeedUrl !== READ_LATER_VIEW_SENTINEL) updateItemReadState(feedUrl, item.id, true);
+          if (selectedSidebarFeedUrl !== READ_LATER_VIEW_SENTINEL) {
+            readState.markAsRead(item.id);
+            updateReadToggleButton();
+            updateUnreadCounts();
+          }
           addToRecentlyRead({ guid: item.id, title: item.title || '', link: item.link || '', summary: item.summary || '', source: feedTitle });
           let exp = li.querySelector('.article-expanded');
           if (exp && !exp.dataset.loaded) {
@@ -817,6 +841,23 @@
       const n = getReadLaterArticles().length;
       el.textContent = n ? String(n) : '';
       el.classList.toggle('dimmed', n === 0);
+    }
+    function updateCategoryUnreadInView() {
+      if (!todayContent) return;
+      todayContent.querySelectorAll('.feed-group').forEach((g) => {
+        const metricsEl = g.querySelector('.feed-group-collapsed-metrics');
+        if (!metricsEl) return;
+        const cards = g.querySelectorAll('.article-card');
+        const n = cards.length;
+        const feedUrls = new Set(Array.from(cards).map((c) => c.dataset.feedUrl).filter(Boolean));
+        const unread = Array.from(cards).filter((c) => !readState.isRead(c.dataset.itemId)).length;
+        const feedCount = feedUrls.size;
+        metricsEl.textContent = n + ' item' + (n === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') + (unread ? ' · ' + unread + ' unread' : '');
+      });
+    }
+    function updateUnreadCounts() {
+      renderSidebar();
+      updateCategoryUnreadInView();
     }
     function renderToday(skipDefaultCollapse) {
       if (!todayContent) return;
@@ -897,14 +938,36 @@
         h3.innerHTML = '<span class="category-chevron" aria-hidden="true">▼</span><span class="category-name">' + escapeHtml(title) + '</span>';
         block.appendChild(h3);
         const feedCount = new Set(items.map((i) => i.feedUrl || feedUrl)).size;
-        const unreadCount = items.filter((i) => !i.isRead).length;
+        const unreadCount = items.filter((i) => !readState.isRead(i.id)).length;
         const summaryEl = document.createElement('div');
         summaryEl.className = 'feed-group-collapsed-summary';
         const metricsLine = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') + (unreadCount ? ' · ' + unreadCount + ' unread' : '');
         const latestTitles = items.slice(0, 3).map((i) => '"' + truncateText(i.title || '', 48) + '"').join(' · ');
         summaryEl.innerHTML = '<div class="feed-group-collapsed-metrics">' + escapeHtml(metricsLine) + '</div><div class="feed-group-collapsed-latest">Latest: ' + escapeHtml(latestTitles) + '</div>';
         block.appendChild(summaryEl);
-        g.appendChild(block);
+        const headerRow = document.createElement('div');
+        headerRow.className = 'feed-group-header-row';
+        const blockWrap = document.createElement('div');
+        blockWrap.className = 'feed-group-header-block-wrap';
+        blockWrap.appendChild(block);
+        headerRow.appendChild(blockWrap);
+        const markAllReadLink = document.createElement('button');
+        markAllReadLink.type = 'button';
+        markAllReadLink.className = 'feed-group-mark-all-read';
+        markAllReadLink.textContent = 'Mark all read';
+        markAllReadLink.onclick = (ev) => {
+          ev.stopPropagation();
+          const guids = items.map((i) => i.id);
+          readState.markMultipleAsRead(guids);
+          g.querySelectorAll('.article-card').forEach((card) => {
+            card.classList.add('is-read');
+            const btn = card.querySelector('.btn-read-toggle');
+            if (btn) { btn.textContent = '○ Mark unread'; btn.title = 'Mark unread'; }
+          });
+          updateUnreadCounts();
+        };
+        headerRow.appendChild(markAllReadLink);
+        g.appendChild(headerRow);
         const detailEl = document.createElement('div');
         detailEl.className = 'feed-group-detail';
         detailEl.textContent = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '');
@@ -1094,7 +1157,21 @@
         e.preventDefault();
         return;
       }
-      if (expandedCard && (e.key === 'm' || e.key === 's')) {
+      if (expandedCard && e.key === 'm') {
+        const itemId = expandedCard.dataset.itemId;
+        if (itemId) {
+          readState.toggleRead(itemId);
+          expandedCard.classList.toggle('is-read', readState.isRead(itemId));
+          const btn = expandedCard.querySelector('.btn-read-toggle');
+          if (btn) {
+            btn.textContent = readState.isRead(itemId) ? '○ Mark unread' : '● Mark read';
+            btn.title = readState.isRead(itemId) ? 'Mark unread' : 'Mark read';
+          }
+          updateUnreadCounts();
+        }
+        e.preventDefault();
+      }
+      if (expandedCard && e.key === 's') {
         e.preventDefault();
       }
     });
@@ -1249,6 +1326,7 @@
 
     articleCache = readArticleCache();
     feedItemCache = readFeedItemCache();
+    readState.cleanupReadArticles && readState.cleanupReadArticles();
     const lib = readLibrary();
     setImportedFeeds(lib.feeds);
     loadSettingsIntoUI();
