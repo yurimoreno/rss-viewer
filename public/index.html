@@ -35,6 +35,7 @@
             <h3>Views</h3>
             <div class="sidebar-nav-item is-active" data-view="reader">Today</div>
             <div class="sidebar-nav-item" data-view="digest">Digest <span class="ai-badge">AI</span></div>
+            <div class="sidebar-nav-item" data-view="saved">Saved <span class="sidebar-saved-count" id="saved-count"></span></div>
           </section>
           <section class="sidebar-section">
             <h3>Feeds</h3>
@@ -50,8 +51,8 @@
           <div class="mockup-view active view-reader" data-tab="reader">
             <header class="viewer-hero">
               <div>
-                <p class="viewer-eyebrow">Today</p>
-                <h1>Today</h1>
+                <p class="viewer-eyebrow" id="viewer-reader-eyebrow">Today</p>
+                <h1 id="viewer-reader-title">Today</h1>
               </div>
               <div class="viewer-hero-actions">
                 <span class="category-expand-collapse">

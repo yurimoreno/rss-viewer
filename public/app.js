@@ -7,6 +7,8 @@
   const SETTINGS_KEY = 'rssViewer.settings';
   const SUMMARY_CACHE_KEY = 'rssViewer.summaryCache';
   const DIGEST_CACHE_KEY = 'rssViewer.digestCache';
+  const SAVED_ARTICLES_KEY = 'rss_saved_articles';
+  const SAVED_VIEW_SENTINEL = '__saved__';
   const MAX_SUMMARY_CACHE = 80;
   const MAX_DIGEST_CACHE = 20;
   const MAX_ITEMS_PER_FEED = 50;
@@ -119,14 +121,45 @@
     try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(buildLibrary(lib.feeds || [], lib.categories || []))); } catch {}
   }
 
+  function getSavedArticles() {
+    try { return JSON.parse(localStorage.getItem(SAVED_ARTICLES_KEY) || '[]'); } catch { return []; }
+  }
+  function saveArticle(article) {
+    const saved = getSavedArticles();
+    if (saved.some((a) => a.guid === article.guid)) return;
+    saved.unshift({ ...article, savedAt: new Date().toISOString() });
+    try {
+      localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(saved));
+    } catch (e) {
+      if (e && e.name === 'QuotaExceededError') showToast('Storage full — unsave some articles to make room.');
+    }
+  }
+  function unsaveArticle(guid) {
+    const saved = getSavedArticles().filter((a) => a.guid !== guid);
+    localStorage.setItem(SAVED_ARTICLES_KEY, JSON.stringify(saved));
+  }
+  function isArticleSaved(guid) {
+    return getSavedArticles().some((a) => a.guid === guid);
+  }
+  function showToast(message) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = message;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('toast-visible'));
+    setTimeout(() => { el.classList.remove('toast-visible'); setTimeout(() => el.remove(), 300); }, 3000);
+  }
+
   function normalizeFeedItem(feedUrl, item) {
     if (!item || typeof item !== 'object') return null;
     const title = (item.title || '').trim() || 'Untitled';
     const link = (item.link || '').trim();
     const pubDate = (item.isoDate || item.pubDate || '').toString();
     const summary = stripHtml(item.summary || item.content || item.contentSnippet || '');
+    const content = (item.content || item['content:encoded'] || '').trim();
+    const author = (item.creator || item.author || '').trim();
     const id = (item.id || item.guid || feedUrl + '|' + link + '|' + title + '|' + pubDate).toString();
-    return { id: id.startsWith(feedUrl + '|') ? id : feedUrl + '|' + id, title, link, pubDate, summary, isRead: !!item.isRead };
+    return { id: id.startsWith(feedUrl + '|') ? id : feedUrl + '|' + id, title, link, pubDate, summary, content, author, isRead: !!item.isRead };
   }
   function normalizeFeedItemList(url, items) {
     const seen = new Set();
@@ -502,9 +535,11 @@
       const words = wordCount(item.summary || item.title);
       const readOriginalHref = safeHref(item.link);
       const domain = domainFromUrl(item.link);
+      const saved = isArticleSaved(item.id);
+      const savedBadge = saved ? '<span class="saved-badge" title="Saved">🔖</span>' : '';
       li.innerHTML =
         '<div class="article-card-header">' +
-        '<div class="item-meta-row"><span class="item-source-badge">' + escapeHtml(feedTitle) + '</span><span class="item-metrics"><span>' + escapeHtml(relTime) + '</span><span>' + escapeHtml(readTime) + '</span><span>~' + words + ' words</span></span></div>' +
+        '<div class="item-meta-row"><span class="item-source-badge">' + escapeHtml(feedTitle) + '</span><span class="item-metrics"><span>' + escapeHtml(relTime) + '</span><span>' + escapeHtml(readTime) + '</span><span>~' + words + ' words</span></span>' + savedBadge + '</div>' +
         '<h2 class="item-title"><a href="' + readOriginalHref + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(item.title || 'Untitled') + '</a></h2>' +
         '<p class="item-snippet">' + escapeHtml(truncateText(item.summary, 120)) + '</p>' +
         '</div>' +
@@ -513,8 +548,7 @@
         '<div class="article-toolbar">' +
         '<div class="toolbar-left">' +
         '<button type="button" class="toolbar-btn primary btn-summarize">Summarize <span class="ai-badge">AI</span></button>' +
-        '<button type="button" class="toolbar-btn btn-save">Save</button>' +
-        '<button type="button" class="toolbar-btn btn-more">More</button>' +
+        '<button type="button" class="toolbar-btn btn-save' + (saved ? ' is-saved' : '') + '" title="' + (saved ? 'Saved' : 'Save') + '">' + (saved ? '🔖 Saved' : '🔖 Save') + '</button>' +
         '</div>' +
         '<div class="toolbar-right">' +
         '<button type="button" class="toolbar-btn btn-open-original">Open original</button>' +
@@ -557,8 +591,36 @@
           });
       }
 
-      li.querySelector('.btn-save').onclick = (ev) => { ev.stopPropagation(); };
-      li.querySelector('.btn-more').onclick = (ev) => { ev.stopPropagation(); };
+      const btnSave = li.querySelector('.btn-save');
+      const updateSaveUi = (isSaved) => {
+        const badge = li.querySelector('.saved-badge');
+        if (isSaved) {
+          btnSave.textContent = '🔖 Saved';
+          btnSave.title = 'Saved';
+          btnSave.classList.add('is-saved');
+          if (!badge) li.querySelector('.item-meta-row').insertAdjacentHTML('beforeend', '<span class="saved-badge" title="Saved">🔖</span>');
+        } else {
+          btnSave.textContent = '🔖 Save';
+          btnSave.title = 'Save';
+          btnSave.classList.remove('is-saved');
+          badge?.remove();
+        }
+      };
+      btnSave.onclick = (ev) => {
+        ev.stopPropagation();
+        const currentlySaved = isArticleSaved(item.id);
+        if (currentlySaved) {
+          unsaveArticle(item.id);
+          updateSaveUi(false);
+          updateSavedCount();
+          if (selectedSidebarFeedUrl === SAVED_VIEW_SENTINEL) { renderToday(); renderSidebar(); }
+        } else {
+          const payload = { guid: item.id, title: item.title || '', link: item.link || '', summary: item.summary || '', content: item.content || '', source: feedTitle, author: item.author || '', pubDate: item.pubDate || '' };
+          saveArticle(payload);
+          updateSaveUi(true);
+          updateSavedCount();
+        }
+      };
       btnOpen.onclick = (ev) => {
         ev.stopPropagation();
         const u = safeHref(item.link);
@@ -614,7 +676,7 @@
           li.classList.add('expanded', 'is-selected');
           selectedItemId = item.id;
           selectedItemFeedUrl = feedUrl;
-          updateItemReadState(feedUrl, item.id, true);
+          if (selectedSidebarFeedUrl !== SAVED_VIEW_SENTINEL) updateItemReadState(feedUrl, item.id, true);
           let exp = li.querySelector('.article-expanded');
           if (exp && !exp.dataset.loaded) {
             exp.dataset.loaded = '1';
@@ -648,8 +710,38 @@
     function setCollapsedCategories(set) {
       try { sessionStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set])); } catch {}
     }
+    function updateSavedCount() {
+      const el = document.getElementById('saved-count');
+      if (!el) return;
+      const n = getSavedArticles().length;
+      el.textContent = n ? String(n) : '';
+      el.classList.toggle('dimmed', n === 0);
+    }
     function renderToday() {
       if (!todayContent) return;
+      const heroEyebrow = document.getElementById('viewer-reader-eyebrow');
+      const heroTitle = document.getElementById('viewer-reader-title');
+      if (selectedSidebarFeedUrl === SAVED_VIEW_SENTINEL) {
+        if (heroEyebrow) heroEyebrow.textContent = 'Saved';
+        if (heroTitle) heroTitle.textContent = getSavedArticles().length === 1 ? '1 article' : getSavedArticles().length + ' articles';
+        todayContent.innerHTML = '';
+        const saved = getSavedArticles();
+        if (!saved.length) {
+          todayContent.innerHTML = '<div class="saved-empty-state"><div class="saved-empty-icon">🔖</div><p class="saved-empty-title">No saved articles yet</p><p class="saved-empty-desc">Click Save on any article to bookmark it for later.</p></div>';
+          return;
+        }
+        const ul = document.createElement('ul');
+        ul.className = 'results';
+        saved.forEach((a) => {
+          const item = { id: a.guid, title: a.title, link: a.link, pubDate: a.pubDate, summary: a.summary, content: a.content, author: a.author, feedUrl: a.link, feedTitle: a.source, isRead: true };
+          ul.appendChild(createItemEl(item, a.link, a.source));
+        });
+        todayContent.appendChild(ul);
+        updateSavedCount();
+        return;
+      }
+      if (heroEyebrow) heroEyebrow.textContent = 'Today';
+      if (heroTitle) heroTitle.textContent = 'Today';
       todayContent.innerHTML = '';
       let collapsed = getCollapsedCategories();
       // Default to all collapsed when user has no saved preference
@@ -746,11 +838,13 @@
     document.querySelectorAll('.sidebar-nav-item').forEach((item) => {
       item.onclick = () => {
         const v = item.dataset.view;
-        if (v !== 'reader' && v !== 'digest') return;
+        if (v !== 'reader' && v !== 'digest' && v !== 'saved') return;
         if (v === 'reader') selectedSidebarFeedUrl = '';
+        else if (v === 'saved') selectedSidebarFeedUrl = SAVED_VIEW_SENTINEL;
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
         document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
-        const view = document.querySelector('.mockup-view[data-tab="' + v + '"]');
+        const tab = v === 'saved' ? 'reader' : v;
+        const view = document.querySelector('.mockup-view[data-tab="' + tab + '"]');
         if (view) view.classList.add('active');
         item.classList.add('is-active');
         renderToday();
@@ -974,6 +1068,7 @@
     const lib = readLibrary();
     setImportedFeeds(lib.feeds);
     loadSettingsIntoUI();
+    updateSavedCount();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
     if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(renderToday), 100);
