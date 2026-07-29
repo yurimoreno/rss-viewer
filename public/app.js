@@ -184,13 +184,36 @@
     } catch {}
   }
 
-  function showToast(message) {
+  function showToast(message, kind) {
     const el = document.createElement('div');
-    el.className = 'toast';
+    el.className = 'toast' + (kind === 'error' ? ' toast-error' : kind === 'success' ? ' toast-success' : '');
+    el.setAttribute('role', 'status');
     el.textContent = message;
     document.body.appendChild(el);
     requestAnimationFrame(() => el.classList.add('toast-visible'));
-    setTimeout(() => { el.classList.remove('toast-visible'); setTimeout(() => el.remove(), 300); }, 3000);
+    setTimeout(() => { el.classList.remove('toast-visible'); setTimeout(() => el.remove(), 300); }, 3200);
+  }
+
+  let lastRefreshAt = null;
+  function formatLastRefreshed(ts) {
+    if (!ts) return '';
+    try {
+      return 'Updated ' + new Date(ts).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  }
+  function updateLastRefreshedUi() {
+    const el = document.getElementById('last-refreshed');
+    if (!el) return;
+    const label = formatLastRefreshed(lastRefreshAt);
+    if (!label) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    el.textContent = label;
   }
 
   function normalizeFeedItem(feedUrl, item) {
@@ -376,6 +399,9 @@
 
 {{ARTICLE}}`;
 
+  const DEFAULT_LOCAL_BASE_URL = 'http://127.0.0.1:8080/v1';
+  const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
+
   function readSettings() {
     try {
       const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
@@ -383,10 +409,34 @@
         s.modelIdDigest = s.modelId;
         s.modelIdSummary = s.modelId;
       }
+      // Default to local LLM when no provider was ever chosen
+      if (!s.provider) s.provider = s.apiKey ? 'openrouter' : 'local';
+      if (!s.baseUrl) s.baseUrl = s.provider === 'openrouter' ? OPENROUTER_BASE_URL : DEFAULT_LOCAL_BASE_URL;
       return s;
-    } catch { return {}; }
+    } catch { return { provider: 'local', baseUrl: DEFAULT_LOCAL_BASE_URL }; }
   }
   function saveSettings(s) { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch {} }
+
+  /** Payload for /api/llm/* from saved or form settings. */
+  function getLlmRequestFields(s) {
+    const settings = s || readSettings();
+    const provider = (settings.provider || 'local').trim() || 'local';
+    const baseUrl = (settings.baseUrl || (provider === 'openrouter' ? OPENROUTER_BASE_URL : DEFAULT_LOCAL_BASE_URL)).trim();
+    const apiKey = (settings.apiKey || '').trim();
+    return { provider, baseUrl, apiKey };
+  }
+
+  function llmConfigReady(s, modelId) {
+    const cfg = getLlmRequestFields(s);
+    if (!modelId) return { ok: false, message: 'Select a model in Settings, then Save.' };
+    if (cfg.provider === 'openrouter' && !cfg.apiKey) {
+      return { ok: false, message: 'OpenRouter requires an API key in Settings.' };
+    }
+    if (cfg.provider === 'local' && !cfg.baseUrl) {
+      return { ok: false, message: 'Set a local base URL in Settings (e.g. http://127.0.0.1:8080/v1).' };
+    }
+    return { ok: true, cfg };
+  }
   function getDigestPrompt() { const s = readSettings(); return (s.digestPrompt || '').trim() || DEFAULT_DIGEST_PROMPT; }
   function getSummaryPrompt() { const s = readSettings(); return (s.summaryPrompt || '').trim() || DEFAULT_SUMMARY_PROMPT; }
   function readSummaryCache() {
@@ -474,11 +524,16 @@
     const todayContent = document.getElementById('today-content');
     const expandAllCategories = document.getElementById('expand-all-categories');
     const collapseAllCategories = document.getElementById('collapse-all-categories');
+    const btnMarkAllRead = document.getElementById('btn-mark-all-read');
     const refreshWrap = document.getElementById('refresh-progress-wrap');
     const refreshBar = document.getElementById('refresh-progress-bar');
     const btnRefresh = document.getElementById('btn-refresh');
     const themeToggle = document.getElementById('theme-toggle');
+    const aiProviderSelect = document.getElementById('ai-provider');
+    const llmBaseUrlInput = document.getElementById('llm-base-url');
     const apiKeyInput = document.getElementById('api-key');
+    const apiKeyLabel = document.getElementById('api-key-label');
+    const rowBaseUrl = document.getElementById('row-base-url');
     const modelSelectDigest = document.getElementById('model-select-digest');
     const modelSelectSummary = document.getElementById('model-select-summary');
     const btnCheckModels = document.getElementById('btn-check-models');
@@ -535,15 +590,24 @@
       const allBtn = document.createElement('button');
       allBtn.type = 'button';
       allBtn.className = 'sidebar-feed sidebar-all' + (selectedSidebarFeedUrl === '' ? ' is-active' : '');
-      allBtn.innerHTML = '<span class="sidebar-feed-name">All</span><span class="sidebar-count' + (totalUnread === 0 ? ' is-zero' : '') + '">' + totalUnread + '</span>';
+      allBtn.innerHTML =
+        '<span class="sidebar-feed-name">All</span>' +
+        (totalUnread > 0
+          ? '<span class="sidebar-count">' + totalUnread + '</span>'
+          : '<span class="sidebar-count is-zero" aria-hidden="true">0</span>');
       allBtn.onclick = () => {
         selectedItemFeedUrl = '';
         selectedItemId = '';
         selectedSidebarFeedUrl = '';
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
         document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
-        document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
-        document.querySelector('.sidebar-nav-item[data-view="reader"]')?.classList.add('is-active');
+        document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
+          x.classList.remove('is-active');
+          x.setAttribute('aria-current', 'false');
+        });
+        const readerNav = document.querySelector('.sidebar-nav-item[data-view="reader"]');
+        readerNav?.classList.add('is-active');
+        readerNav?.setAttribute('aria-current', 'page');
         renderToday();
         renderSidebar();
         closeMobileSidebar();
@@ -568,7 +632,9 @@
         header.innerHTML =
           '<span class="sidebar-category-chevron" aria-hidden="true">' + (isExpanded ? '▼' : '▶') + '</span>' +
           '<span class="sidebar-category-name">' + escapeHtml(cat) + '</span>' +
-          '<span class="sidebar-category-count">' + aggregateUnread + '</span>';
+          (aggregateUnread > 0
+            ? '<span class="sidebar-category-count">' + aggregateUnread + '</span>'
+            : '<span class="sidebar-category-count is-zero" aria-hidden="true"></span>');
         header.onclick = () => {
           const current = getSidebarExpandedCategories();
           const nowExpanded = current.includes(cat);
@@ -591,8 +657,14 @@
           btn.type = 'button';
           btn.className = 'sidebar-feed' + (f.url === selectedSidebarFeedUrl ? ' is-active' : '');
           btn.dataset.url = f.url;
-          const countClass = unread === 0 ? ' is-zero' : '';
-          btn.innerHTML = '<span class="sidebar-feed-name">' + escapeHtml(f.title) + '</span><span class="sidebar-count' + countClass + '">' + unread + '</span>';
+          btn.title = f.title;
+          btn.innerHTML =
+            '<span class="sidebar-feed-name">' +
+            escapeHtml(f.title) +
+            '</span>' +
+            (unread > 0
+              ? '<span class="sidebar-count">' + unread + '</span>'
+              : '<span class="sidebar-count is-zero" aria-hidden="true"></span>');
           btn.onclick = async () => {
             selectedItemFeedUrl = '';
             selectedItemId = '';
@@ -600,11 +672,18 @@
             const url = f.url;
             try {
               setCachedFeedItems(url, await fetchFeed(url));
-            } catch {}
+            } catch (err) {
+              showToast('Could not refresh this feed', 'error');
+            }
             document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
             document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
-            document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
-            document.querySelector('.sidebar-nav-item[data-view="reader"]')?.classList.add('is-active');
+            document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
+              x.classList.remove('is-active');
+              x.setAttribute('aria-current', 'false');
+            });
+            const readerNav = document.querySelector('.sidebar-nav-item[data-view="reader"]');
+            readerNav?.classList.add('is-active');
+            readerNav?.setAttribute('aria-current', 'page');
             renderToday();
             renderSidebar();
             closeMobileSidebar();
@@ -738,10 +817,10 @@
         ev.stopPropagation();
         summaryBlock.classList.remove('is-hidden');
         const s = readSettings();
-        const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
         const modelId = s.modelIdSummary || modelSelectSummary?.value || '';
-        if (!apiKey || !modelId) {
-          summaryTextEl.textContent = 'Configure API key and Summary model in Settings, then Save.';
+        const ready = llmConfigReady(s, modelId);
+        if (!ready.ok) {
+          summaryTextEl.textContent = ready.message;
           summaryTextEl.classList.add('error');
           return;
         }
@@ -757,7 +836,11 @@
           const truncated = text.length > 12000 ? text.slice(0, 12000) + '\n\n[Article truncated…]' : text;
           const promptTpl = getSummaryPrompt();
           const prompt = promptTpl.includes('{{ARTICLE}}') ? promptTpl.replace('{{ARTICLE}}', truncated) : promptTpl + '\n\n' + truncated;
-          const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
+          const res = await fetch('/api/llm/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...ready.cfg, modelId, messages: [{ role: 'user', content: prompt }] })
+          });
           const data = await res.json().catch(() => ({}));
           if (!res.ok) {
             summaryTextEl.textContent = data.message || data.error || 'Request failed.';
@@ -859,17 +942,117 @@
       renderSidebar();
       updateCategoryUnreadInView();
     }
+
+    function emptyStateHtml({ icon, title, desc, actions }) {
+      const acts = Array.isArray(actions) ? actions : [];
+      const actionsHtml = acts.length
+        ? '<div class="empty-state-actions">' +
+          acts
+            .map((a) => {
+              const cls = a.primary ? 'btn-primary' : 'btn-quiet';
+              return (
+                '<button type="button" class="' +
+                cls +
+                '" data-empty-action="' +
+                escapeHtml(a.id) +
+                '">' +
+                escapeHtml(a.label) +
+                '</button>'
+              );
+            })
+            .join('') +
+          '</div>'
+        : '';
+      return (
+        '<div class="empty-state">' +
+        '<div class="empty-state-icon" aria-hidden="true">' +
+        (icon || '◎') +
+        '</div>' +
+        '<p class="empty-state-title">' +
+        escapeHtml(title || '') +
+        '</p>' +
+        '<p class="empty-state-desc">' +
+        escapeHtml(desc || '') +
+        '</p>' +
+        actionsHtml +
+        '</div>'
+      );
+    }
+
+    function bindEmptyStateActions(root) {
+      if (!root) return;
+      root.querySelectorAll('[data-empty-action]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const action = btn.getAttribute('data-empty-action');
+          if (action === 'import-opml') {
+            openPage('feeds');
+            // Defer so feeds view is active, then open file picker
+            setTimeout(() => {
+              const input = document.getElementById('opml-import');
+              if (input) input.click();
+            }, 0);
+          } else if (action === 'manage-feeds') {
+            openPage('feeds');
+          } else if (action === 'refresh') {
+            btnRefresh?.click();
+          }
+        });
+      });
+    }
+
+    /** Items currently in the Today/All or single-feed reader view (not Read Later / Recently Read). */
+    function getCurrentReaderItems() {
+      if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL || selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) {
+        return [];
+      }
+      if (selectedSidebarFeedUrl) {
+        const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+        return getCachedFeedItems(selectedSidebarFeedUrl).map((i) => ({
+          ...i,
+          feedUrl: selectedSidebarFeedUrl,
+          feedTitle: feed ? feed.title : selectedSidebarFeedUrl
+        }));
+      }
+      return getAllItemsGrouped().flatMap((g) => g.items);
+    }
+
+    function setMarkAllReadVisible(show) {
+      if (!btnMarkAllRead) return;
+      btnMarkAllRead.classList.toggle('is-hidden', !show);
+    }
+
+    function applyMarkAllReadToDom(guids) {
+      const set = new Set(guids);
+      todayContent?.querySelectorAll('.article-card').forEach((card) => {
+        if (!set.has(card.dataset.itemId)) return;
+        card.classList.add('is-read');
+        const btn = card.querySelector('.btn-read-toggle');
+        if (btn) {
+          btn.textContent = '○ Mark unread';
+          btn.title = 'Mark unread';
+        }
+      });
+      updateUnreadCounts();
+    }
+
     function renderToday(skipDefaultCollapse) {
       if (!todayContent) return;
       const heroEyebrow = document.getElementById('viewer-reader-eyebrow');
       const heroTitle = document.getElementById('viewer-reader-title');
       if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL) {
+        setMarkAllReadVisible(false);
         if (heroEyebrow) heroEyebrow.textContent = 'Read Later';
         if (heroTitle) heroTitle.textContent = getReadLaterArticles().length === 1 ? '1 article' : getReadLaterArticles().length + ' articles';
         todayContent.innerHTML = '';
         const list = getReadLaterArticles();
         if (!list.length) {
-          todayContent.innerHTML = '<div class="saved-empty-state"><div class="saved-empty-icon">🔖</div><p class="saved-empty-title">No read-later articles yet</p><p class="saved-empty-desc">Click Read Later on any article to save it for later.</p></div>';
+          todayContent.innerHTML = emptyStateHtml({
+            icon: '🔖',
+            title: 'No read-later articles yet',
+            desc: 'Save an article from Today with Read Later to build this list.',
+            actions: []
+          });
           return;
         }
         const ul = document.createElement('ul');
@@ -883,12 +1066,18 @@
         return;
       }
       if (selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) {
+        setMarkAllReadVisible(false);
         if (heroEyebrow) heroEyebrow.textContent = 'Recently Read';
         if (heroTitle) heroTitle.textContent = 'Recently Read';
         todayContent.innerHTML = '';
         const recent = getRecentlyRead();
         if (!recent.length) {
-          todayContent.innerHTML = '<div class="recently-read-empty"><div class="recently-read-empty-icon" aria-hidden="true">◷</div><p class="recently-read-empty-title">No recently read articles</p><p class="recently-read-empty-desc">Articles you read will appear here.</p></div>';
+          todayContent.innerHTML = emptyStateHtml({
+            icon: '◷',
+            title: 'No recently read articles',
+            desc: 'Articles you open in Today will show up here.',
+            actions: []
+          });
           return;
         }
         const ul = document.createElement('ul');
@@ -900,8 +1089,16 @@
         todayContent.appendChild(ul);
         return;
       }
-      if (heroEyebrow) heroEyebrow.textContent = 'Today';
-      if (heroTitle) heroTitle.textContent = 'Today';
+      setMarkAllReadVisible(true);
+      if (heroEyebrow) heroEyebrow.textContent = selectedSidebarFeedUrl ? 'Feed' : 'Today';
+      if (heroTitle) {
+        if (selectedSidebarFeedUrl) {
+          const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+          heroTitle.textContent = feed ? feed.title : 'Feed';
+        } else {
+          heroTitle.textContent = 'All feeds';
+        }
+      }
       todayContent.innerHTML = '';
       let collapsed = getCollapsedCategories();
       // Default to all collapsed when user has no saved preference (unless they just clicked Expand all)
@@ -941,9 +1138,24 @@
         const unreadCount = items.filter((i) => !readState.isRead(i.id)).length;
         const summaryEl = document.createElement('div');
         summaryEl.className = 'feed-group-collapsed-summary';
-        const metricsLine = items.length + ' item' + (items.length === 1 ? '' : 's') + (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') + (unreadCount ? ' · ' + unreadCount + ' unread' : '');
-        const latestTitles = items.slice(0, 3).map((i) => '"' + truncateText(i.title || '', 48) + '"').join(' · ');
-        summaryEl.innerHTML = '<div class="feed-group-collapsed-metrics">' + escapeHtml(metricsLine) + '</div><div class="feed-group-collapsed-latest">Latest: ' + escapeHtml(latestTitles) + '</div>';
+        const metricsLine =
+          items.length +
+          ' item' +
+          (items.length === 1 ? '' : 's') +
+          (feedCount > 1 ? ' · ' + feedCount + ' feeds' : '') +
+          (unreadCount ? ' · ' + unreadCount + ' unread' : '');
+        const latestOne = items[0] ? truncateText(items[0].title || '', 72) : '';
+        summaryEl.innerHTML =
+          '<div class="feed-group-collapsed-metrics">' +
+          escapeHtml(metricsLine) +
+          '</div>' +
+          (latestOne
+            ? '<div class="feed-group-collapsed-latest" title="' +
+              escapeHtml(items[0].title || '') +
+              '">' +
+              escapeHtml(latestOne) +
+              '</div>'
+            : '');
         block.appendChild(summaryEl);
         const headerRow = document.createElement('div');
         headerRow.className = 'feed-group-header-row';
@@ -984,7 +1196,13 @@
           .map((i) => ({ ...i, feedUrl: selectedSidebarFeedUrl, feedTitle: feed ? feed.title : selectedSidebarFeedUrl }))
           .sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
         if (!items.length) {
-          todayContent.innerHTML = '<p class="empty-hint">No items in this feed yet. Try refreshing.</p>';
+          todayContent.innerHTML = emptyStateHtml({
+            icon: '◌',
+            title: 'No items in this feed',
+            desc: 'Try refreshing, or check that the feed URL still works.',
+            actions: [{ id: 'refresh', label: 'Refresh feeds', primary: true }]
+          });
+          bindEmptyStateActions(todayContent);
           return;
         }
         const title = feed ? feed.title : 'Feed';
@@ -993,7 +1211,20 @@
       }
       const grouped = getAllItemsGrouped();
       if (!grouped.length) {
-        todayContent.innerHTML = '<p class="empty-hint">Import OPML or add feeds to see items here.</p>';
+        todayContent.innerHTML = emptyStateHtml({
+          icon: '◎',
+          title: importedFeeds.length ? 'No items to show' : 'No feeds yet',
+          desc: importedFeeds.length
+            ? 'Refresh to fetch the latest posts from your feeds.'
+            : 'Import an OPML file or add a feed URL to start reading.',
+          actions: importedFeeds.length
+            ? [{ id: 'refresh', label: 'Refresh feeds', primary: true }]
+            : [
+                { id: 'import-opml', label: 'Import OPML', primary: true },
+                { id: 'manage-feeds', label: 'Manage feeds', primary: false }
+              ]
+        });
+        bindEmptyStateActions(todayContent);
         return;
       }
       grouped.forEach(({ category, items }) => {
@@ -1006,11 +1237,26 @@
       if (!feedsList || !feedsSummary) return;
       const q = (feedMgmtSearch?.value || '').trim().toLowerCase();
       const filtered = filterFeeds(q);
-      feedsSummary.textContent = filtered.length ? filtered.length + ' feed' + (filtered.length === 1 ? '' : 's') + '.' : 'No feeds yet.';
+      const cats = new Set(filtered.map((f) => f.category).filter(Boolean));
+      feedsSummary.textContent = filtered.length
+        ? filtered.length + ' feed' + (filtered.length === 1 ? '' : 's') + (cats.size ? ' · ' + cats.size + ' categor' + (cats.size === 1 ? 'y' : 'ies') : '') + '.'
+        : 'No feeds yet.';
       feedsList.innerHTML = '';
       filtered.forEach((f) => {
         const li = document.createElement('li');
-        li.innerHTML = '<span>' + escapeHtml(f.title) + '</span><span style="font-size:0.8rem;color:var(--muted)">' + escapeHtml(f.category) + '</span>';
+        li.className = 'feeds-list-item';
+        li.innerHTML =
+          '<div class="feeds-list-main">' +
+          '<span class="feeds-list-title">' +
+          escapeHtml(f.title) +
+          '</span>' +
+          '<span class="feeds-list-url">' +
+          escapeHtml(f.url) +
+          '</span>' +
+          '</div>' +
+          '<span class="feeds-list-cat">' +
+          escapeHtml(f.category || 'Uncategorized') +
+          '</span>';
         feedsList.appendChild(li);
       });
     }
@@ -1023,26 +1269,34 @@
     });
 
     document.querySelectorAll('.sidebar-nav-item').forEach((item) => {
-      item.onclick = () => {
+      const activate = () => {
         const v = item.dataset.view;
         if (v !== 'reader' && v !== 'digest' && v !== 'read_later' && v !== 'recently_read') return;
         if (v === 'reader') selectedSidebarFeedUrl = '';
         else if (v === 'read_later') selectedSidebarFeedUrl = READ_LATER_VIEW_SENTINEL;
         else if (v === 'recently_read') selectedSidebarFeedUrl = RECENTLY_READ_VIEW_SENTINEL;
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
-        document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
+        document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
+          x.classList.remove('is-active');
+          x.setAttribute('aria-current', 'false');
+        });
         const tab = (v === 'read_later' || v === 'recently_read') ? 'reader' : v;
         const view = document.querySelector('.mockup-view[data-tab="' + tab + '"]');
         if (view) view.classList.add('active');
         item.classList.add('is-active');
+        item.setAttribute('aria-current', 'page');
         renderToday();
         renderSidebar();
         closeMobileSidebar();
       };
+      item.addEventListener('click', activate);
     });
     function openPage(p) {
       document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
-      document.querySelectorAll('.sidebar-nav-item').forEach((x) => x.classList.remove('is-active'));
+      document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
+        x.classList.remove('is-active');
+        x.setAttribute('aria-current', 'false');
+      });
       const view = document.querySelector('.mockup-view[data-tab="' + p + '"]');
       if (view) view.classList.add('active');
     }
@@ -1082,9 +1336,11 @@
       updateRailToggleLabel();
     }
 
-    if (typeof localStorage !== 'undefined' && localStorage.getItem('rss_sidebar_collapsed') === 'true') {
-      sidebarEl?.classList.add('collapsed');
+    // Desktop collapse UI removed; clear any sticky collapsed state
+    if (typeof localStorage !== 'undefined') {
+      try { localStorage.removeItem('rss_sidebar_collapsed'); } catch {}
     }
+    sidebarEl?.classList.remove('collapsed');
     updateRailToggleLabel();
 
     document.getElementById('main-menu-btn')?.addEventListener('click', () => {
@@ -1111,25 +1367,53 @@
       if (!isMobileSidebar()) closeMobileSidebar();
     });
 
-    expandAllCategories?.addEventListener('click', (e) => {
-      e.preventDefault();
+    expandAllCategories?.addEventListener('click', () => {
       setCollapsedCategories(new Set());
       renderToday(true);
     });
-    collapseAllCategories?.addEventListener('click', (e) => {
-      e.preventDefault();
+    collapseAllCategories?.addEventListener('click', () => {
       const groups = todayContent?.querySelectorAll('.feed-group[data-category]') ?? [];
       const names = [...groups].map((g) => g.dataset.category).filter(Boolean);
       setCollapsedCategories(new Set(names));
       renderToday();
     });
 
+    // Initial empty-state CTAs (static HTML before first render)
+    bindEmptyStateActions(document.getElementById('today-content'));
+
+    btnMarkAllRead?.addEventListener('click', () => {
+      const items = getCurrentReaderItems();
+      if (!items.length) return;
+      const guids = items.map((i) => i.id).filter(Boolean);
+      if (!guids.length) return;
+      readState.markMultipleAsRead(guids);
+      applyMarkAllReadToDom(guids);
+      // Re-render so collapsed category unread metrics update immediately
+      renderToday(true);
+      renderSidebar();
+    });
+
     btnRefresh?.addEventListener('click', async () => {
       if (!refreshWrap || !refreshBar) return;
+      if (btnRefresh) btnRefresh.disabled = true;
+      refreshWrap.hidden = false;
       refreshWrap.style.display = 'block';
       refreshBar.style.width = '0%';
-      await fetchAllFeeds((done, total) => { refreshBar.style.width = (done / total) * 100 + '%'; });
-      refreshWrap.style.display = 'none';
+      try {
+        const total = importedFeeds.length;
+        await fetchAllFeeds((done, t) => {
+          refreshBar.style.width = ((done / (t || 1)) * 100) + '%';
+        });
+        lastRefreshAt = Date.now();
+        updateLastRefreshedUi();
+        showToast(total ? 'Feeds refreshed' : 'No feeds to refresh', total ? 'success' : undefined);
+      } catch {
+        showToast('Refresh failed', 'error');
+      } finally {
+        refreshWrap.hidden = true;
+        refreshWrap.style.display = 'none';
+        if (btnRefresh) btnRefresh.disabled = false;
+      }
       renderToday();
       renderSidebar();
     });
@@ -1180,8 +1464,33 @@
       saveSettings({ ...readSettings(), themeLight: e.target.checked });
     });
 
+    function syncProviderUi() {
+      const provider = (aiProviderSelect?.value || 'local');
+      const isLocal = provider === 'local';
+      if (rowBaseUrl) rowBaseUrl.style.display = isLocal ? '' : 'none';
+      if (apiKeyInput) {
+        apiKeyInput.placeholder = isLocal ? 'leave empty for local' : 'sk-or-...';
+        apiKeyInput.required = !isLocal;
+      }
+      if (apiKeyLabel) {
+        apiKeyLabel.innerHTML = isLocal
+          ? 'API key <span class="muted-hint">(optional for local)</span>'
+          : 'OpenRouter API key';
+      }
+      if (isLocal && llmBaseUrlInput && !(llmBaseUrlInput.value || '').trim()) {
+        llmBaseUrlInput.value = DEFAULT_LOCAL_BASE_URL;
+      }
+      if (!isLocal && llmBaseUrlInput) {
+        llmBaseUrlInput.value = OPENROUTER_BASE_URL;
+      }
+    }
+
     function loadSettingsIntoUI() {
       const s = readSettings();
+      if (aiProviderSelect) aiProviderSelect.value = s.provider === 'openrouter' ? 'openrouter' : 'local';
+      if (llmBaseUrlInput) {
+        llmBaseUrlInput.value = s.baseUrl || (s.provider === 'openrouter' ? OPENROUTER_BASE_URL : DEFAULT_LOCAL_BASE_URL);
+      }
       if (apiKeyInput) apiKeyInput.value = s.apiKey || '';
       if (refreshIntervalSelect) refreshIntervalSelect.value = String(s.refreshInterval || 0);
       if (themeToggle) themeToggle.checked = !!s.themeLight;
@@ -1200,16 +1509,32 @@
         fillSelect(modelSelectSummary, s.modelIdSummary || s.modelId);
       }
       document.body.classList.toggle('theme-light', !!s.themeLight);
+      syncProviderUi();
     }
     async function checkModels() {
+      const provider = (aiProviderSelect?.value || 'local').trim() || 'local';
+      const baseUrl = (llmBaseUrlInput?.value || '').trim() || (provider === 'openrouter' ? OPENROUTER_BASE_URL : DEFAULT_LOCAL_BASE_URL);
       const key = (apiKeyInput?.value || '').trim();
-      if (!key) { if (modelStatus) { modelStatus.textContent = 'Enter API key first'; modelStatus.className = 'model-status error'; } return; }
+      if (provider === 'openrouter' && !key) {
+        if (modelStatus) { modelStatus.textContent = 'Enter OpenRouter API key first'; modelStatus.className = 'model-status error'; }
+        return;
+      }
       if (modelStatus) { modelStatus.textContent = 'Checking...'; modelStatus.className = 'model-status'; }
       if (btnCheckModels) btnCheckModels.disabled = true;
       try {
-        const res = await fetch('/api/openrouter/models', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey: key }) });
+        const res = await fetch('/api/llm/models', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider, baseUrl, apiKey: key })
+        });
         const data = await res.json();
-        if (!res.ok) { if (modelStatus) { modelStatus.textContent = data.message || 'Invalid API key'; modelStatus.className = 'model-status error'; } return; }
+        if (!res.ok) {
+          if (modelStatus) {
+            modelStatus.textContent = data.message || data.error || 'Could not list models';
+            modelStatus.className = 'model-status error';
+          }
+          return;
+        }
         const models = data.models || [];
         const fillSelect = (sel, val) => {
           if (!sel) return;
@@ -1221,17 +1546,41 @@
         const s = readSettings();
         fillSelect(modelSelectDigest, s.modelIdDigest || s.modelId);
         fillSelect(modelSelectSummary, s.modelIdSummary || s.modelId);
-        saveSettings({ ...s, modelsCache: models });
-        if (modelStatus) { modelStatus.textContent = 'Done'; modelStatus.className = 'model-status success'; }
-      } catch { if (modelStatus) { modelStatus.textContent = 'Request failed'; modelStatus.className = 'model-status error'; } }
-      finally { if (btnCheckModels) btnCheckModels.disabled = false; }
+        // Prefer first local model when none selected yet
+        if (models.length) {
+          if (modelSelectDigest && !modelSelectDigest.value) modelSelectDigest.value = models[0].id;
+          if (modelSelectSummary && !modelSelectSummary.value) modelSelectSummary.value = models[0].id;
+        }
+        saveSettings({
+          ...s,
+          provider,
+          baseUrl,
+          apiKey: key,
+          modelsCache: models,
+          modelIdDigest: modelSelectDigest?.value || s.modelIdDigest || '',
+          modelIdSummary: modelSelectSummary?.value || s.modelIdSummary || ''
+        });
+        if (modelStatus) {
+          modelStatus.textContent = 'Done · ' + models.length + ' model' + (models.length === 1 ? '' : 's');
+          modelStatus.className = 'model-status success';
+        }
+      } catch {
+        if (modelStatus) { modelStatus.textContent = 'Request failed'; modelStatus.className = 'model-status error'; }
+      } finally {
+        if (btnCheckModels) btnCheckModels.disabled = false;
+      }
     }
+    aiProviderSelect?.addEventListener('change', syncProviderUi);
     btnCheckModels?.addEventListener('click', checkModels);
     btnSaveSettings?.addEventListener('click', () => {
       const digestPrompt = (digestPromptInput?.value || '').trim();
       const summaryPrompt = (summaryPromptInput?.value || '').trim();
+      const provider = (aiProviderSelect?.value || 'local').trim() || 'local';
+      const baseUrl = (llmBaseUrlInput?.value || '').trim() || (provider === 'openrouter' ? OPENROUTER_BASE_URL : DEFAULT_LOCAL_BASE_URL);
       saveSettings({
         ...readSettings(),
+        provider,
+        baseUrl,
         apiKey: (apiKeyInput?.value || '').trim(),
         modelIdDigest: modelSelectDigest?.value || '',
         modelIdSummary: modelSelectSummary?.value || '',
@@ -1292,9 +1641,12 @@
 
     btnGenerateDigest?.addEventListener('click', async () => {
       const s = readSettings();
-      const apiKey = (s.apiKey || apiKeyInput?.value || '').trim();
       const modelId = s.modelIdDigest || modelSelectDigest?.value || '';
-      if (!apiKey || !modelId) { if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder error">Configure API key and model in Settings, then Save.</p>'; return; }
+      const ready = llmConfigReady(s, modelId);
+      if (!ready.ok) {
+        if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder error">' + escapeHtml(ready.message) + '</p>';
+        return;
+      }
       const hours = (digestWindow?.value || '24h') === '7d' ? 168 : 24;
       const items = getItemsInWindow(hours);
       if (!items.length) { if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">No items in this time window. Refresh feeds first.</p>'; return; }
@@ -1309,7 +1661,11 @@
       const itemsBlock = lines.join('\n\n');
       const prompt = promptTemplate.includes('{{ITEMS}}') ? promptTemplate.replace('{{ITEMS}}', itemsBlock) : promptTemplate + '\n\nItems:\n' + itemsBlock;
       try {
-        const res = await fetch('/api/openrouter/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ apiKey, modelId, messages: [{ role: 'user', content: prompt }] }) });
+        const res = await fetch('/api/llm/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...ready.cfg, modelId, messages: [{ role: 'user', content: prompt }] })
+        });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) { digestCard.innerHTML = '<p class="digest-placeholder error">' + (data.message || 'Request failed') + '</p>'; return; }
         const bodyHtml = formatDigestOutput(data.content || '', refs);
