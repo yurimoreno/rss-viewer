@@ -1592,12 +1592,6 @@ input[type="search"]::placeholder {
   font-size: 0.7rem;
   font-weight: 700;
 }
-.sidebar-total {
-  font-size: 0.75rem;
-  color: var(--muted);
-  margin-top: 0.35rem;
-}
-
 /* Footer links: text + SVG, no emoji */
 .sidebar-footer-link {
   display: flex;

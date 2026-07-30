@@ -563,7 +563,6 @@
   function init() {
     const appShell = document.getElementById('app-shell');
     const sidebarGroups = document.getElementById('sidebar-groups');
-    const feedCountEl = document.getElementById('feed-count');
     const sidebarMetricEl = document.getElementById('sidebar-metric');
     const feedSearchInput = document.getElementById('feed-search-input');
     const todayContent = document.getElementById('today-content');
@@ -615,7 +614,6 @@
     function setImportedFeeds(feeds) {
       importedFeeds = dedupeFeeds(feeds);
       const n = importedFeeds.length;
-      if (feedCountEl) feedCountEl.textContent = n + ' feed' + (n === 1 ? '' : 's');
       if (sidebarMetricEl) sidebarMetricEl.textContent = n ? n + ' feeds across ' + new Set(importedFeeds.map((f) => f.category)).size + ' categories' : 'Import OPML to get started';
       renderSidebar();
       renderToday();
