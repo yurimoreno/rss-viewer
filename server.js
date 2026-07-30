@@ -10,21 +10,43 @@ app.use(express.json());
 const parser = new Parser();
 const port = process.env.PORT || 3000;
 
-app.get('/api/rss', async (req, res) => {
-  const { url } = req.query;
+/** Blocks loopback/private/link-local/CGNAT hosts (SSRF guard for feed and article fetches). */
+function isBlockedFetchHost(hostname) {
+  // Explicit, off-by-default test escape hatch — lets integration tests hit a
+  // local fixture server without weakening the guard for real requests.
+  if (process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH === '1') return false;
+  const host = hostname.toLowerCase();
+  if (host === 'localhost' || host === '0.0.0.0' || host === '::' || host === '::1') return true;
+  if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  const m172 = host.match(/^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/);
+  if (m172 && Number(m172[1]) >= 16 && Number(m172[1]) <= 31) return true;
+  // Link-local, incl. cloud metadata endpoints (169.254.169.254).
+  if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  // Tailscale/CGNAT 100.64.0.0/10.
+  if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
+  if (host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return true;
+  return false;
+}
 
-  if (typeof url !== 'string' || url.trim() === '') {
-    return res.status(400).json({ error: 'invalid_url' });
-  }
-
-  let parsedUrl;
+/** Parses and validates a user-supplied feed/article URL, or returns null. */
+function parsePublicFetchUrl(rawUrl) {
+  if (typeof rawUrl !== 'string' || rawUrl.trim() === '') return null;
+  let parsed;
   try {
-    parsedUrl = new URL(url);
+    parsed = new URL(rawUrl);
   } catch {
-    return res.status(400).json({ error: 'invalid_url' });
+    return null;
   }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+  if (isBlockedFetchHost(parsed.hostname)) return null;
+  return parsed;
+}
 
-  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+app.get('/api/rss', async (req, res) => {
+  const parsedUrl = parsePublicFetchUrl(req.query.url);
+  if (!parsedUrl) {
     return res.status(400).json({ error: 'invalid_url' });
   }
 
@@ -45,20 +67,8 @@ app.get('/api/rss', async (req, res) => {
 });
 
 app.get('/api/article', async (req, res) => {
-  const { url } = req.query;
-
-  if (typeof url !== 'string' || url.trim() === '') {
-    return res.status(400).json({ error: 'invalid_url' });
-  }
-
-  let parsedUrl;
-  try {
-    parsedUrl = new URL(url);
-  } catch {
-    return res.status(400).json({ error: 'invalid_url' });
-  }
-
-  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+  const parsedUrl = parsePublicFetchUrl(req.query.url);
+  if (!parsedUrl) {
     return res.status(400).json({ error: 'invalid_url' });
   }
 

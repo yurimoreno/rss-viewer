@@ -94,23 +94,45 @@ async function run() {
     assert.strictEqual(invalidUrl.statusCode, 400);
     assert.deepStrictEqual(invalidUrl.body, { error: 'invalid_url' });
 
-    const validFeed = await requestJson(
+    // SSRF guard: loopback/private hosts are rejected by default, for both routes.
+    const ssrfRss = await requestJson(
       appPort,
       `/api/rss?url=${encodeURIComponent(`http://127.0.0.1:${feedPort}/feed.xml`)}`
     );
-    assert.strictEqual(validFeed.statusCode, 200);
-    assert.strictEqual(validFeed.body.feed.title, 'Example Feed');
-    assert.ok(Array.isArray(validFeed.body.items));
-    assert.ok(validFeed.body.items.length > 0);
+    assert.strictEqual(ssrfRss.statusCode, 400, '/api/rss should reject loopback hosts by default');
+    assert.deepStrictEqual(ssrfRss.body, { error: 'invalid_url' });
 
-    const fetchFailure = await requestJson(
+    const ssrfArticle = await requestJson(
       appPort,
-      `/api/rss?url=${encodeURIComponent('http://127.0.0.1:1/unreachable.xml')}`
+      `/api/article?url=${encodeURIComponent(`http://127.0.0.1:${feedPort}/feed.xml`)}`
     );
-    assert.strictEqual(fetchFailure.statusCode, 502);
-    assert.deepStrictEqual(fetchFailure.body, { error: 'fetch_failed' });
+    assert.strictEqual(ssrfArticle.statusCode, 400, '/api/article should reject loopback hosts by default');
+    assert.deepStrictEqual(ssrfArticle.body, { error: 'invalid_url' });
 
-    console.log('RSS proxy test passed: endpoint validates URL, parses feeds, and handles failures.');
+    // Remaining assertions need to reach the local fixture feed server, so opt
+    // into the explicit test-only escape hatch for the SSRF guard.
+    process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH = '1';
+    try {
+      const validFeed = await requestJson(
+        appPort,
+        `/api/rss?url=${encodeURIComponent(`http://127.0.0.1:${feedPort}/feed.xml`)}`
+      );
+      assert.strictEqual(validFeed.statusCode, 200);
+      assert.strictEqual(validFeed.body.feed.title, 'Example Feed');
+      assert.ok(Array.isArray(validFeed.body.items));
+      assert.ok(validFeed.body.items.length > 0);
+
+      const fetchFailure = await requestJson(
+        appPort,
+        `/api/rss?url=${encodeURIComponent('http://127.0.0.1:1/unreachable.xml')}`
+      );
+      assert.strictEqual(fetchFailure.statusCode, 502);
+      assert.deepStrictEqual(fetchFailure.body, { error: 'fetch_failed' });
+    } finally {
+      delete process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH;
+    }
+
+    console.log('RSS proxy test passed: endpoint validates URL, parses feeds, blocks SSRF to private hosts, and handles failures.');
   } finally {
     await Promise.all([closeServer(appServer), closeServer(feedServer)]);
   }
