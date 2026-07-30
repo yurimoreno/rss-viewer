@@ -1356,9 +1356,27 @@
           '</div>' +
           '<span class="feeds-list-cat">' +
           escapeHtml(f.category || 'Uncategorized') +
-          '</span>';
+          '</span>' +
+          '<button type="button" class="feeds-list-remove" title="Remove feed" aria-label="Remove ' +
+          escapeHtml(f.title) +
+          '">&times;</button>';
+        const removeBtn = li.querySelector('.feeds-list-remove');
+        removeBtn.onclick = () => {
+          if (!confirm('Remove "' + f.title + '"? This cannot be undone.')) return;
+          removeFeed(f.url);
+        };
         feedsList.appendChild(li);
       });
+    }
+    function removeFeed(url) {
+      const lib = readLibrary();
+      lib.feeds = lib.feeds.filter((f) => f.url !== url);
+      saveLibrary(lib);
+      delete feedItemCache[url];
+      saveFeedItemCache(feedItemCache);
+      if (selectedSidebarFeedUrl === url) selectedSidebarFeedUrl = '';
+      setImportedFeeds(lib.feeds);
+      showToast('Feed removed');
     }
     document.addEventListener('click', (e) => {
       if (e.target.closest('a, button, input')) return;

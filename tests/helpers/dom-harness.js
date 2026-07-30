@@ -10,7 +10,7 @@ const ROOT = path.join(__dirname, '..', '..');
  * in a jsdom window, so tests exercise the actual current DOM structure
  * instead of a hand-maintained fake.
  */
-function bootstrapApp({ fetchImpl, localStorageSeed = {} } = {}) {
+function bootstrapApp({ fetchImpl, localStorageSeed = {}, confirmImpl } = {}) {
   const html = fs.readFileSync(path.join(ROOT, 'public', 'index.html'), 'utf8');
   const dom = new JSDOM(html, { url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true });
   const window = dom.window;
@@ -22,6 +22,7 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {} } = {}) {
 
   window.fetch = fetchImpl || (async () => ({ ok: false, status: 404, json: async () => ({}) }));
   window.alert = () => {};
+  window.confirm = confirmImpl || (() => true);
 
   const ctx = dom.getInternalVMContext();
   const readStateSrc = fs.readFileSync(path.join(ROOT, 'public', 'lib', 'read-state.js'), 'utf8');

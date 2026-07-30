@@ -1806,6 +1806,25 @@ input[type="search"]::placeholder {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.feeds-list-remove {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1.6rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.feeds-list-remove:hover {
+  color: var(--danger, #e5484d);
+  border-color: var(--danger, #e5484d);
+}
 .feeds-page .add-feed input {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);

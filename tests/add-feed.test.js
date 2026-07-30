@@ -43,7 +43,27 @@ async function run() {
   const libraryAfterDupe = getJson(localStorage, 'rssViewer.library');
   assert.strictEqual(libraryAfterDupe.feeds.length, 1, 'Adding a duplicate URL should be a no-op');
 
-  console.log('Add-feed test passed: valid URLs persist and render, invalid/duplicate URLs are rejected.');
+  // Remove, from the Feeds management page.
+  click(document.querySelector('.sidebar-footer-link[data-page="feeds"]'));
+  const removeBtn = document.querySelector('#feeds-list .feeds-list-remove');
+  assert.ok(removeBtn, 'Feeds list row should expose a remove button');
+  click(removeBtn);
+
+  const libraryAfterRemove = getJson(localStorage, 'rssViewer.library');
+  assert.strictEqual(libraryAfterRemove.feeds.length, 0, 'Removing the feed should clear it from the library');
+  assert.strictEqual(
+    document.querySelectorAll('#feeds-list .feeds-list-item').length,
+    0,
+    'Feeds management list should no longer show the removed feed'
+  );
+  assert.strictEqual(
+    document.querySelector('.sidebar-feed[data-url="' + feedUrl + '"]'),
+    null,
+    'Sidebar should no longer show the removed feed'
+  );
+  assert.strictEqual(getJson(localStorage, 'rssViewer.feedItemCache')[feedUrl], undefined, 'Removing a feed should also drop its cached items');
+
+  console.log('Add-feed test passed: valid URLs persist and render, invalid/duplicate URLs are rejected, removal clears library/cache/UI.');
 }
 
 run().catch((error) => {
