@@ -12,6 +12,7 @@
   const RECENTLY_READ_KEY = 'rss_recently_read';
   const RECENTLY_READ_VIEW_SENTINEL = '__recently_read__';
   const SIDEBAR_STATE_KEY = 'rss_sidebar_state';
+  const UNREAD_FILTER_KEY = 'rssViewer.showUnreadOnly';
   const MAX_SUMMARY_CACHE = 80;
   const MAX_DIGEST_CACHE = 20;
   const MAX_ITEMS_PER_FEED = 50;
@@ -36,6 +37,40 @@
   let selectedItemFeedUrl = '';
   let selectedSidebarFeedUrl = '';
   let refreshIntervalId = null;
+  let showUnreadOnly = false;
+  try {
+    showUnreadOnly = localStorage.getItem(UNREAD_FILTER_KEY) === 'true';
+  } catch {
+    showUnreadOnly = false;
+  }
+
+  function setShowUnreadOnly(on) {
+    showUnreadOnly = !!on;
+    try {
+      localStorage.setItem(UNREAD_FILTER_KEY, showUnreadOnly ? 'true' : 'false');
+    } catch {}
+    syncUnreadFilterUi();
+  }
+
+  function syncUnreadFilterUi() {
+    const allBtn = document.getElementById('filter-show-all');
+    const unreadBtn = document.getElementById('filter-show-unread');
+    if (allBtn) {
+      allBtn.classList.toggle('is-active', !showUnreadOnly);
+      allBtn.setAttribute('aria-pressed', showUnreadOnly ? 'false' : 'true');
+    }
+    if (unreadBtn) {
+      unreadBtn.classList.toggle('is-active', showUnreadOnly);
+      unreadBtn.setAttribute('aria-pressed', showUnreadOnly ? 'true' : 'false');
+    }
+    document.body.classList.toggle('filter-unread-only', showUnreadOnly);
+  }
+
+  function filterItemsByReadState(items) {
+    const list = Array.isArray(items) ? items : [];
+    if (!showUnreadOnly) return list;
+    return list.filter((i) => i && !readState.isRead(i.id));
+  }
 
   function isValidHttpUrl(v) {
     try { return ['http:', 'https:'].includes(new URL(v).protocol); } catch { return false; }
@@ -279,6 +314,16 @@
     Object.entries(feedItemCache).forEach(([url, items]) => {
       const feed = importedFeeds.find((f) => f.url === url);
       items.forEach((i) => { if ((i.pubDate ? Date.parse(i.pubDate) : 0) >= cutoff) all.push({ ...i, feedUrl: url, feedTitle: feed ? feed.title : url }); });
+    });
+    return all.sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
+  }
+  function getUnreadItems() {
+    const all = [];
+    Object.entries(feedItemCache).forEach(([url, items]) => {
+      const feed = importedFeeds.find((f) => f.url === url);
+      items.forEach((i) => {
+        if (!readState.isRead(i.id)) all.push({ ...i, feedUrl: url, feedTitle: feed ? feed.title : url });
+      });
     });
     return all.sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
   }
@@ -552,6 +597,15 @@
     const digestCard = document.getElementById('digest-card');
     const digestWindow = document.getElementById('digest-window');
     const btnGenerateDigest = document.getElementById('btn-generate-digest');
+    let lastDigestUnreadGuids = [];
+    digestCard?.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('.digest-mark-read-btn');
+      if (!btn || btn.disabled) return;
+      readState.markMultipleAsRead(lastDigestUnreadGuids);
+      updateUnreadCounts();
+      btn.disabled = true;
+      btn.textContent = 'Marked as read ✓';
+    });
     const digestPromptInput = document.getElementById('digest-prompt');
     const btnResetDigestPrompt = document.getElementById('btn-reset-digest-prompt');
     const btnSaveDigestPrompt = document.getElementById('btn-save-digest-prompt');
@@ -811,6 +865,9 @@
         readState.toggleRead(item.id);
         updateReadToggleButton();
         updateUnreadCounts();
+        if (showUnreadOnly && readState.isRead(item.id)) {
+          renderToday(true);
+        }
       };
 
       btnSum.onclick = async (ev) => {
@@ -880,6 +937,10 @@
           setTimeout(() => li.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         } else {
           selectedItemId = '';
+          // Drop from unread-only list once the user collapses a now-read card
+          if (showUnreadOnly && readState.isRead(item.id)) {
+            renderToday(true);
+          }
         }
       };
 
@@ -996,6 +1057,9 @@
             openPage('feeds');
           } else if (action === 'refresh') {
             btnRefresh?.click();
+          } else if (action === 'show-all') {
+            setShowUnreadOnly(false);
+            renderToday(true);
           }
         });
       });
@@ -1006,15 +1070,18 @@
       if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL || selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) {
         return [];
       }
+      let items;
       if (selectedSidebarFeedUrl) {
         const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
-        return getCachedFeedItems(selectedSidebarFeedUrl).map((i) => ({
+        items = getCachedFeedItems(selectedSidebarFeedUrl).map((i) => ({
           ...i,
           feedUrl: selectedSidebarFeedUrl,
           feedTitle: feed ? feed.title : selectedSidebarFeedUrl
         }));
+      } else {
+        items = getAllItemsGrouped().flatMap((g) => g.items);
       }
-      return getAllItemsGrouped().flatMap((g) => g.items);
+      return filterItemsByReadState(items);
     }
 
     function setMarkAllReadVisible(show) {
@@ -1092,11 +1159,12 @@
       setMarkAllReadVisible(true);
       if (heroEyebrow) heroEyebrow.textContent = selectedSidebarFeedUrl ? 'Feed' : 'Today';
       if (heroTitle) {
+        const unreadSuffix = showUnreadOnly ? ' · Unread' : '';
         if (selectedSidebarFeedUrl) {
           const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
-          heroTitle.textContent = feed ? feed.title : 'Feed';
+          heroTitle.textContent = (feed ? feed.title : 'Feed') + unreadSuffix;
         } else {
-          heroTitle.textContent = 'All feeds';
+          heroTitle.textContent = (showUnreadOnly ? 'Unread' : 'All feeds');
         }
       }
       todayContent.innerHTML = '';
@@ -1119,6 +1187,8 @@
         }
       }
       function addGroup(title, items, feedUrl, feedTitle) {
+        items = filterItemsByReadState(items);
+        if (!items.length) return;
         const g = document.createElement('div');
         g.className = 'feed-group' + (collapsed.has(title) ? ' is-collapsed' : '');
         g.dataset.category = title;
@@ -1171,12 +1241,16 @@
           ev.stopPropagation();
           const guids = items.map((i) => i.id);
           readState.markMultipleAsRead(guids);
+          updateUnreadCounts();
+          if (showUnreadOnly) {
+            renderToday(true);
+            return;
+          }
           g.querySelectorAll('.article-card').forEach((card) => {
             card.classList.add('is-read');
             const btn = card.querySelector('.btn-read-toggle');
             if (btn) { btn.textContent = '○ Mark unread'; btn.title = 'Mark unread'; }
           });
-          updateUnreadCounts();
         };
         headerRow.appendChild(markAllReadLink);
         g.appendChild(headerRow);
@@ -1195,12 +1269,23 @@
         const items = getCachedFeedItems(selectedSidebarFeedUrl)
           .map((i) => ({ ...i, feedUrl: selectedSidebarFeedUrl, feedTitle: feed ? feed.title : selectedSidebarFeedUrl }))
           .sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
+        const visible = filterItemsByReadState(items);
         if (!items.length) {
           todayContent.innerHTML = emptyStateHtml({
             icon: '◌',
             title: 'No items in this feed',
             desc: 'Try refreshing, or check that the feed URL still works.',
             actions: [{ id: 'refresh', label: 'Refresh feeds', primary: true }]
+          });
+          bindEmptyStateActions(todayContent);
+          return;
+        }
+        if (!visible.length) {
+          todayContent.innerHTML = emptyStateHtml({
+            icon: '✓',
+            title: 'No unread articles',
+            desc: 'You’re caught up in this feed. Switch to All to see everything.',
+            actions: [{ id: 'show-all', label: 'Show all', primary: true }]
           });
           bindEmptyStateActions(todayContent);
           return;
@@ -1227,7 +1312,24 @@
         bindEmptyStateActions(todayContent);
         return;
       }
-      grouped.forEach(({ category, items }) => {
+      const visibleGroups = grouped
+        .map((g) => ({ ...g, items: filterItemsByReadState(g.items) }))
+        .filter((g) => g.items.length);
+      if (!visibleGroups.length) {
+        todayContent.innerHTML = emptyStateHtml({
+          icon: '✓',
+          title: showUnreadOnly ? 'No unread articles' : 'No items to show',
+          desc: showUnreadOnly
+            ? 'You’re caught up. Switch to All to browse everything again.'
+            : 'Refresh to fetch the latest posts from your feeds.',
+          actions: showUnreadOnly
+            ? [{ id: 'show-all', label: 'Show all', primary: true }]
+            : [{ id: 'refresh', label: 'Refresh feeds', primary: true }]
+        });
+        bindEmptyStateActions(todayContent);
+        return;
+      }
+      visibleGroups.forEach(({ category, items }) => {
         const feedTitle = items[0]?.feedTitle || category;
         const feedUrl = items[0]?.feedUrl || '';
         addGroup(category, items, feedUrl, feedTitle);
@@ -1380,6 +1482,15 @@
 
     // Initial empty-state CTAs (static HTML before first render)
     bindEmptyStateActions(document.getElementById('today-content'));
+    syncUnreadFilterUi();
+    document.getElementById('filter-show-all')?.addEventListener('click', () => {
+      setShowUnreadOnly(false);
+      renderToday(true);
+    });
+    document.getElementById('filter-show-unread')?.addEventListener('click', () => {
+      setShowUnreadOnly(true);
+      renderToday(true);
+    });
 
     btnMarkAllRead?.addEventListener('click', () => {
       const items = getCurrentReaderItems();
@@ -1647,16 +1758,22 @@
         if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder error">' + escapeHtml(ready.message) + '</p>';
         return;
       }
-      const hours = (digestWindow?.value || '24h') === '7d' ? 168 : 24;
-      const items = getItemsInWindow(hours);
-      if (!items.length) { if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">No items in this time window. Refresh feeds first.</p>'; return; }
-      const cacheKey = digestCacheKey(hours, items);
+      const windowVal = digestWindow?.value || '24h';
+      const isUnread = windowVal === 'unread';
+      const hours = windowVal === '7d' ? 168 : 24;
+      const items = isUnread ? getUnreadItems() : getItemsInWindow(hours);
+      if (!items.length) {
+        if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">' + (isUnread ? "You're all caught up — no unread items." : 'No items in this time window. Refresh feeds first.') + '</p>';
+        return;
+      }
+      const cacheKey = digestCacheKey(isUnread ? 'unread' : hours, items);
       const cached = getCachedDigest(cacheKey);
-      if (cached) { if (digestCard) digestCard.innerHTML = cached; return; }
+      if (cached) { if (digestCard) { digestCard.innerHTML = cached; lastDigestUnreadGuids = items.slice(0, 50).map((i) => i.id).filter(Boolean); } return; }
       if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">Generating digest…</p>';
       if (btnGenerateDigest) btnGenerateDigest.disabled = true;
       const refs = [];
-      const lines = items.slice(0, 50).map((i, idx) => { refs.push({ title: i.feedTitle, link: i.link }); return '[' + (idx + 1) + '] ' + i.title + ' (' + i.feedTitle + ')\n   ' + truncateText(i.summary, 150); });
+      const usedItems = items.slice(0, 50);
+      const lines = usedItems.map((i, idx) => { refs.push({ title: i.feedTitle, link: i.link }); return '[' + (idx + 1) + '] ' + i.title + ' (' + i.feedTitle + ')\n   ' + truncateText(i.summary, 150); });
       const promptTemplate = getDigestPrompt();
       const itemsBlock = lines.join('\n\n');
       const prompt = promptTemplate.includes('{{ITEMS}}') ? promptTemplate.replace('{{ITEMS}}', itemsBlock) : promptTemplate + '\n\nItems:\n' + itemsBlock;
@@ -1670,8 +1787,13 @@
         if (!res.ok) { digestCard.innerHTML = '<p class="digest-placeholder error">' + (data.message || 'Request failed') + '</p>'; return; }
         const bodyHtml = formatDigestOutput(data.content || '', refs);
         const refsHtml = refs.length ? '<div class="digest-refs"><strong>References:</strong> ' + refs.map((r, i) => '<a href="' + safeHref(r.link) + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>').join(' ') + '</div>' : '';
-        const fullHtml = '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3><div class="digest-body">' + bodyHtml + '</div>' + refsHtml;
+        const titleHtml = isUnread
+          ? '<h3>Unread digest — ' + usedItems.length + (items.length > usedItems.length ? ' of ' + items.length : '') + ' item' + (usedItems.length === 1 ? '' : 's') + '</h3>'
+          : '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3>';
+        const actionsHtml = isUnread ? '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark these as read</button></div>' : '';
+        const fullHtml = titleHtml + '<div class="digest-body">' + bodyHtml + '</div>' + refsHtml + actionsHtml;
         digestCard.innerHTML = fullHtml;
+        lastDigestUnreadGuids = usedItems.map((i) => i.id).filter(Boolean);
         setCachedDigest(cacheKey, fullHtml);
       } catch { digestCard.innerHTML = '<p class="digest-placeholder error">Network error.</p>'; }
       finally { if (btnGenerateDigest) btnGenerateDigest.disabled = false; }

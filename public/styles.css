@@ -1458,6 +1458,7 @@ input[type="search"]::placeholder {
 .digest-ref:hover { text-decoration: underline; }
 .digest-refs { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-soft); font-size: 0.85rem; color: var(--muted); }
 .digest-refs a { color: var(--accent-strong); text-decoration: none; margin-right: 0.5rem; }
+.digest-actions { margin-top: 1rem; display: flex; }
 /* Generate digest uses .btn-primary */
 .settings-page .section, .feeds-page .section { margin-bottom: 1.5rem; padding: 1rem; background: var(--surface-section); border: 1px solid var(--border); border-radius: 12px; }
 .section-desc { color: var(--muted); font-size: 0.9rem; margin: 0 0 1rem; }
@@ -1640,6 +1641,41 @@ input[type="search"]::placeholder {
   font-weight: 500;
 }
 
+/* All / Unread filter */
+.read-filter {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  gap: 0;
+}
+.read-filter-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--ui-font);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.read-filter-btn:hover {
+  color: var(--text);
+}
+.read-filter-btn.is-active {
+  background: var(--surface-active);
+  color: var(--text-bright);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.read-filter-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* Hero last-refreshed */
 .last-refreshed {
   font-size: 0.78rem;
@@ -1806,6 +1842,9 @@ input[type="search"]::placeholder {
   .viewer-hero-actions {
     justify-content: flex-start;
     gap: 0.4rem;
+  }
+  .read-filter {
+    order: -1;
   }
   .hero-btn-group {
     width: 100%;

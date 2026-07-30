@@ -69,6 +69,10 @@
                 <h1 id="viewer-reader-title">Today</h1>
               </div>
               <div class="viewer-hero-actions">
+                <div class="read-filter" role="group" aria-label="Show all or unread only">
+                  <button type="button" class="read-filter-btn is-active" id="filter-show-all" data-filter="all" aria-pressed="true">All</button>
+                  <button type="button" class="read-filter-btn" id="filter-show-unread" data-filter="unread" aria-pressed="false">Unread</button>
+                </div>
                 <div class="hero-btn-group" role="group" aria-label="Category expand">
                   <button type="button" class="btn-quiet" id="expand-all-categories">Expand all</button>
                   <button type="button" class="btn-quiet" id="collapse-all-categories">Collapse all</button>
@@ -107,6 +111,7 @@
                 <select id="digest-window">
                   <option value="24h">Last 24h</option>
                   <option value="7d">Last 7 days</option>
+                  <option value="unread">Unread</option>
                 </select>
                 <button class="btn-primary" type="button" id="btn-generate-digest">Generate digest</button>
               </div>
