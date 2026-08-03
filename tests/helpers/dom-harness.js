@@ -23,6 +23,8 @@ function bootstrapApp({ fetchImpl, localStorageSeed = {}, confirmImpl } = {}) {
   window.fetch = fetchImpl || (async () => ({ ok: false, status: 404, json: async () => ({}) }));
   window.alert = () => {};
   window.confirm = confirmImpl || (() => true);
+  // jsdom doesn't implement layout, so scrollIntoView is missing.
+  window.HTMLElement.prototype.scrollIntoView = () => {};
 
   const ctx = dom.getInternalVMContext();
   const readStateSrc = fs.readFileSync(path.join(ROOT, 'public', 'lib', 'read-state.js'), 'utf8');

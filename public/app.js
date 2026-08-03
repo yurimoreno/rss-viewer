@@ -1583,6 +1583,8 @@
         e.preventDefault();
       }
       if (expandedCard && e.key === 's') {
+        const btn = expandedCard.querySelector('.btn-save');
+        btn?.click();
         e.preventDefault();
       }
     });
