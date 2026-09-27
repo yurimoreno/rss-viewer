@@ -46,15 +46,18 @@
     localStorage.setItem(KEY, JSON.stringify(read));
   }
 
-  function cleanupReadArticles(maxAge) {
+  // Only prune marks for articles no longer served by any feed. Pruning by age
+  // alone resurrected old posts as unread in slow feeds that keep serving them.
+  function cleanupReadArticles(maxAge, liveGuids) {
     if (maxAge == null) maxAge = 30;
+    const live = liveGuids instanceof Set ? liveGuids : new Set(liveGuids || []);
     const read = getReadArticles();
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - maxAge);
     const cutoffISO = cutoff.toISOString();
     let changed = false;
     for (const guid in read) {
-      if (read[guid] < cutoffISO) {
+      if (read[guid] < cutoffISO && !live.has(guid)) {
         delete read[guid];
         changed = true;
       }

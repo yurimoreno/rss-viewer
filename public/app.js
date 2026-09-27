@@ -2306,7 +2306,9 @@
 
     articleCache = readArticleCache();
     feedItemCache = readFeedItemCache();
-    readState.cleanupReadArticles && readState.cleanupReadArticles();
+    readState.cleanupReadArticles && readState.cleanupReadArticles(30, new Set(
+      Object.values(feedItemCache).flatMap((items) => items.map((i) => i.id))
+    ));
     const lib = readLibrary();
     setImportedFeeds(lib.feeds);
     loadSettingsIntoUI();
