@@ -1,6 +1,8 @@
 const express = require('express');
 const dns = require('dns');
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const path = require('path');
 const Parser = require('rss-parser');
 const { Readability } = require('@mozilla/readability');
@@ -57,8 +59,38 @@ async function resolvesToBlockedHost(hostname) {
 }
 
 const MAX_REDIRECTS = 5;
+const FETCH_TIMEOUT_MS = 20000;
+const MAX_BODY_BYTES = 5_000_000;
 
-/** fetch() that re-validates the host (text + DNS) on the first request and every redirect hop. */
+// One GET, no redirect following. Uses node:http(s) rather than fetch(): Cloudflare
+// 403s undici's client fingerprint on some feeds (e.g. neilpatel.com) that
+// rss-parser, which also uses node:http(s), could always read.
+function getOnce(url, headers) {
+  return new Promise((resolve, reject) => {
+    const lib = url.protocol === 'https:' ? https : http;
+    const req = lib.get(url, { headers, timeout: FETCH_TIMEOUT_MS }, (res) => {
+      const status = res.statusCode || 0;
+      const chunks = [];
+      let size = 0;
+      res.on('data', (c) => {
+        size += c.length;
+        if (size > MAX_BODY_BYTES) { req.destroy(new Error('body_too_large')); return; }
+        chunks.push(c);
+      });
+      res.on('end', () => resolve({
+        status,
+        ok: status >= 200 && status < 300,
+        headers: { get: (name) => res.headers[name.toLowerCase()] || null },
+        text: async () => Buffer.concat(chunks).toString('utf8')
+      }));
+      res.on('error', reject);
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+  });
+}
+
+/** GET that re-validates the host (text + DNS) on the first request and every redirect hop. */
 async function safeFetch(url, init = {}) {
   let current = url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
@@ -68,7 +100,7 @@ async function safeFetch(url, init = {}) {
       err.code = 'BLOCKED_HOST';
       throw err;
     }
-    const response = await fetch(parsed.toString(), { ...init, redirect: 'manual' });
+    const response = await getOnce(parsed, init.headers || {});
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location) {
       current = new URL(location, parsed).toString();
