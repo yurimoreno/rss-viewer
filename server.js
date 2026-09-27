@@ -211,6 +211,45 @@ function resolveLlmConfig(body) {
   return { provider, apiKey, baseUrl };
 }
 
+// Thinking-model controls. Chat templates disagree on the key: vLLM/Qwen reads
+// `enable_thinking`, DeepSeek V4 Flash reads `thinking` (its server default is
+// thinking on at effort max). Send both — a template ignores keys it doesn't
+// know — so a digest pays for the answer, not a multi-thousand-token reasoning
+// pass that can run for ten minutes.
+const NO_THINK_KWARGS = { enable_thinking: false, thinking: false };
+
+// A local model generates at ~25 tok/s, so a long digest can outrun Node's
+// 300 s fetch header timeout and surface as a bogus "could not reach" error.
+// Streaming keeps bytes flowing, and this budget is the only thing that ends it.
+const LLM_TIMEOUT_MS = Number(process.env.RSS_VIEWER_LLM_TIMEOUT_MS || 900000);
+
+/** Collect an OpenAI-compatible SSE chat stream into one message string. */
+async function readChatStream(response) {
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let content = '';
+  let reasoning = '';
+  for await (const chunk of response.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    let nl;
+    while ((nl = buffer.indexOf('\n')) !== -1) {
+      const line = buffer.slice(0, nl).trim();
+      buffer = buffer.slice(nl + 1);
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let parsed;
+      try { parsed = JSON.parse(payload); } catch { continue; }
+      const delta = parsed.choices?.[0]?.delta || {};
+      if (typeof delta.content === 'string') content += delta.content;
+      // vLLM names the reasoning delta reasoning_content; DSV4 Flash names it reasoning.
+      if (typeof delta.reasoning_content === 'string') reasoning += delta.reasoning_content;
+      if (typeof delta.reasoning === 'string') reasoning += delta.reasoning;
+    }
+  }
+  return content || reasoning;
+}
+
 function llmAuthHeaders(apiKey, origin) {
   const headers = { 'Content-Type': 'application/json' };
   if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
@@ -244,29 +283,41 @@ app.post('/api/llm/chat', async (req, res) => {
   const model = (typeof req.body?.modelId === 'string' ? req.body.modelId : '').trim();
   const msgs = Array.isArray(req.body?.messages) ? req.body.messages : [];
   if (!model || !msgs.length) return res.status(400).json({ error: 'missing_params', message: 'modelId and messages required' });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
   try {
     const response = await fetch(cfg.baseUrl + '/chat/completions', {
       method: 'POST',
+      signal: controller.signal,
       headers: llmAuthHeaders(cfg.apiKey, req.headers.origin || 'http://localhost:3000'),
       body: JSON.stringify({
         model,
         messages: msgs.map((m) => ({ role: (m.role || 'user').toString(), content: (m.content || '').toString() })),
-        // Prefer final answer only on thinking models (vLLM/Qwen); ignored if unsupported
-        chat_template_kwargs: { enable_thinking: false }
+        chat_template_kwargs: NO_THINK_KWARGS,
+        // Streamed so a slow local model can't trip Node's fetch header timeout.
+        stream: true
       })
     });
-    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
       return res.status(response.status).json({
         error: 'chat_failed',
         message: data.error?.message || data.message || 'Request failed'
       });
     }
-    const choice = data.choices?.[0]?.message || {};
-    const content = (choice.content || choice.reasoning_content || '').toString();
+    const content = await readChatStream(response);
     return res.json({ content });
-  } catch {
-    return res.status(502).json({ error: 'fetch_failed', message: 'Could not reach LLM at ' + cfg.baseUrl });
+  } catch (err) {
+    if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+      return res.status(504).json({
+        error: 'llm_timeout',
+        message: 'LLM at ' + cfg.baseUrl + ' did not answer within ' + Math.round(LLM_TIMEOUT_MS / 1000) + 's'
+      });
+    }
+    const detail = err && err.message ? ' (' + err.message + ')' : '';
+    return res.status(502).json({ error: 'fetch_failed', message: 'Could not reach LLM at ' + cfg.baseUrl + detail });
+  } finally {
+    clearTimeout(timer);
   }
 });
 
