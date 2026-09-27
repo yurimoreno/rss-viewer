@@ -1,4 +1,5 @@
 const express = require('express');
+const dns = require('dns');
 const fs = require('fs');
 const path = require('path');
 const Parser = require('rss-parser');
@@ -17,8 +18,19 @@ function isBlockedFetchHost(hostname) {
   // Explicit, off-by-default test escape hatch — lets integration tests hit a
   // local fixture server without weakening the guard for real requests.
   if (process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH === '1') return false;
-  const host = hostname.toLowerCase();
-  if (host === 'localhost' || host === '0.0.0.0' || host === '::' || host === '::1') return true;
+  // URL.hostname keeps IPv6 brackets and may end in a root-label dot.
+  let host = hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.$/, '');
+  // IPv4-mapped IPv6 (::ffff:127.0.0.1, normalized by URL to ::ffff:7f00:1).
+  const mapped = host.match(/^::ffff:(?:(\d{1,3}(?:\.\d{1,3}){3})|([0-9a-f]{1,4}):([0-9a-f]{1,4}))$/);
+  if (mapped) {
+    if (mapped[1]) host = mapped[1];
+    else {
+      const hi = parseInt(mapped[2], 16), lo = parseInt(mapped[3], 16);
+      host = [hi >> 8, hi & 255, lo >> 8, lo & 255].join('.');
+    }
+  }
+  if (host === 'localhost' || host.endsWith('.localhost') || host === '0.0.0.0' || host === '::' || host === '::1') return true;
+  if (/^0\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
@@ -28,8 +40,43 @@ function isBlockedFetchHost(hostname) {
   if (/^169\.254\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   // Tailscale/CGNAT 100.64.0.0/10.
   if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
-  if (host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return true;
+  if (host.includes(':') && (/^fe[89ab][0-9a-f]:/.test(host) || /^f[cd][0-9a-f]{2}:/.test(host))) return true;
   return false;
+}
+
+/** Rejects hostnames that resolve to a blocked address (e.g. 127.0.0.1.nip.io). */
+async function resolvesToBlockedHost(hostname) {
+  if (process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH === '1') return false;
+  const host = hostname.replace(/^\[|\]$/g, '');
+  try {
+    const addrs = await dns.promises.lookup(host, { all: true });
+    return addrs.length === 0 || addrs.some((a) => isBlockedFetchHost(a.address));
+  } catch {
+    return true;
+  }
+}
+
+const MAX_REDIRECTS = 5;
+
+/** fetch() that re-validates the host (text + DNS) on the first request and every redirect hop. */
+async function safeFetch(url, init = {}) {
+  let current = url;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const parsed = parsePublicFetchUrl(current);
+    if (!parsed || (await resolvesToBlockedHost(parsed.hostname))) {
+      const err = new Error('blocked_host');
+      err.code = 'BLOCKED_HOST';
+      throw err;
+    }
+    const response = await fetch(parsed.toString(), { ...init, redirect: 'manual' });
+    const location = response.headers.get('location');
+    if (response.status >= 300 && response.status < 400 && location) {
+      current = new URL(location, parsed).toString();
+      continue;
+    }
+    return response;
+  }
+  throw new Error('too_many_redirects');
 }
 
 /** Parses and validates a user-supplied feed/article URL, or returns null. */
@@ -104,7 +151,14 @@ app.get('/api/rss', async (req, res) => {
   }
 
   try {
-    const feed = await parser.parseURL(parsedUrl.toString());
+    // Fetch ourselves (not parser.parseURL) so redirects are re-checked by the SSRF guard.
+    const response = await safeFetch(parsedUrl.toString(), {
+      headers: { 'User-Agent': 'rss-viewer', Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
+    });
+    if (!response.ok) {
+      return res.status(502).json({ error: 'fetch_failed' });
+    }
+    const feed = await parser.parseString(await response.text());
 
     return res.json({
       feed: {
@@ -126,7 +180,7 @@ app.get('/api/article', async (req, res) => {
   }
 
   try {
-    const response = await fetch(parsedUrl.toString(), {
+    const response = await safeFetch(parsedUrl.toString(), {
       headers: {
         'User-Agent': 'rss-viewer'
       }

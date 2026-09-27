@@ -109,6 +109,15 @@ async function run() {
     assert.strictEqual(ssrfArticle.statusCode, 400, '/api/article should reject loopback hosts by default');
     assert.deepStrictEqual(ssrfArticle.body, { error: 'invalid_url' });
 
+    // Loopback spelled as IPv6 / IPv4-mapped / trailing-dot must be blocked too.
+    for (const host of ['[::1]', '[::ffff:127.0.0.1]', '[::ffff:7f00:1]', 'localhost.', '[fd00::1]', '[fe80::1]']) {
+      const bypass = await requestJson(
+        appPort,
+        `/api/article?url=${encodeURIComponent(`http://${host}:${feedPort}/feed.xml`)}`
+      );
+      assert.strictEqual(bypass.statusCode, 400, `/api/article should reject ${host}`);
+    }
+
     // Remaining assertions need to reach the local fixture feed server, so opt
     // into the explicit test-only escape hatch for the SSRF guard.
     process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH = '1';

@@ -84,7 +84,11 @@
     if (!url) return '#';
     try {
       const parsed = new URL(url);
-      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return url;
+      // Percent-encode chars the URL parser leaves raw (e.g. `"` in a host) so a
+      // feed link can't break out of an href="..." attribute built as a string.
+      if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+        return parsed.href.replace(/["'<>`]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+      }
     } catch {}
     return '#';
   }
