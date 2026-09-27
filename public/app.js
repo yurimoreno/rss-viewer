@@ -2319,16 +2319,24 @@
     updateReadLaterCount();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
-    if (lib.feeds.length) {
-      setTimeout(() => fetchAllFeeds().then(renderToday), 100);
-    } else {
-      loadLibraryFromServer().then((remote) => {
-        if (!remote || readLibrary().feeds.length) return;
-        try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(remote)); } catch {}
-        setImportedFeeds(remote.feeds);
-        fetchAllFeeds().then(renderToday);
-      });
-    }
+    if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(renderToday), 100);
+    // The server copy is the source of truth (every edit is PUT there), so a feed
+    // list changed on another device or on the server replaces this browser's.
+    loadLibraryFromServer().then((remote) => {
+      const local = readLibrary();
+      if (!remote) {
+        if (local.feeds.length) persistLibraryToServer(local);
+        return;
+      }
+      if (JSON.stringify(remote) === JSON.stringify(local)) return;
+      try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(remote)); } catch {}
+      const keep = new Set(remote.feeds.map((f) => f.url));
+      Object.keys(feedItemCache).forEach((url) => { if (!keep.has(url)) delete feedItemCache[url]; });
+      saveFeedItemCache(feedItemCache);
+      if (selectedSidebarFeedUrl && !keep.has(selectedSidebarFeedUrl)) selectedSidebarFeedUrl = '';
+      setImportedFeeds(remote.feeds);
+      fetchAllFeeds().then(renderToday);
+    });
   }
 
   if (document.readyState === 'loading') {

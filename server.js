@@ -46,6 +46,22 @@ function isBlockedFetchHost(hostname) {
   return false;
 }
 
+// Bot filters on some feeds (Cloudflare, Akamai) turn away an unknown reader
+// with 403/429/202 but allowlist Feedly's fetcher, so retry once with a UA that
+// still names this app but also matches that allowlist.
+const APP_UA = 'Mozilla/5.0 (compatible; rss-viewer/1.0; +https://github.com/yurimoreno/rss-viewer)';
+const FETCH_USER_AGENTS = [APP_UA, APP_UA.replace(/\)$/, '; like Feedly/1.0)')];
+const BOT_BLOCK_STATUSES = new Set([202, 403, 429]);
+
+async function getWithUaFallback(url, headers) {
+  let response;
+  for (const ua of FETCH_USER_AGENTS) {
+    response = await getOnce(url, { ...headers, 'User-Agent': ua });
+    if (!BOT_BLOCK_STATUSES.has(response.status)) break;
+  }
+  return response;
+}
+
 /** Rejects hostnames that resolve to a blocked address (e.g. 127.0.0.1.nip.io). */
 async function resolvesToBlockedHost(hostname) {
   if (process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH === '1') return false;
@@ -100,7 +116,7 @@ async function safeFetch(url, init = {}) {
       err.code = 'BLOCKED_HOST';
       throw err;
     }
-    const response = await getOnce(parsed, init.headers || {});
+    const response = await getWithUaFallback(parsed, init.headers || {});
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location) {
       current = new URL(location, parsed).toString();
@@ -185,7 +201,7 @@ app.get('/api/rss', async (req, res) => {
   try {
     // Fetch ourselves (not parser.parseURL) so redirects are re-checked by the SSRF guard.
     const response = await safeFetch(parsedUrl.toString(), {
-      headers: { 'User-Agent': 'rss-viewer', Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
+      headers: { Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
     });
     if (!response.ok) {
       return res.status(502).json({ error: 'fetch_failed' });
@@ -213,9 +229,7 @@ app.get('/api/article', async (req, res) => {
 
   try {
     const response = await safeFetch(parsedUrl.toString(), {
-      headers: {
-        'User-Agent': 'rss-viewer'
-      }
+      headers: {}
     });
     if (!response.ok) {
       return res.status(502).json({ error: 'fetch_failed' });
