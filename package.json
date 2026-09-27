@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/opml-import.test.js && node tests/add-feed.test.js && node tests/read-later.test.js && node tests/unread-cache.test.js && node tests/keyboard-shortcuts.test.js",
+    "test": "node tests/smoke.test.js && node tests/rss-proxy.test.js && node tests/library-store.test.js && node tests/opml-import.test.js && node tests/add-feed.test.js && node tests/read-later.test.js && node tests/unread-cache.test.js && node tests/keyboard-shortcuts.test.js && node tests/feed-digest.test.js && node tests/category-digest.test.js",
     "dev": "node --watch server.js",
     "start": "node server.js"
   },

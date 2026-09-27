@@ -5,7 +5,8 @@ Feedly-style RSS reader with AI digest via OpenRouter or a local OpenAI-compatib
 ## Features
 
 - **Today** – Feed list by category, inline expand/collapse, per-article AI summary, All/Unread filter, read/unread toggle (auto on expand), mark-all-read (per category or whole view), Read Later and Recently Read views
-- **Digest** – AI summary via OpenRouter or local LLM, time window (24h/7d/unread), source links, mark digest items as read
+- **Feed & category digest (AI-first)** – Opening a single feed, or clicking a category name (e.g. Business), leads with an AI digest for that scope (Unread or All). Generate is explicit (no auto LLM on open); results cache until the item set changes. Chevron on a category only expands/collapses the feed list. Source items stay below for optional deep dives.
+- **Digest** – Cross-feed AI summary via OpenRouter or local LLM, time window (24h/7d/unread), source links, mark digest items as read
 - **Settings** – AI provider (OpenRouter or local LLM base URL), separate models for digest/summary, editable prompts, refresh interval, light theme
 - **Feeds** – Add/remove feeds, import/export OPML, feed list with search
 - **Shortcuts** – `j`/`k` navigate, `o`/`Enter` open original, `m` toggle read, `Escape` collapse (active while an article is expanded)

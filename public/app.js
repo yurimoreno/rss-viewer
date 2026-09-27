@@ -14,7 +14,10 @@
   const SIDEBAR_STATE_KEY = 'rss_sidebar_state';
   const UNREAD_FILTER_KEY = 'rssViewer.showUnreadOnly';
   const MAX_SUMMARY_CACHE = 80;
-  const MAX_DIGEST_CACHE = 20;
+  const MAX_DIGEST_CACHE = 48;
+  /** Cap on items sent to the LLM (prompt size). Mark-as-read still uses the full unread set. */
+  const MAX_DIGEST_ITEMS = 100;
+  const FEED_DIGEST_SCOPE_KEY = 'rssViewer.feedDigestScope';
   const MAX_ITEMS_PER_FEED = 50;
   const PREFETCH_CONCURRENCY = 3;
   const MAX_ARTICLE_CACHE = 40;
@@ -36,6 +39,8 @@
   let selectedItemId = '';
   let selectedItemFeedUrl = '';
   let selectedSidebarFeedUrl = '';
+  /** When set, reader shows an AI-first digest for this OPML category (not a single feed). */
+  let selectedSidebarCategory = '';
   let refreshIntervalId = null;
   let showUnreadOnly = false;
   try {
@@ -165,7 +170,27 @@
     } catch { return buildLibrary([]); }
   }
   function saveLibrary(lib) {
-    try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(buildLibrary(lib.feeds || [], lib.categories || []))); } catch {}
+    const built = buildLibrary(lib.feeds || [], lib.categories || []);
+    try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(built)); } catch {}
+    persistLibraryToServer(built);
+  }
+  function persistLibraryToServer(lib) {
+    fetch('/api/library', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lib)
+    }).catch(() => {});
+  }
+  async function loadLibraryFromServer() {
+    try {
+      const res = await fetch('/api/library');
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!Array.isArray(data.feeds) || !data.feeds.length) return null;
+      return buildLibrary(data.feeds, data.categories || []);
+    } catch {
+      return null;
+    }
   }
 
   function getReadLaterArticles() {
@@ -462,6 +487,17 @@
   }
   function saveSettings(s) { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch {} }
 
+  /** Theme resolution: explicit saved choice wins; otherwise follow the system setting. */
+  function systemWantsLight() {
+    try { return !!window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches; } catch { return false; }
+  }
+  function applyTheme(s) {
+    const light = s && s.themeLight !== undefined ? !!s.themeLight : systemWantsLight();
+    document.body.classList.toggle('theme-light', light);
+    document.body.classList.toggle('theme-dark', !light);
+    return light;
+  }
+
   /** Payload for /api/llm/* from saved or form settings. */
   function getLlmRequestFields(s) {
     const settings = s || readSettings();
@@ -503,11 +539,77 @@
     }
     saveSummaryCache(c);
   }
-  function digestCacheKey(hours, items) {
+  /** Stable cache key for a digest scope (window hours, "unread", or "feed:url:scope"). */
+  function digestCacheKey(scope, items) {
     let h = 0;
-    const s = items.map((i) => i.id).sort().join('|');
+    const s = (items || []).map((i) => i.id).sort().join('|');
     for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-    return hours + '-' + h;
+    return String(scope) + '-' + h;
+  }
+
+  function getFeedDigestScope() {
+    try {
+      const v = localStorage.getItem(FEED_DIGEST_SCOPE_KEY);
+      return v === 'all' ? 'all' : 'unread';
+    } catch {
+      return 'unread';
+    }
+  }
+
+  function setFeedDigestScope(scope) {
+    try {
+      localStorage.setItem(FEED_DIGEST_SCOPE_KEY, scope === 'all' ? 'all' : 'unread');
+    } catch {}
+  }
+
+  function itemsForFeedDigest(items, scope) {
+    const list = Array.isArray(items) ? items : [];
+    if (scope === 'all') return list.slice();
+    return list.filter((i) => i && !readState.isRead(i.id));
+  }
+
+  /**
+   * @param {object[]} items
+   * @param {{ feedTitle?: string, categoryName?: string }} [opts]
+   * feedTitle: single-feed digest (omit per-item source). categoryName: multi-feed category digest.
+   */
+  function buildDigestUserPrompt(items, opts) {
+    const feedTitle = (opts && opts.feedTitle) || '';
+    const categoryName = (opts && opts.categoryName) || '';
+    // Back-compat: older callers passed a string feed title as the second arg
+    const legacyTitle = typeof opts === 'string' ? opts : '';
+    const singleFeedTitle = feedTitle || legacyTitle;
+    const usedItems = items.slice(0, MAX_DIGEST_ITEMS);
+    const refs = [];
+    const lines = usedItems.map((i, idx) => {
+      refs.push({ title: i.feedTitle || singleFeedTitle || 'Source', link: i.link });
+      const source = singleFeedTitle && !categoryName ? '' : ' (' + (i.feedTitle || 'Source') + ')';
+      return '[' + (idx + 1) + '] ' + i.title + source + '\n   ' + truncateText(i.summary, 150);
+    });
+    const promptTemplate = getDigestPrompt();
+    let itemsBlock = lines.join('\n\n');
+    if (categoryName) {
+      itemsBlock =
+        'Category: ' +
+        categoryName +
+        '\nThese items are from multiple feeds in this category. Deduplicate across sources, group by theme, and rank what matters for a busy reader who will not open every article.\n\n' +
+        itemsBlock;
+    } else if (singleFeedTitle) {
+      itemsBlock =
+        'Feed: ' +
+        singleFeedTitle +
+        '\nThese items are all from this single feed. Deduplicate and rank what matters for a busy reader who will not open every article.\n\n' +
+        itemsBlock;
+    }
+    const prompt = promptTemplate.includes('{{ITEMS}}')
+      ? promptTemplate.replace('{{ITEMS}}', itemsBlock)
+      : promptTemplate + '\n\nItems:\n' + itemsBlock;
+    return { prompt, refs, usedItems };
+  }
+
+  function getCategoryItems(categoryName) {
+    const group = getAllItemsGrouped().find((g) => g.category === categoryName);
+    return group ? group.items.slice() : [];
   }
   function readDigestCache() {
     try {
@@ -597,14 +699,326 @@
     const digestWindow = document.getElementById('digest-window');
     const btnGenerateDigest = document.getElementById('btn-generate-digest');
     let lastDigestUnreadGuids = [];
-    digestCard?.addEventListener('click', (ev) => {
+
+    function handleDigestMarkReadClick(ev) {
       const btn = ev.target.closest('.digest-mark-read-btn');
       if (!btn || btn.disabled) return;
-      readState.markMultipleAsRead(lastDigestUnreadGuids);
+      const guids = lastDigestUnreadGuids.slice();
+      if (!guids.length) return;
+      readState.markMultipleAsRead(guids);
       updateUnreadCounts();
       btn.disabled = true;
-      btn.textContent = 'Marked as read ✓';
-    });
+      btn.textContent = 'Marked as read';
+      // Re-render feed/category view so unread counts / empty states stay honest
+      if (
+        selectedSidebarCategory ||
+        (selectedSidebarFeedUrl &&
+          selectedSidebarFeedUrl !== READ_LATER_VIEW_SENTINEL &&
+          selectedSidebarFeedUrl !== RECENTLY_READ_VIEW_SENTINEL)
+      ) {
+        renderToday(true);
+      }
+    }
+    digestCard?.addEventListener('click', handleDigestMarkReadClick);
+    todayContent?.addEventListener('click', handleDigestMarkReadClick);
+
+    /**
+     * Shared digest pipeline for global Digest and per-feed digest.
+     * Never auto-fires: caller must invoke after an explicit user action (or cache hit display).
+     * Caches by item-id set so unchanged feeds do not re-hit the LLM.
+     */
+    async function runDigestGeneration({ items, scopeKey, titleHtml, isUnread, feedTitle, categoryName, targetEl, generateBtn }) {
+      if (!targetEl) return { ok: false };
+      const s = readSettings();
+      const modelId = s.modelIdDigest || modelSelectDigest?.value || '';
+      const ready = llmConfigReady(s, modelId);
+      if (!ready.ok) {
+        targetEl.innerHTML = '<p class="digest-placeholder error">' + escapeHtml(ready.message) + '</p>';
+        return { ok: false };
+      }
+      if (!items.length) {
+        targetEl.innerHTML =
+          '<p class="digest-placeholder">' +
+          escapeHtml(isUnread ? "You're all caught up — no unread items." : 'No items to digest. Refresh feeds first.') +
+          '</p>';
+        return { ok: false };
+      }
+      const cacheKey = digestCacheKey(scopeKey, items);
+      // Mark-as-read must clear every item in this digest scope (e.g. all 73 unread
+      // in Tech), not only the subset that fit in the LLM prompt.
+      const markReadGuids = isUnread
+        ? items.map((i) => i.id).filter(Boolean)
+        : [];
+      const cached = getCachedDigest(cacheKey);
+      if (cached) {
+        targetEl.innerHTML = cached;
+        lastDigestUnreadGuids = markReadGuids;
+        // Refresh button label if cached HTML had the old "Mark these" copy
+        const markBtn = targetEl.querySelector('.digest-mark-read-btn');
+        if (markBtn && markReadGuids.length) {
+          markBtn.textContent = 'Mark all ' + markReadGuids.length + ' as read';
+          markBtn.disabled = false;
+        }
+        return { ok: true, fromCache: true };
+      }
+      targetEl.innerHTML = '<p class="digest-placeholder">Generating digest…</p>';
+      if (generateBtn) generateBtn.disabled = true;
+      const { prompt, refs, usedItems } = buildDigestUserPrompt(items, {
+        feedTitle: feedTitle || '',
+        categoryName: categoryName || ''
+      });
+      try {
+        const res = await fetch('/api/llm/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...ready.cfg, modelId, messages: [{ role: 'user', content: prompt }] })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          targetEl.innerHTML = '<p class="digest-placeholder error">' + escapeHtml(data.message || 'Request failed') + '</p>';
+          return { ok: false };
+        }
+        const bodyHtml = formatDigestOutput(data.content || '', refs);
+        const refsHtml = refs.length
+          ? '<div class="digest-refs"><strong>References:</strong> ' +
+            refs
+              .map((r, i) => '<a href="' + safeHref(r.link) + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>')
+              .join(' ') +
+            '</div>'
+          : '';
+        const truncatedNote =
+          isUnread && items.length > usedItems.length
+            ? '<p class="digest-truncation-note">Summarized ' +
+              usedItems.length +
+              ' of ' +
+              items.length +
+              ' unread. Mark as read clears all ' +
+              items.length +
+              '.</p>'
+            : items.length > usedItems.length
+              ? '<p class="digest-truncation-note">Summarized ' +
+                usedItems.length +
+                ' of ' +
+                items.length +
+                ' items.</p>'
+              : '';
+        const actionsHtml = isUnread && markReadGuids.length
+          ? '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark all ' +
+            markReadGuids.length +
+            ' as read</button></div>'
+          : '';
+        const fullHtml =
+          titleHtml + truncatedNote + '<div class="digest-body">' + bodyHtml + '</div>' + refsHtml + actionsHtml;
+        targetEl.innerHTML = fullHtml;
+        lastDigestUnreadGuids = markReadGuids;
+        setCachedDigest(cacheKey, fullHtml);
+        return { ok: true, fromCache: false };
+      } catch {
+        targetEl.innerHTML = '<p class="digest-placeholder error">Network error.</p>';
+        return { ok: false };
+      } finally {
+        if (generateBtn) generateBtn.disabled = false;
+      }
+    }
+
+    function feedDigestScopeKey(feedUrl, scope) {
+      return 'feed:' + feedUrl + ':' + scope;
+    }
+
+    function categoryDigestScopeKey(categoryName, scope) {
+      return 'cat:' + categoryName + ':' + scope;
+    }
+
+    /**
+     * AI-first digest panel for a feed or a category.
+     * @param {{ kind: 'feed'|'category', label: string, scopeId: string, allItems: object[], allOptionLabel: string }} opts
+     */
+    function mountScopeDigestPanel(container, opts) {
+      const kind = opts.kind === 'category' ? 'category' : 'feed';
+      const label = opts.label || (kind === 'category' ? 'Category' : 'Feed');
+      const scopeId = opts.scopeId || label;
+      const allItems = opts.allItems || [];
+      const allOptionLabel = opts.allOptionLabel || (kind === 'category' ? 'All in category' : 'All in feed');
+      const scope = getFeedDigestScope();
+      const digestItems = itemsForFeedDigest(allItems, scope);
+      const unreadN = allItems.filter((i) => !readState.isRead(i.id)).length;
+      const scopeKey =
+        kind === 'category' ? categoryDigestScopeKey(scopeId, scope) : feedDigestScopeKey(scopeId, scope);
+      const cacheKey = digestCacheKey(scopeKey, digestItems);
+      const cachedHtml = digestItems.length ? getCachedDigest(cacheKey) : null;
+      const kindLabel = kind === 'category' ? 'Category digest' : 'Feed digest';
+      const emptyUnread = 'No unread items.';
+      const emptyAll = 'No items.';
+
+      const panel = document.createElement('section');
+      panel.className = 'feed-digest-panel';
+      panel.setAttribute('aria-label', kindLabel);
+
+      const head = document.createElement('div');
+      head.className = 'feed-digest-head';
+      head.innerHTML =
+        '<div class="feed-digest-head-text">' +
+        '<p class="feed-digest-eyebrow"><span class="ai-badge">AI</span> ' +
+        escapeHtml(kindLabel) +
+        '</p>' +
+        '</div>';
+
+      const controls = document.createElement('div');
+      controls.className = 'feed-digest-controls';
+      const scopeSelect = document.createElement('select');
+      scopeSelect.className = 'feed-digest-scope';
+      scopeSelect.setAttribute('aria-label', 'Digest which items');
+      scopeSelect.innerHTML =
+        '<option value="unread"' +
+        (scope === 'unread' ? ' selected' : '') +
+        '>Unread (' +
+        unreadN +
+        ')</option>' +
+        '<option value="all"' +
+        (scope === 'all' ? ' selected' : '') +
+        '>' +
+        escapeHtml(allOptionLabel) +
+        ' (' +
+        allItems.length +
+        ')</option>';
+      const genBtn = document.createElement('button');
+      genBtn.type = 'button';
+      genBtn.className = 'btn-primary feed-digest-generate';
+      genBtn.textContent =
+        digestItems.length === 0
+          ? 'Nothing to digest'
+          : cachedHtml
+            ? 'Regenerate digest'
+            : 'Digest ' + digestItems.length + ' item' + (digestItems.length === 1 ? '' : 's');
+      genBtn.disabled = digestItems.length === 0;
+      controls.appendChild(scopeSelect);
+      controls.appendChild(genBtn);
+      head.appendChild(controls);
+      panel.appendChild(head);
+
+      const card = document.createElement('div');
+      card.className = 'digest-card feed-digest-card';
+      if (cachedHtml) {
+        card.innerHTML = cachedHtml;
+        // Full unread set for this scope, not only the LLM subset
+        lastDigestUnreadGuids =
+          scope === 'unread' ? digestItems.map((i) => i.id).filter(Boolean) : [];
+        const markBtn = card.querySelector('.digest-mark-read-btn');
+        if (markBtn && lastDigestUnreadGuids.length) {
+          markBtn.textContent = 'Mark all ' + lastDigestUnreadGuids.length + ' as read';
+          markBtn.disabled = false;
+        }
+      } else if (!digestItems.length) {
+        card.innerHTML =
+          '<p class="digest-placeholder">' + (scope === 'unread' ? emptyUnread : emptyAll) + '</p>';
+      } else {
+        // Button is the affordance; no coaching placeholder while idle
+        card.hidden = true;
+      }
+      panel.appendChild(card);
+
+      scopeSelect.addEventListener('change', () => {
+        setFeedDigestScope(scopeSelect.value);
+        renderToday(true);
+      });
+      genBtn.addEventListener('click', async () => {
+        const nextScope = scopeSelect.value === 'all' ? 'all' : 'unread';
+        setFeedDigestScope(nextScope);
+        const nextItems = itemsForFeedDigest(allItems, nextScope);
+        const isUnread = nextScope === 'unread';
+        const usedN = Math.min(nextItems.length, MAX_DIGEST_ITEMS);
+        const titleHtml = isUnread
+          ? '<h3>' +
+            escapeHtml(label) +
+            ' — Unread digest · ' +
+            usedN +
+            (nextItems.length > usedN ? ' of ' + nextItems.length : '') +
+            ' items</h3>'
+          : '<h3>' +
+            escapeHtml(label) +
+            ' — ' +
+            (kind === 'category' ? 'Category' : 'Feed') +
+            ' digest · ' +
+            usedN +
+            ' items</h3>';
+        const nextKey =
+          kind === 'category'
+            ? categoryDigestScopeKey(scopeId, nextScope)
+            : feedDigestScopeKey(scopeId, nextScope);
+        if (genBtn.textContent.indexOf('Regenerate') !== -1) {
+          const key = digestCacheKey(nextKey, nextItems);
+          const c = readDigestCache();
+          if (c.entries[key]) {
+            delete c.entries[key];
+            c.order = c.order.filter((k) => k !== key);
+            saveDigestCache(c);
+          }
+        }
+        card.hidden = false;
+        await runDigestGeneration({
+          items: nextItems,
+          scopeKey: nextKey,
+          titleHtml,
+          isUnread,
+          feedTitle: kind === 'feed' ? label : '',
+          categoryName: kind === 'category' ? label : '',
+          targetEl: card,
+          generateBtn: genBtn
+        });
+        if (card.querySelector('.digest-body')) {
+          genBtn.textContent = 'Regenerate digest';
+        }
+      });
+
+      container.appendChild(panel);
+    }
+
+    function mountFeedDigestPanel(container, feed, allItems) {
+      mountScopeDigestPanel(container, {
+        kind: 'feed',
+        label: feed.title || feed.url,
+        scopeId: feed.url,
+        allItems,
+        allOptionLabel: 'All in feed'
+      });
+    }
+
+    function mountCategoryDigestPanel(container, categoryName, allItems) {
+      mountScopeDigestPanel(container, {
+        kind: 'category',
+        label: categoryName,
+        scopeId: categoryName,
+        allItems,
+        allOptionLabel: 'All in category'
+      });
+    }
+
+    function activateReaderView() {
+      document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
+      document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
+      document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
+        x.classList.remove('is-active');
+        x.setAttribute('aria-current', 'false');
+      });
+      const readerNav = document.querySelector('.sidebar-nav-item[data-view="reader"]');
+      readerNav?.classList.add('is-active');
+      readerNav?.setAttribute('aria-current', 'page');
+    }
+
+    function openCategoryView(cat) {
+      selectedItemFeedUrl = '';
+      selectedItemId = '';
+      selectedSidebarFeedUrl = '';
+      selectedSidebarCategory = cat;
+      const current = getSidebarExpandedCategories();
+      if (!current.includes(cat)) {
+        setSidebarExpandedCategories([...current, cat]);
+      }
+      activateReaderView();
+      renderToday();
+      renderSidebar();
+      closeMobileSidebar();
+    }
     const digestPromptInput = document.getElementById('digest-prompt');
     const btnResetDigestPrompt = document.getElementById('btn-reset-digest-prompt');
     const btnSaveDigestPrompt = document.getElementById('btn-save-digest-prompt');
@@ -641,7 +1055,8 @@
       allRow.className = 'sidebar-all-row';
       const allBtn = document.createElement('button');
       allBtn.type = 'button';
-      allBtn.className = 'sidebar-feed sidebar-all' + (selectedSidebarFeedUrl === '' ? ' is-active' : '');
+      allBtn.className =
+        'sidebar-feed sidebar-all' + (selectedSidebarFeedUrl === '' && !selectedSidebarCategory ? ' is-active' : '');
       allBtn.innerHTML =
         '<span class="sidebar-feed-name">All</span>' +
         (totalUnread > 0
@@ -651,15 +1066,8 @@
         selectedItemFeedUrl = '';
         selectedItemId = '';
         selectedSidebarFeedUrl = '';
-        document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
-        document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
-        document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
-          x.classList.remove('is-active');
-          x.setAttribute('aria-current', 'false');
-        });
-        const readerNav = document.querySelector('.sidebar-nav-item[data-view="reader"]');
-        readerNav?.classList.add('is-active');
-        readerNav?.setAttribute('aria-current', 'page');
+        selectedSidebarCategory = '';
+        activateReaderView();
         renderToday();
         renderSidebar();
         closeMobileSidebar();
@@ -680,21 +1088,32 @@
 
         const header = document.createElement('button');
         header.type = 'button';
-        header.className = 'sidebar-category-row';
+        header.className =
+          'sidebar-category-row' + (selectedSidebarCategory === cat ? ' is-active' : '');
+        header.title = 'Open category digest for ' + cat;
         header.innerHTML =
-          '<span class="sidebar-category-chevron" aria-hidden="true">' + (isExpanded ? '▼' : '▶') + '</span>' +
-          '<span class="sidebar-category-name">' + escapeHtml(cat) + '</span>' +
+          '<span class="sidebar-category-chevron" aria-hidden="true" title="Expand or collapse feeds">' +
+          (isExpanded ? '▼' : '▶') +
+          '</span>' +
+          '<span class="sidebar-category-name">' +
+          escapeHtml(cat) +
+          '</span>' +
           (aggregateUnread > 0
             ? '<span class="sidebar-category-count">' + aggregateUnread + '</span>'
             : '<span class="sidebar-category-count is-zero" aria-hidden="true"></span>');
-        header.onclick = () => {
-          const current = getSidebarExpandedCategories();
-          const nowExpanded = current.includes(cat);
-          const next = nowExpanded ? current.filter((c) => c !== cat) : [...current, cat];
-          setSidebarExpandedCategories(next);
-          sec.classList.toggle('is-expanded');
-          const chev = sec.querySelector('.sidebar-category-chevron');
-          if (chev) chev.textContent = sec.classList.contains('is-expanded') ? '▼' : '▶';
+        header.onclick = (ev) => {
+          // Chevron alone toggles expand; name/count opens category AI digest view
+          if (ev.target.closest('.sidebar-category-chevron')) {
+            const current = getSidebarExpandedCategories();
+            const nowExpanded = current.includes(cat);
+            const next = nowExpanded ? current.filter((c) => c !== cat) : [...current, cat];
+            setSidebarExpandedCategories(next);
+            sec.classList.toggle('is-expanded');
+            const chev = sec.querySelector('.sidebar-category-chevron');
+            if (chev) chev.textContent = sec.classList.contains('is-expanded') ? '▼' : '▶';
+            return;
+          }
+          openCategoryView(cat);
         };
         sec.appendChild(header);
 
@@ -721,21 +1140,14 @@
             selectedItemFeedUrl = '';
             selectedItemId = '';
             selectedSidebarFeedUrl = f.url;
+            selectedSidebarCategory = '';
             const url = f.url;
             try {
               setCachedFeedItems(url, await fetchFeed(url));
             } catch (err) {
               showToast('Could not refresh this feed', 'error');
             }
-            document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
-            document.querySelector('.mockup-view[data-tab="reader"]')?.classList.add('active');
-            document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
-              x.classList.remove('is-active');
-              x.setAttribute('aria-current', 'false');
-            });
-            const readerNav = document.querySelector('.sidebar-nav-item[data-view="reader"]');
-            readerNav?.classList.add('is-active');
-            readerNav?.setAttribute('aria-current', 'page');
+            activateReaderView();
             renderToday();
             renderSidebar();
             closeMobileSidebar();
@@ -1030,9 +1442,9 @@
         '<p class="empty-state-title">' +
         escapeHtml(title || '') +
         '</p>' +
-        '<p class="empty-state-desc">' +
-        escapeHtml(desc || '') +
-        '</p>' +
+        (desc
+          ? '<p class="empty-state-desc">' + escapeHtml(desc) + '</p>'
+          : '') +
         actionsHtml +
         '</div>'
       );
@@ -1063,13 +1475,15 @@
       });
     }
 
-    /** Items currently in the Today/All or single-feed reader view (not Read Later / Recently Read). */
+    /** Items currently in the Today/All, category, or single-feed reader view (not Read Later / Recently Read). */
     function getCurrentReaderItems() {
       if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL || selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) {
         return [];
       }
       let items;
-      if (selectedSidebarFeedUrl) {
+      if (selectedSidebarCategory) {
+        items = getCategoryItems(selectedSidebarCategory);
+      } else if (selectedSidebarFeedUrl) {
         const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
         items = getCachedFeedItems(selectedSidebarFeedUrl).map((i) => ({
           ...i,
@@ -1155,21 +1569,29 @@
         return;
       }
       setMarkAllReadVisible(true);
-      if (heroEyebrow) heroEyebrow.textContent = selectedSidebarFeedUrl ? 'Feed' : 'Today';
+      if (heroEyebrow) {
+        if (selectedSidebarCategory) heroEyebrow.textContent = 'Category';
+        else if (selectedSidebarFeedUrl) heroEyebrow.textContent = 'Feed';
+        else heroEyebrow.textContent = 'Today';
+      }
       if (heroTitle) {
         const unreadSuffix = showUnreadOnly ? ' · Unread' : '';
-        if (selectedSidebarFeedUrl) {
+        if (selectedSidebarCategory) {
+          heroTitle.textContent = selectedSidebarCategory + unreadSuffix;
+        } else if (selectedSidebarFeedUrl) {
           const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
           heroTitle.textContent = (feed ? feed.title : 'Feed') + unreadSuffix;
         } else {
-          heroTitle.textContent = (showUnreadOnly ? 'Unread' : 'All feeds');
+          heroTitle.textContent = showUnreadOnly ? 'Unread' : 'All feeds';
         }
       }
       todayContent.innerHTML = '';
       let collapsed = getCollapsedCategories();
       // Default to all collapsed when user has no saved preference (unless they just clicked Expand all)
       if (!skipDefaultCollapse) {
-        if (selectedSidebarFeedUrl) {
+        if (selectedSidebarCategory) {
+          // Category view lists feeds as source groups; leave expand preference alone
+        } else if (selectedSidebarFeedUrl) {
           const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
           const singleTitle = feed ? feed.title : 'Feed';
           if (collapsed.size === 0) {
@@ -1184,9 +1606,10 @@
           }
         }
       }
-      function addGroup(title, items, feedUrl, feedTitle) {
+      function addGroup(title, items, feedUrl, feedTitle, parentEl) {
         items = filterItemsByReadState(items);
         if (!items.length) return;
+        const host = parentEl || todayContent;
         const g = document.createElement('div');
         g.className = 'feed-group' + (collapsed.has(title) ? ' is-collapsed' : '');
         g.dataset.category = title;
@@ -1260,12 +1683,75 @@
         ul.className = 'results';
         items.forEach((i) => ul.appendChild(createItemEl(i, i.feedUrl ?? feedUrl, i.feedTitle ?? feedTitle)));
         g.appendChild(ul);
-        todayContent.appendChild(g);
+        host.appendChild(g);
+      }
+      if (selectedSidebarCategory) {
+        const cat = selectedSidebarCategory;
+        const items = getCategoryItems(cat);
+        const visible = filterItemsByReadState(items);
+        if (!items.length) {
+          todayContent.innerHTML = emptyStateHtml({
+            icon: '◌',
+            title: 'No items in ' + cat,
+            desc: 'Refresh feeds in this category, or check that feed URLs still work.',
+            actions: [{ id: 'refresh', label: 'Refresh feeds', primary: true }]
+          });
+          bindEmptyStateActions(todayContent);
+          return;
+        }
+        mountCategoryDigestPanel(todayContent, cat, items);
+        if (!visible.length) {
+          const caughtUp = document.createElement('div');
+          caughtUp.className = 'feed-source-empty';
+          caughtUp.innerHTML = emptyStateHtml({
+            icon: '✓',
+            title: 'No unread articles',
+            desc: '',
+            actions: [{ id: 'show-all', label: 'Show all', primary: true }]
+          });
+          todayContent.appendChild(caughtUp);
+          bindEmptyStateActions(caughtUp);
+          return;
+        }
+        const sourceWrap = document.createElement('section');
+        sourceWrap.className = 'feed-source-section';
+        const sourceHead = document.createElement('div');
+        sourceHead.className = 'feed-source-heading-row';
+        const feedCount = new Set(items.map((i) => i.feedUrl)).size;
+        sourceHead.innerHTML =
+          '<h3 class="feed-source-heading">Source items · ' +
+          feedCount +
+          ' feed' +
+          (feedCount === 1 ? '' : 's') +
+          '</h3>';
+        sourceWrap.appendChild(sourceHead);
+        const groupHost = document.createElement('div');
+        groupHost.className = 'feed-source-groups';
+        sourceWrap.appendChild(groupHost);
+        todayContent.appendChild(sourceWrap);
+        // One group per feed inside the category for scannable source list
+        const byFeed = new Map();
+        items.forEach((i) => {
+          const key = i.feedUrl || '';
+          if (!byFeed.has(key)) byFeed.set(key, { title: i.feedTitle || key, items: [] });
+          byFeed.get(key).items.push(i);
+        });
+        byFeed.forEach((bucket, feedUrl) => {
+          addGroup(bucket.title, bucket.items, feedUrl, bucket.title, groupHost);
+        });
+        return;
       }
       if (selectedSidebarFeedUrl) {
-        const feed = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl);
+        const feedMeta = importedFeeds.find((f) => f.url === selectedSidebarFeedUrl) || {
+          url: selectedSidebarFeedUrl,
+          title: selectedSidebarFeedUrl
+        };
         const items = getCachedFeedItems(selectedSidebarFeedUrl)
-          .map((i) => ({ ...i, feedUrl: selectedSidebarFeedUrl, feedTitle: feed ? feed.title : selectedSidebarFeedUrl }))
+          .map((i) => ({
+            ...i,
+            feedUrl: selectedSidebarFeedUrl,
+            feedTitle: feedMeta.title || selectedSidebarFeedUrl
+          }))
           .sort((a, b) => (b.pubDate ? Date.parse(b.pubDate) : 0) - (a.pubDate ? Date.parse(a.pubDate) : 0));
         const visible = filterItemsByReadState(items);
         if (!items.length) {
@@ -1278,18 +1764,33 @@
           bindEmptyStateActions(todayContent);
           return;
         }
+        // AI-first: digest panel always leads. Source list is secondary and
+        // still respects All/Unread filter for manual browsing.
+        mountFeedDigestPanel(todayContent, feedMeta, items);
         if (!visible.length) {
-          todayContent.innerHTML = emptyStateHtml({
+          const caughtUp = document.createElement('div');
+          caughtUp.className = 'feed-source-empty';
+          caughtUp.innerHTML = emptyStateHtml({
             icon: '✓',
             title: 'No unread articles',
-            desc: 'You’re caught up in this feed. Switch to All to see everything.',
+            desc: '',
             actions: [{ id: 'show-all', label: 'Show all', primary: true }]
           });
-          bindEmptyStateActions(todayContent);
+          todayContent.appendChild(caughtUp);
+          bindEmptyStateActions(caughtUp);
           return;
         }
-        const title = feed ? feed.title : 'Feed';
-        addGroup(title, items, selectedSidebarFeedUrl, title);
+        const sourceWrap = document.createElement('section');
+        sourceWrap.className = 'feed-source-section';
+        const sourceHead = document.createElement('div');
+        sourceHead.className = 'feed-source-heading-row';
+        sourceHead.innerHTML = '<h3 class="feed-source-heading">Source items</h3>';
+        sourceWrap.appendChild(sourceHead);
+        const groupHost = document.createElement('div');
+        groupHost.className = 'feed-source-groups';
+        sourceWrap.appendChild(groupHost);
+        todayContent.appendChild(sourceWrap);
+        addGroup(feedMeta.title || 'Feed', items, selectedSidebarFeedUrl, feedMeta.title || 'Feed', groupHost);
         return;
       }
       const grouped = getAllItemsGrouped();
@@ -1390,9 +1891,16 @@
       const activate = () => {
         const v = item.dataset.view;
         if (v !== 'reader' && v !== 'digest' && v !== 'read_later' && v !== 'recently_read') return;
-        if (v === 'reader') selectedSidebarFeedUrl = '';
-        else if (v === 'read_later') selectedSidebarFeedUrl = READ_LATER_VIEW_SENTINEL;
-        else if (v === 'recently_read') selectedSidebarFeedUrl = RECENTLY_READ_VIEW_SENTINEL;
+        if (v === 'reader') {
+          selectedSidebarFeedUrl = '';
+          selectedSidebarCategory = '';
+        } else if (v === 'read_later') {
+          selectedSidebarFeedUrl = READ_LATER_VIEW_SENTINEL;
+          selectedSidebarCategory = '';
+        } else if (v === 'recently_read') {
+          selectedSidebarFeedUrl = RECENTLY_READ_VIEW_SENTINEL;
+          selectedSidebarCategory = '';
+        }
         document.querySelectorAll('.mockup-view').forEach((x) => x.classList.remove('active'));
         document.querySelectorAll('.sidebar-nav-item').forEach((x) => {
           x.classList.remove('is-active');
@@ -1622,7 +2130,7 @@
       }
       if (apiKeyInput) apiKeyInput.value = s.apiKey || '';
       if (refreshIntervalSelect) refreshIntervalSelect.value = String(s.refreshInterval || 0);
-      if (themeToggle) themeToggle.checked = !!s.themeLight;
+      if (themeToggle) themeToggle.checked = applyTheme(s);
       if (digestPromptInput) digestPromptInput.value = (s.digestPrompt || '').trim() || DEFAULT_DIGEST_PROMPT;
       if (summaryPromptInput) summaryPromptInput.value = (s.summaryPrompt || '').trim() || DEFAULT_SUMMARY_PROMPT;
       const models = Array.isArray(s.modelsCache) ? s.modelsCache : [];
@@ -1637,7 +2145,7 @@
         fillSelect(modelSelectDigest, s.modelIdDigest || s.modelId);
         fillSelect(modelSelectSummary, s.modelIdSummary || s.modelId);
       }
-      document.body.classList.toggle('theme-light', !!s.themeLight);
+      applyTheme(s);
       syncProviderUi();
     }
     async function checkModels() {
@@ -1769,52 +2277,28 @@
     });
 
     btnGenerateDigest?.addEventListener('click', async () => {
-      const s = readSettings();
-      const modelId = s.modelIdDigest || modelSelectDigest?.value || '';
-      const ready = llmConfigReady(s, modelId);
-      if (!ready.ok) {
-        if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder error">' + escapeHtml(ready.message) + '</p>';
-        return;
-      }
       const windowVal = digestWindow?.value || '24h';
       const isUnread = windowVal === 'unread';
       const hours = windowVal === '7d' ? 168 : 24;
       const items = isUnread ? getUnreadItems() : getItemsInWindow(hours);
-      if (!items.length) {
-        if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">' + (isUnread ? "You're all caught up — no unread items." : 'No items in this time window. Refresh feeds first.') + '</p>';
-        return;
-      }
-      const cacheKey = digestCacheKey(isUnread ? 'unread' : hours, items);
-      const cached = getCachedDigest(cacheKey);
-      if (cached) { if (digestCard) { digestCard.innerHTML = cached; lastDigestUnreadGuids = items.slice(0, 50).map((i) => i.id).filter(Boolean); } return; }
-      if (digestCard) digestCard.innerHTML = '<p class="digest-placeholder">Generating digest…</p>';
-      if (btnGenerateDigest) btnGenerateDigest.disabled = true;
-      const refs = [];
-      const usedItems = items.slice(0, 50);
-      const lines = usedItems.map((i, idx) => { refs.push({ title: i.feedTitle, link: i.link }); return '[' + (idx + 1) + '] ' + i.title + ' (' + i.feedTitle + ')\n   ' + truncateText(i.summary, 150); });
-      const promptTemplate = getDigestPrompt();
-      const itemsBlock = lines.join('\n\n');
-      const prompt = promptTemplate.includes('{{ITEMS}}') ? promptTemplate.replace('{{ITEMS}}', itemsBlock) : promptTemplate + '\n\nItems:\n' + itemsBlock;
-      try {
-        const res = await fetch('/api/llm/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...ready.cfg, modelId, messages: [{ role: 'user', content: prompt }] })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) { digestCard.innerHTML = '<p class="digest-placeholder error">' + (data.message || 'Request failed') + '</p>'; return; }
-        const bodyHtml = formatDigestOutput(data.content || '', refs);
-        const refsHtml = refs.length ? '<div class="digest-refs"><strong>References:</strong> ' + refs.map((r, i) => '<a href="' + safeHref(r.link) + '" target="_blank" rel="noopener">[' + (i + 1) + '] ' + escapeHtml(r.title) + '</a>').join(' ') + '</div>' : '';
-        const titleHtml = isUnread
-          ? '<h3>Unread digest — ' + usedItems.length + (items.length > usedItems.length ? ' of ' + items.length : '') + ' item' + (usedItems.length === 1 ? '' : 's') + '</h3>'
-          : '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3>';
-        const actionsHtml = isUnread ? '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark these as read</button></div>' : '';
-        const fullHtml = titleHtml + '<div class="digest-body">' + bodyHtml + '</div>' + refsHtml + actionsHtml;
-        digestCard.innerHTML = fullHtml;
-        lastDigestUnreadGuids = usedItems.map((i) => i.id).filter(Boolean);
-        setCachedDigest(cacheKey, fullHtml);
-      } catch { digestCard.innerHTML = '<p class="digest-placeholder error">Network error.</p>'; }
-      finally { if (btnGenerateDigest) btnGenerateDigest.disabled = false; }
+      const usedN = Math.min(items.length, MAX_DIGEST_ITEMS);
+      const titleHtml = isUnread
+        ? '<h3>Unread digest — ' +
+          usedN +
+          (items.length > usedN ? ' of ' + items.length : '') +
+          ' item' +
+          (usedN === 1 ? '' : 's') +
+          '</h3>'
+        : '<h3>' + new Date().toLocaleDateString(undefined, { dateStyle: 'long' }) + ' — Digest</h3>';
+      await runDigestGeneration({
+        items,
+        scopeKey: isUnread ? 'unread' : String(hours),
+        titleHtml,
+        isUnread,
+        feedTitle: '',
+        targetEl: digestCard,
+        generateBtn: btnGenerateDigest
+      });
     });
 
     feedSearchInput?.addEventListener('input', renderSidebar);
@@ -1829,7 +2313,16 @@
     updateReadLaterCount();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
-    if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(renderToday), 100);
+    if (lib.feeds.length) {
+      setTimeout(() => fetchAllFeeds().then(renderToday), 100);
+    } else {
+      loadLibraryFromServer().then((remote) => {
+        if (!remote || readLibrary().feeds.length) return;
+        try { localStorage.setItem(LIBRARY_KEY, JSON.stringify(remote)); } catch {}
+        setImportedFeeds(remote.feeds);
+        fetchAllFeeds().then(renderToday);
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

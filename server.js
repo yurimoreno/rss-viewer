@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const Parser = require('rss-parser');
 const { Readability } = require('@mozilla/readability');
@@ -9,6 +10,7 @@ const app = express();
 app.use(express.json());
 const parser = new Parser();
 const port = process.env.PORT || 3000;
+const LIBRARY_PATH = process.env.RSS_VIEWER_LIBRARY_PATH || path.join(__dirname, 'data', 'library.json');
 
 /** Blocks loopback/private/link-local/CGNAT hosts (SSRF guard for feed and article fetches). */
 function isBlockedFetchHost(hostname) {
@@ -43,6 +45,57 @@ function parsePublicFetchUrl(rawUrl) {
   if (isBlockedFetchHost(parsed.hostname)) return null;
   return parsed;
 }
+
+function readStoredLibrary() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(LIBRARY_PATH, 'utf8'));
+    return normalizeStoredLibrary(parsed);
+  } catch {
+    return { feeds: [], categories: [] };
+  }
+}
+
+function normalizeStoredLibrary(body) {
+  const feedsIn = Array.isArray(body && body.feeds) ? body.feeds : [];
+  const seen = new Set();
+  const feeds = [];
+  feedsIn.forEach((f) => {
+    if (!f || typeof f !== 'object') return;
+    const parsedUrl = parsePublicFetchUrl(typeof f.url === 'string' ? f.url : '');
+    if (!parsedUrl) return;
+    const url = parsedUrl.toString();
+    if (seen.has(url)) return;
+    seen.add(url);
+    const title = sanitizeText((typeof f.title === 'string' ? f.title : '').trim()) || url;
+    const category = sanitizeText((typeof f.category === 'string' ? f.category : '').trim()) || 'Uncategorized';
+    feeds.push({ url, title, category });
+  });
+  const catsIn = Array.isArray(body && body.categories) ? body.categories : [];
+  const categories = [];
+  const seenCat = new Set();
+  catsIn.concat(feeds.map((f) => f.category)).forEach((c) => {
+    const name = sanitizeText((typeof c === 'string' ? c : '').trim());
+    if (!name || seenCat.has(name)) return;
+    seenCat.add(name);
+    categories.push(name);
+  });
+  return { feeds, categories };
+}
+
+function writeStoredLibrary(lib) {
+  fs.mkdirSync(path.dirname(LIBRARY_PATH), { recursive: true });
+  const normalized = normalizeStoredLibrary(lib);
+  fs.writeFileSync(LIBRARY_PATH, JSON.stringify(normalized, null, 2));
+  return normalized;
+}
+
+app.get('/api/library', (req, res) => {
+  return res.json(readStoredLibrary());
+});
+
+app.put('/api/library', (req, res) => {
+  return res.json(writeStoredLibrary(req.body || {}));
+});
 
 app.get('/api/rss', async (req, res) => {
   const parsedUrl = parsePublicFetchUrl(req.query.url);
