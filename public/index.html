@@ -244,11 +244,13 @@
                 </div>
                 <div class="section">
                   <h2>Add feed</h2>
-                  <p class="section-desc">Paste an RSS or Atom feed URL.</p>
+                  <p class="section-desc">Paste a feed URL, or a site's address and we'll find its feed.</p>
                   <div class="add-feed">
-                    <input type="url" id="add-feed-url" placeholder="https://example.com/feed.xml" />
+                    <input type="url" id="add-feed-url" placeholder="https://example.com" />
                     <button type="button" id="btn-add-feed" class="btn-primary">Add</button>
                   </div>
+                  <p class="add-feed-status" id="add-feed-status" role="status"></p>
+                  <ul class="discover-results" id="discover-results" hidden></ul>
                 </div>
                 <div class="section">
                   <h2>OPML</h2>

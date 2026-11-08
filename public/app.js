@@ -391,8 +391,8 @@
   function buildCachedFromFetch(url, items) {
     return normalizeFeedItemList(url, items);
   }
-  async function fetchFeed(url) {
-    const res = await fetch('/api/rss?url=' + encodeURIComponent(url));
+  async function fetchFeed(url, opts) {
+    const res = await fetch('/api/rss?url=' + encodeURIComponent(url) + (opts && opts.force ? '&force=1' : ''));
     if (!res.ok) throw new Error();
     const data = await res.json();
     return buildCachedFromFetch(url, data.items || []);
@@ -413,6 +413,48 @@
       }
     }
     await Promise.all(Array.from({ length: workers }, w));
+  }
+
+  /** Server-side per-feed fetch health (GET /api/feed-health), keyed by feed URL. */
+  let feedHealth = {};
+  const STALE_FEED_DAYS = 60;
+  async function loadFeedHealth() {
+    try {
+      const res = await fetch('/api/feed-health');
+      if (!res || !res.ok) return false;
+      const data = await res.json();
+      feedHealth = (data && data.feeds && typeof data.feeds === 'object') ? data.feeds : {};
+      return true;
+    } catch { return false; }
+  }
+  function formatAgo(ts) {
+    const r = formatRelativeTime(ts);
+    return r && /\d[mhd]$/.test(r) ? r + ' ago' : r;
+  }
+  /** { level: 'ok'|'stale'|'warn'|'error'|'unknown', label, detail } for a feed URL. */
+  function feedHealthInfo(url) {
+    const h = feedHealth[url];
+    if (!h) return { level: 'unknown', label: 'Not checked yet', detail: '' };
+    const n = h.consecutiveFailures || 0;
+    if (n > 0) {
+      const since = h.firstFailureAt ? 'since ' + formatAgo(h.firstFailureAt) : '';
+      const lastOk = h.lastSuccessAt ? 'last OK ' + formatAgo(h.lastSuccessAt) : 'never loaded';
+      return {
+        level: n >= 3 ? 'error' : 'warn',
+        label: n >= 3 ? 'Broken' : 'Failing',
+        detail: [h.lastError || 'fetch failed', n + ' failure' + (n === 1 ? '' : 's') + (since ? ' ' + since : ''), lastOk].join(' · ')
+      };
+    }
+    const newest = h.newestItemAt || 0;
+    if (newest && Date.now() - newest > STALE_FEED_DAYS * 86400000) {
+      const days = Math.floor((Date.now() - newest) / 86400000);
+      return { level: 'stale', label: 'No posts in ' + days + ' days', detail: 'Loads fine, but the newest item is from ' + new Date(newest).toLocaleDateString() };
+    }
+    return {
+      level: 'ok',
+      label: 'OK',
+      detail: (h.itemCount || 0) + ' item' + (h.itemCount === 1 ? '' : 's') + (newest ? ' · newest ' + formatAgo(newest) : '') + (h.lastCheckedAt ? ' · checked ' + formatAgo(h.lastCheckedAt) : '')
+    };
   }
 
   function readArticleCache() {
@@ -1133,10 +1175,15 @@
           btn.className = 'sidebar-feed' + (f.url === selectedSidebarFeedUrl ? ' is-active' : '');
           btn.dataset.url = f.url;
           btn.title = f.title;
+          const health = feedHealthInfo(f.url);
+          const warn = health.level === 'error'
+            ? '<span class="sidebar-feed-warn" title="' + escapeHtml(health.label + ': ' + health.detail) + '" aria-label="Feed is broken">⚠</span>'
+            : '';
           btn.innerHTML =
             '<span class="sidebar-feed-name">' +
             escapeHtml(f.title) +
             '</span>' +
+            warn +
             (unread > 0
               ? '<span class="sidebar-count">' + unread + '</span>'
               : '<span class="sidebar-count is-zero" aria-hidden="true"></span>');
@@ -1147,10 +1194,11 @@
             selectedSidebarCategory = '';
             const url = f.url;
             try {
-              setCachedFeedItems(url, await fetchFeed(url));
+              setCachedFeedItems(url, await fetchFeed(url, { force: true }));
             } catch (err) {
               showToast('Could not refresh this feed', 'error');
             }
+            loadFeedHealth().then((ok) => { if (ok) { renderSidebar(); renderFeedsPage(); } });
             activateReaderView();
             renderToday();
             renderSidebar();
@@ -1838,18 +1886,39 @@
         addGroup(category, items, feedUrl, feedTitle);
       });
     }
+    let feedsProblemsOnly = false;
     function renderFeedsPage() {
       if (!feedsList || !feedsSummary) return;
       const q = (feedMgmtSearch?.value || '').trim().toLowerCase();
-      const filtered = filterFeeds(q);
+      const isProblem = (f) => feedHealthInfo(f.url).level !== 'ok' && feedHealthInfo(f.url).level !== 'unknown';
+      const problems = importedFeeds.filter(isProblem);
+      if (!problems.length) feedsProblemsOnly = false;
+      let filtered = filterFeeds(q);
+      if (feedsProblemsOnly) filtered = filtered.filter(isProblem);
       const cats = new Set(filtered.map((f) => f.category).filter(Boolean));
       feedsSummary.textContent = filtered.length
         ? filtered.length + ' feed' + (filtered.length === 1 ? '' : 's') + (cats.size ? ' · ' + cats.size + ' categor' + (cats.size === 1 ? 'y' : 'ies') : '') + '.'
-        : 'No feeds yet.';
+        : (feedsProblemsOnly ? 'No problem feeds match.' : 'No feeds yet.');
+      if (problems.length) {
+        const broken = problems.filter((f) => feedHealthInfo(f.url).level !== 'stale').length;
+        const stale = problems.length - broken;
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'btn-quiet feeds-problems-toggle' + (feedsProblemsOnly ? ' is-active' : '');
+        toggle.setAttribute('aria-pressed', feedsProblemsOnly ? 'true' : 'false');
+        toggle.textContent = feedsProblemsOnly
+          ? 'Show all feeds'
+          : [broken ? broken + ' failing' : '', stale ? stale + ' stale' : ''].filter(Boolean).join(' · ');
+        toggle.onclick = () => { feedsProblemsOnly = !feedsProblemsOnly; renderFeedsPage(); };
+        feedsSummary.appendChild(toggle);
+      }
       feedsList.innerHTML = '';
       filtered.forEach((f) => {
+        const health = feedHealthInfo(f.url);
         const li = document.createElement('li');
         li.className = 'feeds-list-item';
+        li.dataset.url = f.url;
+        li.dataset.health = health.level;
         li.innerHTML =
           '<div class="feeds-list-main">' +
           '<span class="feeds-list-title">' +
@@ -1857,6 +1926,10 @@
           '</span>' +
           '<span class="feeds-list-url">' +
           escapeHtml(f.url) +
+          '</span>' +
+          '<span class="feeds-list-health is-' + health.level + '">' +
+          '<span class="feeds-list-health-label">' + escapeHtml(health.label) + '</span>' +
+          (health.detail ? '<span class="feeds-list-health-detail">' + escapeHtml(health.detail) + '</span>' : '') +
           '</span>' +
           '</div>' +
           '<span class="feeds-list-cat">' +
@@ -1929,6 +2002,7 @@
       });
       const view = document.querySelector('.mockup-view[data-tab="' + p + '"]');
       if (view) view.classList.add('active');
+      if (p === 'feeds') loadFeedHealth().then((ok) => { if (ok) renderFeedsPage(); });
     }
     document.querySelectorAll('.sidebar-footer-link[data-page], .page-nav a[data-page]').forEach((a) => {
       a.onclick = (e) => {
@@ -2045,6 +2119,7 @@
         });
         lastRefreshAt = Date.now();
         updateLastRefreshedUi();
+        if (await loadFeedHealth()) renderFeedsPage();
         showToast(total ? 'Feeds refreshed' : 'No feeds to refresh', total ? 'success' : undefined);
       } catch {
         showToast('Refresh failed', 'error');
@@ -2242,19 +2317,77 @@
       if (summaryPromptInput) summaryPromptInput.value = DEFAULT_SUMMARY_PROMPT;
     });
 
-    btnAddFeed?.addEventListener('click', async () => {
-      const url = (addFeedUrl?.value || '').trim();
-      if (!isValidHttpUrl(url)) return;
+    const addFeedStatus = document.getElementById('add-feed-status');
+    const discoverResults = document.getElementById('discover-results');
+    function setAddFeedStatus(text, isError) {
+      if (!addFeedStatus) return;
+      addFeedStatus.textContent = text || '';
+      addFeedStatus.classList.toggle('error', !!isError);
+    }
+    function clearDiscoverResults() {
+      if (!discoverResults) return;
+      discoverResults.innerHTML = '';
+      discoverResults.hidden = true;
+    }
+    async function addFeedToLibrary(url, title) {
       const lib = readLibrary();
-      if (lib.feeds.some((f) => f.url === url)) return;
-      const entry = normalizeFeedEntry({ url, title: url, category: UNCATEGORIZED_CATEGORY });
-      if (!entry) return;
+      if (lib.feeds.some((f) => f.url === url)) {
+        setAddFeedStatus('Already in your feeds.', true);
+        return false;
+      }
+      const entry = normalizeFeedEntry({ url, title: title || url, category: UNCATEGORIZED_CATEGORY });
+      if (!entry) return false;
       lib.feeds.push(entry);
       saveLibrary(lib);
       setImportedFeeds(lib.feeds);
-      addFeedUrl.value = '';
-      try { setCachedFeedItems(url, await fetchFeed(url)); renderToday(); } catch {}
-    });
+      clearDiscoverResults();
+      if (addFeedUrl) addFeedUrl.value = '';
+      setAddFeedStatus('Added ' + (title || url) + '.');
+      try { setCachedFeedItems(url, await fetchFeed(url, { force: true })); renderToday(); renderSidebar(); } catch {}
+      loadFeedHealth().then((ok) => { if (ok) renderFeedsPage(); });
+      return true;
+    }
+    async function discoverAndAdd() {
+      let url = (addFeedUrl?.value || '').trim();
+      if (url && !/^https?:\/\//i.test(url) && /^[\w-]+(\.[\w-]+)+/.test(url)) url = 'https://' + url;
+      if (!isValidHttpUrl(url)) { setAddFeedStatus('Enter a valid http(s) URL.', true); return; }
+      if (readLibrary().feeds.some((f) => f.url === url)) { setAddFeedStatus('Already in your feeds.', true); return; }
+      clearDiscoverResults();
+      setAddFeedStatus('Looking for a feed…');
+      if (btnAddFeed) btnAddFeed.disabled = true;
+      let feeds = [];
+      try {
+        const res = await fetch('/api/discover?url=' + encodeURIComponent(url));
+        const data = await res.json().catch(() => ({}));
+        feeds = Array.isArray(data.feeds) ? data.feeds.filter((f) => f && isValidHttpUrl(f.url)) : [];
+      } catch {
+        feeds = [];
+      } finally {
+        if (btnAddFeed) btnAddFeed.disabled = false;
+      }
+      if (!feeds.length) { setAddFeedStatus('No RSS or Atom feed found at that address.', true); return; }
+      if (feeds.length === 1) { await addFeedToLibrary(feeds[0].url, feeds[0].title); return; }
+      setAddFeedStatus('Found ' + feeds.length + ' feeds. Pick one:');
+      if (!discoverResults) return;
+      const have = new Set(readLibrary().feeds.map((f) => f.url));
+      feeds.forEach((f) => {
+        const li = document.createElement('li');
+        li.innerHTML =
+          '<div class="feeds-list-main"><span class="feeds-list-title">' + escapeHtml(f.title || f.url) + '</span>' +
+          '<span class="feeds-list-url">' + escapeHtml(f.url) + '</span></div>';
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = have.has(f.url) ? 'btn-quiet' : 'btn-primary';
+        b.textContent = have.has(f.url) ? 'Added' : 'Add';
+        b.disabled = have.has(f.url);
+        b.onclick = () => addFeedToLibrary(f.url, f.title);
+        li.appendChild(b);
+        discoverResults.appendChild(li);
+      });
+      discoverResults.hidden = false;
+    }
+    btnAddFeed?.addEventListener('click', discoverAndAdd);
+    addFeedUrl?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); discoverAndAdd(); } });
     opmlImport?.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
@@ -2319,7 +2452,12 @@
     updateReadLaterCount();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
-    if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(renderToday), 100);
+    const afterFetchAll = () => {
+      renderToday();
+      loadFeedHealth().then((ok) => { if (ok) { renderSidebar(); renderFeedsPage(); } });
+    };
+    loadFeedHealth().then((ok) => { if (ok) { renderSidebar(); renderFeedsPage(); } });
+    if (lib.feeds.length) setTimeout(() => fetchAllFeeds().then(afterFetchAll), 100);
     // The server copy is the source of truth (every edit is PUT there), so a feed
     // list changed on another device or on the server replaces this browser's.
     loadLibraryFromServer().then((remote) => {

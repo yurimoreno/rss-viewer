@@ -8,12 +8,16 @@ const Parser = require('rss-parser');
 const { Readability } = require('@mozilla/readability');
 const { JSDOM } = require('jsdom');
 const { sanitizeText, sanitizeUrl, sanitizeHtml, sanitizeItem } = require('./lib/sanitize');
+const { createFeedStateStore, parseRetryAfter, parseFreshness } = require('./lib/feed-state');
 
 const app = express();
 app.use(express.json());
 const parser = new Parser();
 const port = process.env.PORT || 3000;
 const LIBRARY_PATH = process.env.RSS_VIEWER_LIBRARY_PATH || path.join(__dirname, 'data', 'library.json');
+const FEED_STATE_PATH = process.env.RSS_VIEWER_FEED_STATE_PATH || path.join(__dirname, 'data', 'feed-state.json');
+const feedState = createFeedStateStore(FEED_STATE_PATH);
+const FEED_ACCEPT = 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*';
 
 /** Blocks loopback/private/link-local/CGNAT hosts (SSRF guard for feed and article fetches). */
 function isBlockedFetchHost(hostname) {
@@ -122,6 +126,7 @@ async function safeFetch(url, init = {}) {
       current = new URL(location, parsed).toString();
       continue;
     }
+    response.url = parsed.toString();
     return response;
   }
   throw new Error('too_many_redirects');
@@ -181,6 +186,7 @@ function writeStoredLibrary(lib) {
   fs.mkdirSync(path.dirname(LIBRARY_PATH), { recursive: true });
   const normalized = normalizeStoredLibrary(lib);
   fs.writeFileSync(LIBRARY_PATH, JSON.stringify(normalized, null, 2));
+  feedState.prune(normalized.feeds.map((f) => f.url));
   return normalized;
 }
 
@@ -192,33 +198,198 @@ app.put('/api/library', (req, res) => {
   return res.json(writeStoredLibrary(req.body || {}));
 });
 
+function newestItemTime(items) {
+  let max = 0;
+  items.forEach((i) => {
+    const t = Date.parse(i.isoDate || i.pubDate || '');
+    if (Number.isFinite(t) && t > max && t <= Date.now() + 86400000) max = t;
+  });
+  return max;
+}
+
+function buildFeedPayload(feed, fallbackLink) {
+  return {
+    feed: {
+      title: sanitizeText(feed.title || ''),
+      description: sanitizeText(feed.description || ''),
+      link: sanitizeUrl(feed.link) || fallbackLink
+    },
+    items: (Array.isArray(feed.items) ? feed.items : []).map(sanitizeItem)
+  };
+}
+
 app.get('/api/rss', async (req, res) => {
   const parsedUrl = parsePublicFetchUrl(req.query.url);
   if (!parsedUrl) {
     return res.status(400).json({ error: 'invalid_url' });
   }
+  const url = parsedUrl.toString();
+  // force=1 is an explicit user action (opening one feed): skip freshness and backoff holds.
+  const force = req.query.force === '1';
+  const now = Date.now();
+  const st = feedState.get(url);
+  const cached = feedState.getBody(url);
 
+  if (!force && cached && st.freshUntil > now) {
+    res.set('X-Feed-Cache', 'fresh');
+    return res.json(cached);
+  }
+  if (!force && st.retryAfterUntil > now) {
+    if (cached) {
+      res.set('X-Feed-Cache', 'backoff');
+      return res.json(cached);
+    }
+    return res.status(502).json({ error: 'backing_off', retryAt: st.retryAfterUntil, message: st.lastError || '' });
+  }
+
+  const headers = { Accept: FEED_ACCEPT };
+  // Only ask "changed since?" when we can answer a 304 from memory.
+  if (cached && st.etag) headers['If-None-Match'] = st.etag;
+  if (cached && st.lastModified) headers['If-Modified-Since'] = st.lastModified;
+
+  let response;
   try {
     // Fetch ourselves (not parser.parseURL) so redirects are re-checked by the SSRF guard.
-    const response = await safeFetch(parsedUrl.toString(), {
-      headers: { Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*' }
-    });
-    if (!response.ok) {
-      return res.status(502).json({ error: 'fetch_failed' });
-    }
-    const feed = await parser.parseString(await response.text());
-
-    return res.json({
-      feed: {
-        title: sanitizeText(feed.title || ''),
-        description: sanitizeText(feed.description || ''),
-        link: sanitizeUrl(feed.link) || parsedUrl.toString()
-      },
-      items: (Array.isArray(feed.items) ? feed.items : []).map(sanitizeItem)
-    });
-  } catch {
-    return res.status(502).json({ error: 'fetch_failed' });
+    response = await safeFetch(url, { headers });
+  } catch (err) {
+    const msg = err && err.code === 'BLOCKED_HOST' ? 'Blocked host' : err && err.message === 'timeout' ? 'Timed out' : 'Could not connect' + (err && err.code ? ' (' + err.code + ')' : '');
+    feedState.recordFailure(url, { status: 0, error: msg });
+    return res.status(502).json({ error: 'fetch_failed', message: msg });
   }
+
+  const freshMs = parseFreshness(response.headers.get('cache-control'), response.headers.get('expires'));
+  if (response.status === 304 && cached) {
+    feedState.recordSuccess(url, {
+      status: 304,
+      etag: response.headers.get('etag') || st.etag,
+      lastModified: response.headers.get('last-modified') || st.lastModified,
+      freshMs,
+      itemCount: cached.items.length,
+      newestItemAt: st.newestItemAt
+    });
+    res.set('X-Feed-Cache', 'not-modified');
+    return res.json(cached);
+  }
+  if (!response.ok) {
+    feedState.recordFailure(url, {
+      status: response.status,
+      error: 'HTTP ' + response.status,
+      retryAfterMs: parseRetryAfter(response.headers.get('retry-after'))
+    });
+    return res.status(502).json({ error: 'fetch_failed', message: 'HTTP ' + response.status });
+  }
+
+  let feed;
+  try {
+    feed = await parser.parseString(await response.text());
+  } catch {
+    feedState.recordFailure(url, { status: response.status, error: 'Not a valid RSS/Atom feed' });
+    return res.status(502).json({ error: 'fetch_failed', message: 'Not a valid RSS/Atom feed' });
+  }
+  const payload = buildFeedPayload(feed, url);
+  feedState.recordSuccess(url, {
+    status: response.status,
+    etag: response.headers.get('etag') || '',
+    lastModified: response.headers.get('last-modified') || '',
+    freshMs,
+    itemCount: payload.items.length,
+    newestItemAt: newestItemTime(Array.isArray(feed.items) ? feed.items : []),
+    payload
+  });
+  return res.json(payload);
+});
+
+/** Health of every library feed, for the Feeds page. */
+app.get('/api/feed-health', (req, res) => {
+  const lib = readStoredLibrary();
+  const all = feedState.all();
+  const feeds = {};
+  lib.feeds.forEach((f) => {
+    const st = all[f.url];
+    if (!st) return;
+    feeds[f.url] = {
+      lastStatus: st.lastStatus || 0,
+      lastCheckedAt: st.lastCheckedAt || 0,
+      lastSuccessAt: st.lastSuccessAt || 0,
+      lastError: st.consecutiveFailures ? st.lastError || '' : '',
+      firstFailureAt: st.consecutiveFailures ? st.firstFailureAt || 0 : 0,
+      consecutiveFailures: st.consecutiveFailures || 0,
+      retryAfterUntil: st.consecutiveFailures ? st.retryAfterUntil || 0 : 0,
+      itemCount: st.itemCount || 0,
+      newestItemAt: st.newestItemAt || 0
+    };
+  });
+  return res.json({ now: Date.now(), feeds });
+});
+
+const FEED_LINK_TYPES = /^application\/(rss|atom)\+xml$|^application\/(rdf\+)?xml$|^text\/xml$/i;
+const COMMON_FEED_PATHS = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml', '/index.xml', '/feed/atom'];
+const MAX_DISCOVERED = 8;
+
+/** GET a URL and try it as a feed. Returns { feed } on success, else { html, finalUrl } when it looked like a page. */
+async function probeFeed(url) {
+  try {
+    const r = await safeFetch(url, { headers: { Accept: FEED_ACCEPT + ', text/html;q=0.8' } });
+    if (!r.ok) return { status: r.status };
+    const text = await r.text();
+    try {
+      return { feed: await parser.parseString(text), finalUrl: r.url || url };
+    } catch {
+      const ct = String(r.headers.get('content-type') || '');
+      return { html: /html/i.test(ct) || /<html[\s>]/i.test(text.slice(0, 2000)) ? text : '', finalUrl: r.url || url };
+    }
+  } catch {
+    return {};
+  }
+}
+
+/** <link rel="alternate" type="application/rss+xml" href="..."> URLs in an HTML page. */
+function feedLinksFromHtml(html, baseUrl) {
+  const dom = new JSDOM(html.slice(0, 500_000), { url: baseUrl });
+  const out = [];
+  dom.window.document.querySelectorAll('link[rel][href]').forEach((el) => {
+    const rels = (el.getAttribute('rel') || '').toLowerCase().split(/\s+/);
+    const type = (el.getAttribute('type') || '').trim();
+    if (!rels.includes('alternate') || !FEED_LINK_TYPES.test(type)) return;
+    try {
+      const href = new URL(el.getAttribute('href'), baseUrl).toString();
+      if (!out.includes(href)) out.push(href);
+    } catch {}
+  });
+  return out;
+}
+
+/** Paste a site or feed URL; returns the feed(s) behind it with their titles. */
+app.get('/api/discover', async (req, res) => {
+  const parsedUrl = parsePublicFetchUrl(req.query.url);
+  if (!parsedUrl) return res.status(400).json({ error: 'invalid_url' });
+  const url = parsedUrl.toString();
+
+  const first = await probeFeed(url);
+  if (first.feed) {
+    return res.json({ feeds: [{ url, title: sanitizeText(first.feed.title || '') || url }] });
+  }
+
+  let candidates = first.html ? feedLinksFromHtml(first.html, first.finalUrl || url) : [];
+  if (!candidates.length) {
+    const origin = new URL(first.finalUrl || url).origin;
+    candidates = COMMON_FEED_PATHS.map((p) => origin + p);
+  }
+  candidates = candidates.filter((c) => parsePublicFetchUrl(c)).slice(0, MAX_DISCOVERED);
+
+  const probed = await Promise.all(candidates.map(async (c) => ({ url: c, r: await probeFeed(c) })));
+  const seenTitles = new Set();
+  const feeds = [];
+  probed.forEach(({ url: c, r }) => {
+    if (!r.feed) return;
+    const title = sanitizeText(r.feed.title || '') || c;
+    // /feed and /feed/ etc. often serve the same document; keep the first.
+    const key = title + '|' + (r.feed.items || []).length + '|' + ((r.feed.items || [])[0] || {}).link;
+    if (seenTitles.has(key)) return;
+    seenTitles.add(key);
+    feeds.push({ url: c, title });
+  });
+  return res.json({ feeds });
 });
 
 app.get('/api/article', async (req, res) => {
@@ -471,3 +642,4 @@ if (require.main === module) {
 }
 
 module.exports = app;
+module.exports.feedState = feedState;

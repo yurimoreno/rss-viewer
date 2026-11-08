@@ -7,13 +7,16 @@ async function run() {
   const feedUrl = 'https://example.com/rss.xml';
 
   const { document, localStorage } = bootstrapApp({
-    fetchImpl: async () => ({
+    fetchImpl: async (u) => ({
       ok: true,
       async json() {
+        if (String(u).includes('/api/discover')) return { feeds: [{ url: feedUrl, title: 'Example Feed' }] };
+        if (String(u).includes('/api/feed-health')) return { feeds: {} };
         return { items: [{ title: 'Hello', link: feedUrl + '/1', pubDate: '2024-01-01T00:00:00Z' }] };
       }
     })
   });
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
 
   const addFeedUrl = document.getElementById('add-feed-url');
   const btnAddFeed = document.getElementById('btn-add-feed');
@@ -24,13 +27,14 @@ async function run() {
 
   setValue(addFeedUrl, feedUrl);
   click(btnAddFeed);
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await tick(); await tick(); await tick();
 
   const library = getJson(localStorage, 'rssViewer.library');
   assert.ok(library, 'Adding a valid feed URL should persist the library');
   assert.strictEqual(library.feeds.length, 1, 'Library should contain the added feed');
   assert.strictEqual(library.feeds[0].url, feedUrl, 'Persisted feed URL should match input');
   assert.strictEqual(library.feeds[0].category, 'Uncategorized', 'Feeds added without a category default to Uncategorized');
+  assert.strictEqual(library.feeds[0].title, 'Example Feed', 'Discovered feed title is used instead of the raw URL');
   assert.strictEqual(addFeedUrl.value, '', 'Input should clear after a successful add');
 
   const sidebarFeed = document.querySelector('.sidebar-feed[data-url="' + feedUrl + '"]');
@@ -39,7 +43,8 @@ async function run() {
   // Re-adding the same URL should not duplicate the entry.
   setValue(addFeedUrl, feedUrl);
   click(btnAddFeed);
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await tick(); await tick(); await tick();
+  assert.ok(/Already/.test(document.getElementById('add-feed-status').textContent), 'Duplicate add says so');
   const libraryAfterDupe = getJson(localStorage, 'rssViewer.library');
   assert.strictEqual(libraryAfterDupe.feeds.length, 1, 'Adding a duplicate URL should be a no-op');
 

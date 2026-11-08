@@ -136,7 +136,7 @@ async function run() {
         `/api/rss?url=${encodeURIComponent('http://127.0.0.1:1/unreachable.xml')}`
       );
       assert.strictEqual(fetchFailure.statusCode, 502);
-      assert.deepStrictEqual(fetchFailure.body, { error: 'fetch_failed' });
+      assert.strictEqual(fetchFailure.body.error, 'fetch_failed');
     } finally {
       delete process.env.RSS_VIEWER_ALLOW_PRIVATE_FETCH;
     }

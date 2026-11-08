@@ -6,3 +6,4 @@ node_modules/
 .design-shots/
 data/library.json
 *.bak-*
+data/feed-state.json
