@@ -71,10 +71,22 @@
     document.body.classList.toggle('filter-unread-only', showUnreadOnly);
   }
 
+  // Items marked read one at a time inside an Unread view stay listed (grayed)
+  // so they can be flipped back in place; leaving the view drops them. Scoped to
+  // one view (feed/category + filter); bulk mark-all-read never pins.
+  const readPins = new Set();
+  let readPinsViewKey = '';
+  function pinRead(id) {
+    if (showUnreadOnly && id && readState.isRead(id)) readPins.add(id);
+  }
+  function unpinMany(ids) {
+    (ids || []).forEach((id) => readPins.delete(id));
+  }
+
   function filterItemsByReadState(items) {
     const list = Array.isArray(items) ? items : [];
     if (!showUnreadOnly) return list;
-    return list.filter((i) => i && !readState.isRead(i.id));
+    return list.filter((i) => i && (!readState.isRead(i.id) || readPins.has(i.id)));
   }
 
   function isValidHttpUrl(v) {
@@ -417,7 +429,7 @@
 
   /** Server-side per-feed fetch health (GET /api/feed-health), keyed by feed URL. */
   let feedHealth = {};
-  const STALE_FEED_DAYS = 60;
+  const STALE_FEED_DAYS = 90;
   async function loadFeedHealth() {
     try {
       const res = await fetch('/api/feed-health');
@@ -429,6 +441,7 @@
   }
   function formatAgo(ts) {
     const r = formatRelativeTime(ts);
+    if (r === '0m' || /^-/.test(r)) return 'just now';
     return r && /\d[mhd]$/.test(r) ? r + ' ago' : r;
   }
   /** { level: 'ok'|'stale'|'warn'|'error'|'unknown', label, detail } for a feed URL. */
@@ -437,7 +450,7 @@
     if (!h) return { level: 'unknown', label: 'Not checked yet', detail: '' };
     const n = h.consecutiveFailures || 0;
     if (n > 0) {
-      const since = h.firstFailureAt ? 'since ' + formatAgo(h.firstFailureAt) : '';
+      const since = h.firstFailureAt ? (formatAgo(h.firstFailureAt) === 'just now' ? 'just now' : 'since ' + formatAgo(h.firstFailureAt)) : '';
       const lastOk = h.lastSuccessAt ? 'last OK ' + formatAgo(h.lastSuccessAt) : 'never loaded';
       return {
         level: n >= 3 ? 'error' : 'warn',
@@ -708,7 +721,11 @@
     return '<div class="digest-sections">' + parts.join('') + '</div>';
   }
 
+  let initialized = false;
   function init() {
+    // Guard: test harnesses can fire DOMContentLoaded twice, which would bind every handler twice.
+    if (initialized) return;
+    initialized = true;
     const appShell = document.getElementById('app-shell');
     const sidebarGroups = document.getElementById('sidebar-groups');
     const sidebarMetricEl = document.getElementById('sidebar-metric');
@@ -752,6 +769,7 @@
       const guids = lastDigestUnreadGuids.slice();
       if (!guids.length) return;
       readState.markMultipleAsRead(guids);
+      unpinMany(guids);
       updateUnreadCounts();
       btn.disabled = true;
       btn.textContent = 'Marked as read';
@@ -1325,11 +1343,9 @@
       btnReadToggle.onclick = (ev) => {
         ev.stopPropagation();
         readState.toggleRead(item.id);
+        pinRead(item.id);
         updateReadToggleButton();
         updateUnreadCounts();
-        if (showUnreadOnly && readState.isRead(item.id)) {
-          renderToday(true);
-        }
       };
 
       btnSum.onclick = async (ev) => {
@@ -1387,6 +1403,7 @@
           selectedItemFeedUrl = feedUrl;
           if (selectedSidebarFeedUrl !== READ_LATER_VIEW_SENTINEL) {
             readState.markAsRead(item.id);
+            pinRead(item.id);
             updateReadToggleButton();
             updateUnreadCounts();
           }
@@ -1398,11 +1415,8 @@
           }
           setTimeout(() => li.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         } else {
+          // Read card stays (grayed) in an Unread view until the view changes.
           selectedItemId = '';
-          // Drop from unread-only list once the user collapses a now-read card
-          if (showUnreadOnly && readState.isRead(item.id)) {
-            renderToday(true);
-          }
         }
       };
 
@@ -1568,6 +1582,82 @@
     }
 
     function renderToday(skipDefaultCollapse) {
+      const viewKey = [selectedSidebarFeedUrl, selectedSidebarCategory, showUnreadOnly ? 'unread' : 'all'].join('\u0001');
+      if (viewKey !== readPinsViewKey) {
+        readPins.clear();
+        readPinsViewKey = viewKey;
+      }
+      renderTodayView(skipDefaultCollapse);
+      syncRoute();
+    }
+
+    // --- URL state: #/feed/<url>, #/category/<name>, #/later, #/recent, #/digest, #/feeds, #/settings
+    let applyingRoute = false;
+    let routeReady = false;
+    function routeFromState() {
+      const tab = document.querySelector('.mockup-view.active')?.dataset.tab || 'reader';
+      if (tab !== 'reader') return '#/' + tab;
+      if (selectedSidebarFeedUrl === READ_LATER_VIEW_SENTINEL) return '#/later';
+      if (selectedSidebarFeedUrl === RECENTLY_READ_VIEW_SENTINEL) return '#/recent';
+      if (selectedSidebarCategory) return '#/category/' + encodeURIComponent(selectedSidebarCategory);
+      if (selectedSidebarFeedUrl) return '#/feed/' + encodeURIComponent(selectedSidebarFeedUrl);
+      return '#/';
+    }
+    function normalizedHash() {
+      const h = (location.hash || '').replace(/^#\/?/, '');
+      return '#/' + h;
+    }
+    function syncRoute() {
+      if (applyingRoute || !routeReady) return;
+      const want = routeFromState();
+      if (normalizedHash() === want) return;
+      try { history.pushState(null, '', want); } catch {}
+    }
+    function clickNav(view) {
+      document.querySelector('.sidebar-nav-item[data-view="' + view + '"]')?.click();
+    }
+    function applyRoute() {
+      if (normalizedHash() === routeFromState()) return;
+      const h = normalizedHash().slice(2);
+      const slash = h.indexOf('/');
+      const kind = slash === -1 ? h : h.slice(0, slash);
+      let arg = '';
+      try { arg = slash === -1 ? '' : decodeURIComponent(h.slice(slash + 1)); } catch {}
+      applyingRoute = true;
+      try {
+        if (kind === 'feeds' || kind === 'settings') {
+          openPage(kind);
+        } else if (kind === 'digest') {
+          clickNav('digest');
+        } else if (kind === 'later') {
+          clickNav('read_later');
+        } else if (kind === 'recent') {
+          clickNav('recently_read');
+        } else if (kind === 'feed' && importedFeeds.some((f) => f.url === arg)) {
+          selectedItemFeedUrl = '';
+          selectedItemId = '';
+          selectedSidebarFeedUrl = arg;
+          selectedSidebarCategory = '';
+          activateReaderView();
+          renderToday();
+          renderSidebar();
+        } else if (kind === 'category' && importedFeeds.some((f) => normalizeCategory(f.category) === arg)) {
+          openCategoryView(arg);
+        } else {
+          clickNav('reader');
+        }
+      } finally {
+        applyingRoute = false;
+      }
+      // Unknown feed/category fell back to All: fix the address bar without a new entry.
+      const want = routeFromState();
+      if (normalizedHash() !== want) {
+        try { history.replaceState(null, '', want); } catch {}
+      }
+    }
+    window.addEventListener('hashchange', applyRoute);
+
+    function renderTodayView(skipDefaultCollapse) {
       if (!todayContent) return;
       const heroEyebrow = document.getElementById('viewer-reader-eyebrow');
       const heroTitle = document.getElementById('viewer-reader-title');
@@ -1714,6 +1804,7 @@
           ev.stopPropagation();
           const guids = items.map((i) => i.id);
           readState.markMultipleAsRead(guids);
+          unpinMany(guids);
           updateUnreadCounts();
           if (showUnreadOnly) {
             renderToday(true);
@@ -2003,6 +2094,7 @@
       const view = document.querySelector('.mockup-view[data-tab="' + p + '"]');
       if (view) view.classList.add('active');
       if (p === 'feeds') loadFeedHealth().then((ok) => { if (ok) renderFeedsPage(); });
+      syncRoute();
     }
     document.querySelectorAll('.sidebar-footer-link[data-page], .page-nav a[data-page]').forEach((a) => {
       a.onclick = (e) => {
@@ -2100,6 +2192,7 @@
       const guids = items.map((i) => i.id).filter(Boolean);
       if (!guids.length) return;
       readState.markMultipleAsRead(guids);
+      unpinMany(guids);
       applyMarkAllReadToDom(guids);
       // Re-render so collapsed category unread metrics update immediately
       renderToday(true);
@@ -2131,21 +2224,117 @@
       renderToday();
       renderSidebar();
     });
+    const SHORTCUTS = [
+      ['j / n', 'Next article (opens the first one if none is open)'],
+      ['k / p', 'Previous article'],
+      ['o / Enter', 'Open original'],
+      ['m', 'Toggle read / unread'],
+      ['s', 'Save to Read Later'],
+      ['Esc', 'Collapse article / close this help'],
+      ['g a', 'Go to All'],
+      ['g u', 'Go to Unread'],
+      ['g s', 'Go to Read Later'],
+      ['g r', 'Go to Recently Read'],
+      ['g d', 'Go to Digest'],
+      ['g f', 'Go to Feeds'],
+      ['/', 'Search feeds'],
+      ['Shift+R', 'Refresh all feeds'],
+      ['?', 'Show this help']
+    ];
+    function toggleShortcutHelp(force) {
+      let el = document.getElementById('shortcut-help');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'shortcut-help';
+        el.className = 'shortcut-help-backdrop';
+        el.hidden = true;
+        el.innerHTML =
+          '<div class="shortcut-help" role="dialog" aria-modal="true" aria-labelledby="shortcut-help-title">' +
+          '<div class="shortcut-help-head"><h2 id="shortcut-help-title">Keyboard shortcuts</h2>' +
+          '<button type="button" class="btn-quiet shortcut-help-close" aria-label="Close">&times;</button></div>' +
+          '<dl>' +
+          SHORTCUTS.map(([k, d]) => '<div><dt>' + k.split(' / ').map((x) => '<kbd>' + escapeHtml(x) + '</kbd>').join(' / ') + '</dt><dd>' + escapeHtml(d) + '</dd></div>').join('') +
+          '</dl></div>';
+        el.addEventListener('click', (ev) => {
+          if (ev.target === el || ev.target.closest('.shortcut-help-close')) toggleShortcutHelp(false);
+        });
+        document.body.appendChild(el);
+      }
+      el.hidden = typeof force === 'boolean' ? !force : !el.hidden;
+      return !el.hidden;
+    }
+
+    let gPrefixAt = 0;
     document.addEventListener('keydown', (e) => {
+      const t = e.target;
+      const typing = !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''));
+      const help = document.getElementById('shortcut-help');
+      if (e.key === 'Escape' && help && !help.hidden) {
+        toggleShortcutHelp(false);
+        e.preventDefault();
+        return;
+      }
+      if (typing) {
+        if (e.key === 'Escape' && t.blur) t.blur();
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (gPrefixAt && Date.now() - gPrefixAt < 1500) {
+        gPrefixAt = 0;
+        const k = e.key.toLowerCase();
+        if (k === 'a' || k === 'u') {
+          setShowUnreadOnly(k === 'u');
+          clickNav('reader');
+        } else if (k === 's') clickNav('read_later');
+        else if (k === 'r') clickNav('recently_read');
+        else if (k === 'd') clickNav('digest');
+        else if (k === 'f') openPage('feeds');
+        else return;
+        e.preventDefault();
+        return;
+      }
+      gPrefixAt = 0;
+      if (e.key === 'g') { gPrefixAt = Date.now(); e.preventDefault(); return; }
+      if (e.key === '?') { toggleShortcutHelp(); e.preventDefault(); return; }
+      if (e.key === '/') {
+        if (isMobileSidebar()) { sidebarEl?.classList.add('open'); sidebarOverlay?.classList.add('visible'); }
+        feedSearchInput?.focus();
+        e.preventDefault();
+        return;
+      }
+      if (e.key === 'R' && e.shiftKey) { btnRefresh?.click(); e.preventDefault(); return; }
+
+      const readerActive = !!document.querySelector('.mockup-view.view-reader.active');
       const expandedCard = document.querySelector('.view-reader .article-card.expanded');
+      const nextKeys = ['j', 'n', 'ArrowDown'];
+      const prevKeys = ['k', 'p', 'ArrowUp'];
       if (e.key === 'Escape' && expandedCard) {
         expandedCard.classList.remove('expanded', 'is-selected');
         selectedItemId = '';
         e.preventDefault();
         return;
       }
-      if (expandedCard && ['j', 'k', 'ArrowDown', 'ArrowUp'].includes(e.key)) {
-        const items = document.querySelectorAll('.view-reader .article-card');
+      if (!expandedCard && readerActive && ['j', 'n', 'k', 'p'].includes(e.key)) {
+        // Nothing open yet: start at the first visible card; if every group is
+        // collapsed (Today's default), open the first group and start there.
+        const cards = Array.from(document.querySelectorAll('.view-reader .article-card'));
+        let first = cards.find((c) => !c.closest('.feed-group.is-collapsed'));
+        if (!first && cards[0]) {
+          cards[0].closest('.feed-group')?.querySelector('.feed-group-header-block')?.click();
+          first = cards[0];
+        }
+        if (first) first.click();
+        e.preventDefault();
+        return;
+      }
+      if (expandedCard && (nextKeys.includes(e.key) || prevKeys.includes(e.key))) {
+        const items = Array.from(document.querySelectorAll('.view-reader .article-card'));
         if (!items.length) return;
-        let idx = Array.from(items).indexOf(expandedCard);
-        idx = (e.key === 'j' || e.key === 'ArrowDown') ? idx + 1 : idx - 1;
+        let idx = items.indexOf(expandedCard);
+        idx = nextKeys.includes(e.key) ? idx + 1 : idx - 1;
         idx = Math.max(0, Math.min(items.length - 1, idx));
-        if (items[idx]) items[idx].click();
+        if (items[idx] && items[idx] !== expandedCard) items[idx].click();
         e.preventDefault();
         return;
       }
@@ -2159,6 +2348,7 @@
         const itemId = expandedCard.dataset.itemId;
         if (itemId) {
           readState.toggleRead(itemId);
+          pinRead(itemId);
           expandedCard.classList.toggle('is-read', readState.isRead(itemId));
           const btn = expandedCard.querySelector('.btn-read-toggle');
           if (btn) {
@@ -2168,10 +2358,10 @@
           updateUnreadCounts();
         }
         e.preventDefault();
+        return;
       }
       if (expandedCard && e.key === 's') {
-        const btn = expandedCard.querySelector('.btn-save');
-        btn?.click();
+        expandedCard.querySelector('.btn-save')?.click();
         e.preventDefault();
       }
     });
@@ -2366,15 +2556,19 @@
         if (btnAddFeed) btnAddFeed.disabled = false;
       }
       if (!feeds.length) { setAddFeedStatus('No RSS or Atom feed found at that address.', true); return; }
-      if (feeds.length === 1) { await addFeedToLibrary(feeds[0].url, feeds[0].title); return; }
-      setAddFeedStatus('Found ' + feeds.length + ' feeds. Pick one:');
+      if (feeds.length === 1 && feeds[0].verified !== false) { await addFeedToLibrary(feeds[0].url, feeds[0].title); return; }
+      setAddFeedStatus(feeds.length === 1
+        ? 'Found a feed link, but it did not load just now. Add it anyway?'
+        : 'Found ' + feeds.length + ' feeds. Pick one:');
       if (!discoverResults) return;
       const have = new Set(readLibrary().feeds.map((f) => f.url));
       feeds.forEach((f) => {
         const li = document.createElement('li');
         li.innerHTML =
           '<div class="feeds-list-main"><span class="feeds-list-title">' + escapeHtml(f.title || f.url) + '</span>' +
-          '<span class="feeds-list-url">' + escapeHtml(f.url) + '</span></div>';
+          '<span class="feeds-list-url">' + escapeHtml(f.url) + '</span>' +
+          (f.verified === false ? '<span class="discover-hint">Declared by the page, but did not load just now</span>' : '') +
+          '</div>';
         const b = document.createElement('button');
         b.type = 'button';
         b.className = have.has(f.url) ? 'btn-quiet' : 'btn-primary';
@@ -2450,6 +2644,8 @@
     setImportedFeeds(lib.feeds);
     loadSettingsIntoUI();
     updateReadLaterCount();
+    routeReady = true;
+    if (location.hash && location.hash !== '#' && location.hash !== '#/') applyRoute();
     const mins = parseInt(readSettings().refreshInterval, 10) || 0;
     if (mins > 0) refreshIntervalId = setInterval(() => fetchAllFeeds().then(renderToday), mins * 60000);
     const afterFetchAll = () => {

@@ -343,17 +343,24 @@ async function probeFeed(url) {
   }
 }
 
-/** <link rel="alternate" type="application/rss+xml" href="..."> URLs in an HTML page. */
+/** <link rel="alternate" type="application/rss+xml" href="..."> feeds in an HTML page, as { url, title }. */
 function feedLinksFromHtml(html, baseUrl) {
   const dom = new JSDOM(html.slice(0, 500_000), { url: baseUrl });
   const out = [];
+  const seen = new Set();
+  const pageTitle = sanitizeText((dom.window.document.title || '').trim()).slice(0, 120);
   dom.window.document.querySelectorAll('link[rel][href]').forEach((el) => {
     const rels = (el.getAttribute('rel') || '').toLowerCase().split(/\s+/);
     const type = (el.getAttribute('type') || '').trim();
     if (!rels.includes('alternate') || !FEED_LINK_TYPES.test(type)) return;
     try {
       const href = new URL(el.getAttribute('href'), baseUrl).toString();
-      if (!out.includes(href)) out.push(href);
+      if (seen.has(href)) return;
+      seen.add(href);
+      const linkTitle = sanitizeText((el.getAttribute('title') || '').trim());
+      // "RSS" / "Atom" / "Feed" say nothing; the page title is a better default.
+      const generic = !linkTitle || /^(rss|atom|feed|rss feed|atom feed|rss 2\.0|subscribe)$/i.test(linkTitle);
+      out.push({ url: href, title: generic ? pageTitle || linkTitle : linkTitle });
     } catch {}
   });
   return out;
@@ -367,27 +374,34 @@ app.get('/api/discover', async (req, res) => {
 
   const first = await probeFeed(url);
   if (first.feed) {
-    return res.json({ feeds: [{ url, title: sanitizeText(first.feed.title || '') || url }] });
+    return res.json({ feeds: [{ url, title: sanitizeText(first.feed.title || '') || url, verified: true }] });
   }
 
-  let candidates = first.html ? feedLinksFromHtml(first.html, first.finalUrl || url) : [];
+  // Feeds the page declares are offered even when probing them fails (e.g. HN
+  // rate-limits a burst with 419), flagged verified:false so the client won't auto-add.
+  let candidates = first.html ? feedLinksFromHtml(first.html, first.finalUrl || url).map((c) => ({ ...c, declared: true })) : [];
   if (!candidates.length) {
     const origin = new URL(first.finalUrl || url).origin;
-    candidates = COMMON_FEED_PATHS.map((p) => origin + p);
+    candidates = COMMON_FEED_PATHS.map((p) => ({ url: origin + p, title: '', declared: false }));
   }
-  candidates = candidates.filter((c) => parsePublicFetchUrl(c)).slice(0, MAX_DISCOVERED);
+  candidates = candidates.filter((c) => parsePublicFetchUrl(c.url)).slice(0, MAX_DISCOVERED);
 
-  const probed = await Promise.all(candidates.map(async (c) => ({ url: c, r: await probeFeed(c) })));
+  const probed = await Promise.all(candidates.map(async (c) => ({ c, r: await probeFeed(c.url) })));
   const seenTitles = new Set();
   const feeds = [];
-  probed.forEach(({ url: c, r }) => {
-    if (!r.feed) return;
-    const title = sanitizeText(r.feed.title || '') || c;
+  probed.forEach(({ c: cand, r }) => {
+    const c = cand.url;
+    if (!r.feed) {
+      // A declared link that answered with a page (not an error) really isn't a feed.
+      if (cand.declared && !r.html && !r.finalUrl) feeds.push({ url: c, title: cand.title || c, verified: false });
+      return;
+    }
+    const title = sanitizeText(r.feed.title || '') || cand.title || c;
     // /feed and /feed/ etc. often serve the same document; keep the first.
     const key = title + '|' + (r.feed.items || []).length + '|' + ((r.feed.items || [])[0] || {}).link;
     if (seenTitles.has(key)) return;
     seenTitles.add(key);
-    feeds.push({ url: c, title });
+    feeds.push({ url: c, title, verified: true });
   });
   return res.json({ feeds });
 });

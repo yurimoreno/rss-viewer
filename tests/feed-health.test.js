@@ -44,11 +44,16 @@ const fixture = http.createServer((req, res) => {
   if (req.url === '/site/') {
     res.writeHead(200, { 'Content-Type': 'text/html' });
     return res.end('<html><head><link rel="alternate" type="application/rss+xml" href="/etag.xml">' +
-      '<link rel="alternate" type="application/atom+xml" href="comments.atom"><link rel="stylesheet" href="/a.css"></head><body></body></html>');
+      '<link rel="alternate" type="application/atom+xml" href="comments.atom">' +
+      '<link rel="alternate" type="application/rss+xml" title="Rate limited" href="limited.xml"><link rel="stylesheet" href="/a.css"></head><body></body></html>');
   }
   if (req.url === '/site/comments.atom') {
     res.writeHead(200, { 'Content-Type': 'application/atom+xml' });
     return res.end(ATOM);
+  }
+  if (req.url === '/site/limited.xml') {
+    res.writeHead(419);
+    return res.end();
   }
   if (req.url === '/bare') {
     res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -156,16 +161,17 @@ async function run() {
 
   // Discovery: a feed URL returns itself with its title.
   r = await getJson(port, '/api/discover?url=' + encodeURIComponent(base + '/etag.xml'));
-  assert.deepStrictEqual(r.body.feeds, [{ url: base + '/etag.xml', title: 'Fixture Feed' }]);
+  assert.deepStrictEqual(r.body.feeds, [{ url: base + '/etag.xml', title: 'Fixture Feed', verified: true }]);
   // An HTML page lists its <link rel=alternate> feeds, resolved, non-feed links ignored.
   r = await getJson(port, '/api/discover?url=' + encodeURIComponent(base + '/site/'));
   assert.deepStrictEqual(r.body.feeds, [
-    { url: base + '/etag.xml', title: 'Fixture Feed' },
-    { url: base + '/site/comments.atom', title: 'Comments' }
+    { url: base + '/etag.xml', title: 'Fixture Feed', verified: true },
+    { url: base + '/site/comments.atom', title: 'Comments', verified: true },
+    { url: base + '/site/limited.xml', title: 'Rate limited', verified: false }
   ]);
   // A page without links falls back to common paths on the origin.
   r = await getJson(port, '/api/discover?url=' + encodeURIComponent(base + '/bare'));
-  assert.deepStrictEqual(r.body.feeds, [{ url: base + '/feed', title: 'Fixture Feed' }]);
+  assert.deepStrictEqual(r.body.feeds, [{ url: base + '/feed', title: 'Fixture Feed', verified: true }]);
   r = await getJson(port, '/api/discover?url=not-a-url');
   assert.strictEqual(r.status, 400);
 
