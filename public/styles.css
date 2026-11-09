@@ -1653,6 +1653,11 @@ input[type="text"]::placeholder {
   text-wrap: pretty;
 }
 
+.ai-summary-text p { margin: 0 0 0.4rem; }
+.ai-summary-text p:last-child { margin-bottom: 0; }
+.ai-summary-text ul { margin: 0.2rem 0 0.4rem; padding-left: 1.2rem; }
+.ai-summary-text li { margin: 0.15rem 0; }
+
 .ai-summary-text.error {
   color: var(--danger);
 }

@@ -5,7 +5,8 @@
   const LIBRARY_KEY = 'rssViewer.library';
   const FEED_CACHE_KEY = 'rssViewer.feedItemCache';
   const SETTINGS_KEY = 'rssViewer.settings';
-  const SUMMARY_CACHE_KEY = 'rssViewer.summaryCache';
+  // v2: summaries made before full-text fetch were often of a feed teaser only.
+  const SUMMARY_CACHE_KEY = 'rssViewer.summaryCache.v2';
   const DIGEST_CACHE_KEY = 'rssViewer.digestCache';
   const READ_LATER_KEY = 'rss_read_later';
   const READ_LATER_VIEW_SENTINEL = '__read_later__';
@@ -20,8 +21,9 @@
   const FEED_DIGEST_SCOPE_KEY = 'rssViewer.feedDigestScope';
   const MAX_ITEMS_PER_FEED = 50;
   const PREFETCH_CONCURRENCY = 3;
-  const MAX_ARTICLE_CACHE = 40;
-  const MAX_ARTICLE_LENGTH = 20000;
+  const MAX_ARTICLE_CACHE = 30;
+  // HTML length; long list posts run ~40k of markup, and a 20k cut dropped half the list.
+  const MAX_ARTICLE_LENGTH = 50000;
   const UNCATEGORIZED_CATEGORY = 'Uncategorized';
 
   const readState = typeof window !== 'undefined' && window.RSS_READ_STATE ? window.RSS_READ_STATE : {
@@ -132,9 +134,31 @@
       el.textContent = s;
     }
   }
+  /** Feed text shorter than this is treated as a teaser and the full page is fetched. */
+  const FULL_TEXT_MIN_CHARS = 1500;
+  /** Light markdown for summaries: bullets and **bold** only, everything escaped first. */
+  function renderSummaryHtml(raw) {
+    const inline = (t) => escapeHtml(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    const out = [];
+    let list = [];
+    const flush = () => { if (list.length) { out.push('<ul>' + list.join('') + '</ul>'); list = []; } };
+    String(raw || '').split(/\n/).forEach((line) => {
+      const t = line.trim();
+      if (!t) { flush(); return; }
+      const m = t.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
+      if (m) list.push('<li>' + inline(m[1]) + '</li>');
+      else { flush(); out.push('<p>' + inline(t) + '</p>'); }
+    });
+    flush();
+    return out.join('');
+  }
+  function plainTextLength(htmlOrText) {
+    return String(htmlOrText || '').replace(/<[^>]*>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').replace(/\s+/g, ' ').trim().length;
+  }
   function isContentSufficient(content) {
     const s = (content || '').trim();
-    return s.length > 200 && !s.endsWith('...');
+    if (/(\.\.\.|…|\[…\]|\[\.\.\.\])(\s*<\/p>)?$/.test(s)) return false;
+    return plainTextLength(s) >= FULL_TEXT_MIN_CHARS;
   }
   function domainFromUrl(url) {
     try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'source'; }
@@ -524,7 +548,19 @@
 ## Items
 {{ITEMS}}`;
 
-  const DEFAULT_SUMMARY_PROMPT = `Summarize this article in 2-4 concise sentences. TL;DR style.
+  const DEFAULT_SUMMARY_PROMPT = `Give the payoff of this article: the specific things a reader would have to open it to learn. The reader has already seen the title and the first paragraph, so never restate them or describe what the article "covers" or "aims to" do.
+
+Match the shape of the article:
+- List or roundup ("8 best...", "top tools"): list every item by name, each with a few words on what sets it apart (price, best for, key catch).
+- How-to or guide: the actual steps or recommendations, in order.
+- News: what happened, who is involved, and the key numbers or dates.
+- Opinion or analysis: the core argument and the strongest evidence for it.
+- Anything else: the 3-5 most specific, useful facts.
+
+Rules:
+- Lead with specifics: names, numbers, prices, dates, conclusions.
+- Short bullets or 2-4 tight sentences. No intro line, no closing line.
+- Use only what the article says. If it never delivers the specifics, say so in one line.
 
 {{ARTICLE}}`;
 
@@ -1280,6 +1316,8 @@
         }
         loadArticle(item)
           .then((t) => {
+            // Extraction failed or came back thinner than the feed's own text: keep the feed text.
+            if (!t || plainTextLength(t) < plainTextLength(item.content)) throw new Error('no full text');
             bodyEl.innerHTML = '';
             bodyEl.classList.remove('article-body-skeleton');
             setArticleBody(bodyEl, t);
@@ -1287,6 +1325,10 @@
           .catch(() => {
             bodyEl.innerHTML = '';
             bodyEl.classList.remove('article-body-skeleton');
+            if (item.content && plainTextLength(item.content) > plainTextLength(item.summary)) {
+              setArticleBody(bodyEl, item.content);
+              return;
+            }
             const p = document.createElement('p');
             p.textContent = item.summary || 'No summary available.';
             bodyEl.appendChild(p);
@@ -1362,16 +1404,27 @@
           summaryTextEl.classList.add('error');
           return;
         }
-        const text = (bodyEl.innerText || bodyEl.textContent || '').trim();
-        if (!text || text === 'No content available.') {
-          summaryTextEl.textContent = 'No article content to summarize.';
-          return;
-        }
         summaryTextEl.classList.remove('error');
         summaryTextEl.textContent = 'Summarizing…';
         btnSum.disabled = true;
         try {
-          const truncated = text.length > 12000 ? text.slice(0, 12000) + '\n\n[Article truncated…]' : text;
+          // Summarize the full article, never just the feed teaser.
+          let text = (bodyEl.innerText || bodyEl.textContent || '').trim();
+          if (text === 'No content available.') text = '';
+          if (text.length < FULL_TEXT_MIN_CHARS) {
+            const fetched = await loadArticle(item);
+            // DOMParser, not innerHTML on a live element, so images in the article don't load.
+            const parsed = new DOMParser().parseFromString(fetched || '', 'text/html');
+            const fetchedText = (parsed.body.innerText || parsed.body.textContent || '').replace(/[ \t]+/g, ' ').replace(/\n\s*\n+/g, '\n\n').trim();
+            if (fetchedText && fetchedText.length >= text.length) {
+              text = fetchedText;
+            } else if (text.length < 600) {
+              summaryTextEl.textContent =
+                "Only the feed's teaser is available (the full page couldn't be loaded), so there's nothing more to summarize. Use Open original.";
+              return;
+            }
+          }
+          const truncated = text.length > 24000 ? text.slice(0, 24000) + '\n\n[Article truncated…]' : text;
           const promptTpl = getSummaryPrompt();
           const prompt = promptTpl.includes('{{ARTICLE}}') ? promptTpl.replace('{{ARTICLE}}', truncated) : promptTpl + '\n\n' + truncated;
           const res = await fetch('/api/llm/chat', {
@@ -1386,7 +1439,7 @@
             return;
           }
           const result = (data.content || '').trim() || 'No summary returned.';
-          summaryTextEl.textContent = result;
+          summaryTextEl.innerHTML = renderSummaryHtml(result);
           setCachedSummary(item.id, result);
         } catch {
           summaryTextEl.textContent = 'Network error.';
@@ -1426,7 +1479,7 @@
       const cachedSummary = getCachedSummary(item.id);
       if (cachedSummary) {
         summaryBlock.classList.remove('is-hidden');
-        summaryTextEl.textContent = cachedSummary;
+        summaryTextEl.innerHTML = renderSummaryHtml(cachedSummary);
       }
 
       if (li.classList.contains('expanded')) {
