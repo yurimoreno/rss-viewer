@@ -763,6 +763,19 @@
     const btnGenerateDigest = document.getElementById('btn-generate-digest');
     let lastDigestUnreadGuids = [];
 
+    /** Put the mark-read row right under the digest title, so it is visible without scrolling past the references. */
+    function placeDigestActions(el, count) {
+      el.querySelectorAll('.digest-actions').forEach((n) => n.remove());
+      if (!count) return;
+      const html =
+        '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark all ' +
+        count +
+        ' as read</button></div>';
+      const title = el.firstElementChild && el.firstElementChild.tagName === 'H3' ? el.firstElementChild : null;
+      if (title) title.insertAdjacentHTML('afterend', html);
+      else el.insertAdjacentHTML('afterbegin', html);
+    }
+
     function handleDigestMarkReadClick(ev) {
       const btn = ev.target.closest('.digest-mark-read-btn');
       if (!btn || btn.disabled) return;
@@ -772,7 +785,9 @@
       unpinMany(guids);
       updateUnreadCounts();
       btn.disabled = true;
-      btn.textContent = 'Marked as read';
+      btn.textContent = '✓ Marked ' + guids.length + ' as read';
+      lastDigestUnreadGuids = [];
+      showToast('Marked ' + guids.length + ' article' + (guids.length === 1 ? '' : 's') + ' as read', 'success');
       // Re-render feed/category view so unread counts / empty states stay honest
       if (
         selectedSidebarCategory ||
@@ -812,18 +827,13 @@
       // in Tech, or everything from the last 24h), not only the subset that fit in
       // the LLM prompt. Already-read items are left out of the count.
       const markReadGuids = items.filter((i) => i && i.id && !readState.isRead(i.id)).map((i) => i.id);
-      const markReadActionsHtml = () =>
-        '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark all ' +
-        markReadGuids.length +
-        ' as read</button></div>';
       const cached = getCachedDigest(cacheKey);
       if (cached) {
         targetEl.innerHTML = cached;
         lastDigestUnreadGuids = markReadGuids;
         // Cached HTML may predate the button (time-window digests) or carry a stale
         // count, so rebuild the actions row from the current unread set.
-        targetEl.querySelector('.digest-actions')?.remove();
-        if (markReadGuids.length) targetEl.insertAdjacentHTML('beforeend', markReadActionsHtml());
+        placeDigestActions(targetEl, markReadGuids.length);
         return { ok: true, fromCache: true };
       }
       targetEl.innerHTML = '<p class="digest-placeholder">Generating digest…</p>';
@@ -869,7 +879,8 @@
               : '';
         const fullHtml =
           titleHtml + truncatedNote + '<div class="digest-body">' + bodyHtml + '</div>' + refsHtml;
-        targetEl.innerHTML = fullHtml + (markReadGuids.length ? markReadActionsHtml() : '');
+        targetEl.innerHTML = fullHtml;
+        placeDigestActions(targetEl, markReadGuids.length);
         lastDigestUnreadGuids = markReadGuids;
         // Cache without the actions row; it is rebuilt from live read state on display.
         setCachedDigest(cacheKey, fullHtml);
@@ -963,15 +974,7 @@
         card.innerHTML = cachedHtml;
         // Full unread set for this scope, not only the LLM subset
         lastDigestUnreadGuids = digestItems.filter((i) => i && i.id && !readState.isRead(i.id)).map((i) => i.id);
-        card.querySelector('.digest-actions')?.remove();
-        if (lastDigestUnreadGuids.length) {
-          card.insertAdjacentHTML(
-            'beforeend',
-            '<div class="digest-actions"><button type="button" class="btn-quiet digest-mark-read-btn">Mark all ' +
-              lastDigestUnreadGuids.length +
-              ' as read</button></div>'
-          );
-        }
+        placeDigestActions(card, lastDigestUnreadGuids.length);
       } else if (!digestItems.length) {
         card.innerHTML =
           '<p class="digest-placeholder">' + (scope === 'unread' ? emptyUnread : emptyAll) + '</p>';

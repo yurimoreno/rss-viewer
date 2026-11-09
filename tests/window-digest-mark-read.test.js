@@ -53,7 +53,11 @@ async function run() {
   assert.ok(markBtn, '24h digest should offer mark-as-read');
   assert.strictEqual(markBtn.textContent, 'Mark all 3 as read', 'Only the 3 items inside the 24h window count');
 
+  assert.strictEqual(markBtn.parentElement.previousElementSibling.tagName, 'H3', 'Mark-read sits right under the digest title, above the references');
   click(markBtn);
+  assert.strictEqual(markBtn.textContent, '✓ Marked 3 as read');
+  const toasts = Array.from(document.querySelectorAll('.toast')).map((t) => t.textContent);
+  assert.ok(toasts.includes('Marked 3 articles as read'), 'A confirmation toast shows the count');
   const read = JSON.parse(localStorage.getItem('rss_read_articles') || '{}');
   const readTitles = rawItems.filter((i) => Object.keys(read).some((id) => id.includes(i.link))).map((i) => i.title);
   assert.deepStrictEqual(readTitles.sort(), ['Fresh 1', 'Fresh 2', 'Fresh 3'], 'Window items are marked read; older item is not');
